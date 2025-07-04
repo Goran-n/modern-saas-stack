@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@kibly/api/*": ["./apps/api/src/*"],
+      "@kibly/web/*": ["./apps/web/src/*"],
+      "@kibly/shared-utils/*": ["./packages/shared-utils/src/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/web"
+    }
+  ],
+  "files": [],
+  "include": [],
+  "exclude": [
+    "node_modules",
+    "**/dist",
+    "**/build",
+    "**/.next"
+  ]
+}

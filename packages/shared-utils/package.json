@@ -1,0 +1,18 @@
+{
+  "name": "@kibly/shared-utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for Kibly",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

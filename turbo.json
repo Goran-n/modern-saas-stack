@@ -1,0 +1,82 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "typecheck"],
+      "outputs": ["dist/**", "build/**", ".next/**"],
+      "env": ["NODE_ENV"]
+    },
+    "dev": {
+      "dependsOn": ["typecheck"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "lint:check": {
+      "outputs": []
+    },
+    "format": {
+      "outputs": []
+    },
+    "format:check": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "typecheck:strict": {
+      "cache": false,
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**", "tests/**", "test/**", "**/*.test.*", "**/*.spec.*"]
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build", "db:migrate"],
+      "outputs": ["coverage/**"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:seed": {
+      "dependsOn": ["db:migrate"],
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    }
+  },
+  "globalDependencies": [
+    "package.json",
+    "bun.lockb",
+    "turbo.json",
+    ".env*"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "LOG_LEVEL",
+    "PORT",
+    "HOST"
+  ]
+}

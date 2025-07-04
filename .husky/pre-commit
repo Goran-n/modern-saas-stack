@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running strict TypeScript validation before commit..."
+bun run typecheck:strict
+
+echo "🔍 Running linting..."
+bun run lint:check
+
+echo "✅ Pre-commit checks passed!"

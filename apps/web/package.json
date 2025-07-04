@@ -1,0 +1,47 @@
+{
+  "name": "@kibly/web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run typecheck && vite",
+    "build": "bun run typecheck && vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "typecheck": "vue-tsc -b --noEmit",
+    "typecheck:watch": "vue-tsc -b --noEmit --watch",
+    "format": "prettier --write \"**/*.{vue,ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{vue,ts,js,json,md}\"",
+    "clean": "rm -rf dist",
+    "type-coverage": "type-coverage --at-least 95",
+    "precommit": "bun run typecheck && bun run lint:check && bun run format:check"
+  },
+  "dependencies": {
+    "@headlessui/vue": "latest",
+    "@heroicons/vue": "latest",
+    "@kibly/shared-types": "workspace:*",
+    "@kibly/shared-utils": "workspace:*",
+    "@tanstack/vue-query": "latest",
+    "@trpc/client": "latest",
+    "date-fns": "latest",
+    "pinia": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@kibly/shared-config": "workspace:*",
+    "@tailwindcss/vite": "latest",
+    "@types/node": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "@vue/tsconfig": "latest",
+    "eslint": "latest",
+    "eslint-plugin-vue": "latest",
+    "prettier": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vue-tsc": "latest"
+  },
+  "packageManager": "bun@1.2.17"
+}
