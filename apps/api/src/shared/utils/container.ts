@@ -87,6 +87,7 @@ export const TOKENS = {
   INTEGRATION_REPOSITORY: Symbol('IntegrationRepository'),
   TRANSACTION_REPOSITORY: Symbol('TransactionRepository'),
   SYNC_JOB_REPOSITORY: Symbol('SyncJobRepository'),
+  FILE_REPOSITORY: Symbol('FileRepository'),
   
   // Services
   TENANT_SERVICE: Symbol('TenantService'),
@@ -97,6 +98,8 @@ export const TOKENS = {
   TOKEN_MANAGEMENT_SERVICE: Symbol('TokenManagementService'),
   ENTITY_LOOKUP_SERVICE: Symbol('EntityLookupService'),
   ERROR_HANDLER: Symbol('ErrorHandler'),
+  FILE_SERVICE: Symbol('FileService'),
+  FILE_STORAGE: Symbol('FileStorage'),
   
   // Providers
   XERO_PROVIDER: Symbol('XeroProvider'),

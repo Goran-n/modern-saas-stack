@@ -1,6 +1,7 @@
 // Direct table exports for drizzle (avoid wildcard exports to prevent circular deps)
 import { tenants } from './tenants'
 import { tenantMembers } from './tenant-members'
+import { users } from './users'
 import { integrations, integrationSyncLogs } from './integrations'
 import { syncJobs } from './sync-jobs'
 import { transactions, transactionLineItems } from './transactions'
@@ -11,11 +12,13 @@ import { bankStatements } from './bank-statements'
 import { reconciliations } from './reconciliations'
 import { manualJournals } from './manual-journals'
 import { importBatches } from './import-batches'
+import { files, fileVersions } from './files'
 
 // Export individual tables
 export { 
   tenants, 
-  tenantMembers, 
+  tenantMembers,
+  users, 
   integrations, 
   integrationSyncLogs, 
   syncJobs, 
@@ -27,7 +30,9 @@ export {
   bankStatements,
   reconciliations,
   manualJournals,
-  importBatches
+  importBatches,
+  files,
+  fileVersions
 }
 
 // Export type definitions
@@ -37,6 +42,7 @@ export type {
   MemberPermissions, 
   RoleType
 } from './tenant-members'
+export type { User, NewUser } from './users'
 export type { Integration, IntegrationSyncLog, ProviderType } from './integrations'
 export type { SyncJob, NewSyncJob } from './sync-jobs'
 export type { 
@@ -55,6 +61,7 @@ export type { BankStatement, NewBankStatement } from './bank-statements'
 export type { Reconciliation, NewReconciliation } from './reconciliations'
 export type { ManualJournal, NewManualJournal } from './manual-journals'
 export type { ImportBatch, NewImportBatch } from './import-batches'
+export type { File, NewFile, FileVersion, NewFileVersion } from './files'
 
 // Export constants and enums
 export { DEFAULT_ROLE_PERMISSIONS, ROLE_HIERARCHY, memberStatusEnum, memberRoleEnum } from './tenant-members'
@@ -71,6 +78,7 @@ export { BATCH_TYPE, IMPORT_SOURCE, BATCH_STATUS } from './import-batches'
 export const schema = {
   tenants,
   tenantMembers,
+  users,
   integrations,
   integrationSyncLogs,
   syncJobs,
@@ -83,4 +91,6 @@ export const schema = {
   reconciliations,
   manualJournals,
   importBatches,
+  files,
+  fileVersions,
 }

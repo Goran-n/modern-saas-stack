@@ -60,11 +60,59 @@ function createApp() {
     })
   })
 
+  // S3 storage health check
+  app.get('/health/storage', async (c) => {
+    try {
+      const { container, TOKENS } = await import('./shared/utils/container')
+      const { FileService } = await import('./services/file.service')
+      
+      const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
+      const healthcheck = await fileService.performHealthcheck()
+      
+      if (!healthcheck.healthy) {
+        return c.json({
+          status: 'unhealthy',
+          ...healthcheck,
+          requestId: c.get('requestId')
+        }, 503)
+      }
+      
+      return c.json({
+        status: 'healthy',
+        ...healthcheck,
+        requestId: c.get('requestId')
+      })
+    } catch (error) {
+      return c.json({
+        status: 'error',
+        message: 'Failed to check storage health',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        requestId: c.get('requestId')
+      }, 500)
+    }
+  })
+
   // Detailed health check with full system status
   app.get('/health', async (c) => {
     try {
       const dbHealth = await checkDatabaseHealth()
-      const overallStatus = dbHealth.connected ? 'healthy' : 'unhealthy'
+      
+      // Also check storage health
+      let storageHealth = { healthy: false, message: 'Not checked' }
+      try {
+        const { container, TOKENS } = await import('./shared/utils/container')
+        const { FileService } = await import('./services/file.service')
+        const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
+        const health = await fileService.performHealthcheck()
+        storageHealth = { healthy: health.healthy, message: health.message }
+      } catch (error) {
+        storageHealth = { 
+          healthy: false, 
+          message: error instanceof Error ? error.message : 'Storage check failed' 
+        }
+      }
+      
+      const overallStatus = dbHealth.connected && storageHealth.healthy ? 'healthy' : 'unhealthy'
       
       return c.json({
         status: overallStatus,
@@ -72,11 +120,12 @@ function createApp() {
         requestId: c.get('requestId'),
         services: {
           database: dbHealth,
+          storage: storageHealth,
           api: { status: 'operational' }
         },
         environment: appConfig.environment,
         version: appConfig.version
-      }, dbHealth.connected ? 200 : 503)
+      }, overallStatus === 'healthy' ? 200 : 503)
     } catch (error) {
       log.error('Health check error:', error)
       return c.json({

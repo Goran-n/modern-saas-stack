@@ -5,6 +5,7 @@ import {
   DrizzleIntegrationRepository,
   DrizzleSyncJobRepository,
   DrizzleTenantMemberRepository,
+  DrizzleFileRepository,
 } from './repositories/index'
 import { TriggerSyncUseCase } from '../core/usecases/sync/trigger-sync.usecase'
 import { ImportTransactionsUseCase } from '../core/usecases/sync/import-transactions.usecase'
@@ -17,6 +18,11 @@ import type { TransactionRepository } from '../core/ports/transaction.repository
 import type { IntegrationRepository } from '../core/ports/integration.repository'
 import type { SyncJobRepository } from '../core/ports/sync-job.repository'
 import type { TenantMemberRepository } from '../core/ports/tenant-member.repository'
+import type { FileRepository } from '../core/ports/file.repository'
+import type { FileStorage } from '../core/ports/storage/file-storage'
+import { StorageFactory } from './storage/storage-factory'
+import type { S3Config } from './storage/s3-file-storage'
+import { FileService } from '../services/file.service'
 import log from '../config/logger'
 
 export function bootstrapDependencies(): void {
@@ -71,6 +77,12 @@ function registerRepositories(): void {
     const db = container.resolve(TOKENS.DATABASE) as any
     return new DrizzleTenantMemberRepository(db) as TenantMemberRepository
   })
+
+  // File Repository
+  container.register(TOKENS.FILE_REPOSITORY, () => {
+    const db = container.resolve(TOKENS.DATABASE) as any
+    return new DrizzleFileRepository(db)
+  })
 }
 
 function registerProviders(): void {
@@ -83,6 +95,31 @@ function registerProviders(): void {
       redirectUri: config.redirectUri || '',
       scopes: config.scopes || []
     })
+  })
+
+  // File Storage
+  container.register(TOKENS.FILE_STORAGE, () => {
+    // Get S3 config from environment
+    let s3Config: S3Config | null = null
+    
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      s3Config = {
+        region: process.env.AWS_REGION || 'us-east-1',
+        bucket: process.env.S3_BUCKET || 'kibly-files',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }
+      
+      if (process.env.S3_ENDPOINT) {
+        s3Config.endpoint = process.env.S3_ENDPOINT
+      }
+    }
+    
+    const storageConfig = {
+      provider: 's3' as const,
+      s3: s3Config
+    }
+    return StorageFactory.create(storageConfig) as FileStorage
   })
 }
 
@@ -107,6 +144,15 @@ function registerCoreServices(): void {
   // Entity Lookup Service
   container.register(TOKENS.ENTITY_LOOKUP_SERVICE, () => {
     return new EntityLookupService()
+  })
+
+  // File Service
+  container.register(TOKENS.FILE_SERVICE, () => {
+    const fileRepository = container.resolve<FileRepository>(TOKENS.FILE_REPOSITORY)
+    const fileStorage = container.resolve<FileStorage>(TOKENS.FILE_STORAGE)
+    const logger = log
+    
+    return new FileService(fileRepository, fileStorage, logger)
   })
 
   // Sync Service - now handled by the DI container in lib/di/services.ts

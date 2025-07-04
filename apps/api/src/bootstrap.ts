@@ -3,6 +3,9 @@ import { getConfig } from './config/config'
 import { getRedisConnection } from './config/redis'
 import { registerServices } from './lib/di/services'
 import log, { dbLogger } from './config/logger'
+import { container, TOKENS } from './shared/utils/container'
+import { FileService } from './services/file.service'
+import { syncIntegrationProcessor, importTransactionsProcessor } from './jobs/processors/sync.processor'
 
 /**
  * Bootstrap: validate security configuration, connect to database, start job processors
@@ -49,11 +52,32 @@ export async function bootstrap(): Promise<void> {
       log.warn('💡 To enable Redis: Set REDIS_URL in your environment variables')
     }
 
+    // Perform S3 healthcheck
+    log.info('🗄️  Checking S3 storage configuration...')
+    try {
+      const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
+      const healthcheck = await fileService.performHealthcheck()
+      
+      if (healthcheck.healthy) {
+        log.info('✅ S3 storage configured and accessible')
+        log.info(`   Bucket: ${healthcheck.details.storage.details?.bucket}`)
+        log.info(`   Region: ${healthcheck.details.storage.details?.region}`)
+      } else {
+        log.warn('⚠️  S3 storage healthcheck failed:', healthcheck.message)
+        log.warn('   Details:', healthcheck.details)
+        log.warn('💡 File uploads will fail until S3 is properly configured')
+        log.warn('💡 Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and S3_BUCKET in your environment')
+      }
+    } catch (error) {
+      log.warn('⚠️  Could not perform S3 healthcheck:', error instanceof Error ? error.message : 'Unknown error')
+      log.warn('💡 File service may not be properly configured')
+    }
+
     // Start job processors
     log.info('⚙️  Starting job processors...')
-    setTimeout(async () => {
+    setTimeout(() => {
       try {
-        await import('./jobs/processors/sync.processor')
+        // Job processors are already imported, they start automatically
         log.info('✅ Job processors started')
       } catch (error) {
         log.error('❌ Failed to start job processors:', error)
@@ -75,7 +99,6 @@ export async function shutdown(): Promise<void> {
     log.info('🛑 Starting graceful shutdown...')
 
     // Stop job processors
-    const { syncIntegrationProcessor, importTransactionsProcessor } = await import('./jobs/processors/sync.processor')
     await syncIntegrationProcessor.close()
     await importTransactionsProcessor.close()
     log.info('✅ Job processors stopped')

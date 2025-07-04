@@ -41,7 +41,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.4",
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@aws-sdk/s3-request-presigner": "^3.842.0",
+    "@hono/node-server": "^1.15.0",
     "@kibly/shared-types": "workspace:*",
     "@kibly/shared-utils": "workspace:*",
     "@trpc/server": "^11.4.3",
