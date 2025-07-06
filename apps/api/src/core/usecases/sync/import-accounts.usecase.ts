@@ -301,8 +301,6 @@ export class ImportAccountsUseCase {
       
       return { created: true, updated: false }
     }
-    
-    return { created: !existing, updated: !!existing }
   }
   
   private mapXeroAccountToAccount(xeroAccount: Account, tenantId: string): any {

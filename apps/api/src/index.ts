@@ -3,7 +3,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { requestId } from 'hono/request-id'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { bootstrap } from './bootstrap'
+import { bootstrap, shutdown } from './bootstrap'
+import { createWebhookRouter } from './routers/webhook'
 import { getCorsConfig, getAppConfig } from './config/config'
 import { checkDatabaseHealth, isConnectedToDatabase } from './database/connection'
 import { optionalAuthMiddleware } from './middleware/auth'
@@ -30,6 +31,9 @@ function createApp() {
   // Request logging middleware
   app.use('/health*', simpleRequestLoggingMiddleware)
   app.use('*', requestLoggingMiddleware)
+  
+  // Register webhook routes
+  createWebhookRouter(app)
 
   // Liveness probe - basic server health (always returns 200 if server is running)
   app.get('/health/live', (c) => {
@@ -64,9 +68,9 @@ function createApp() {
   app.get('/health/storage', async (c) => {
     try {
       const { container, TOKENS } = await import('./shared/utils/container')
-      const { FileService } = await import('./services/file.service')
+      const { FileService: _FileService } = await import('./services/file.service')
       
-      const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
+      const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof _FileService>
       const healthcheck = await fileService.performHealthcheck()
       
       if (!healthcheck.healthy) {
@@ -101,8 +105,8 @@ function createApp() {
       let storageHealth = { healthy: false, message: 'Not checked' }
       try {
         const { container, TOKENS } = await import('./shared/utils/container')
-        const { FileService } = await import('./services/file.service')
-        const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
+        const { FileService: _FileService } = await import('./services/file.service')
+        const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof _FileService>
         const health = await fileService.performHealthcheck()
         storageHealth = { healthy: health.healthy, message: health.message }
       } catch (error) {
@@ -193,6 +197,38 @@ function createApp() {
           const { createContext } = await import('./lib/context')
           return createContext(c)
         },
+        responseMeta({ errors }) {
+          // Set proper HTTP status codes based on tRPC errors
+          if (errors.length) {
+            const firstError = errors[0]
+            const errorCode = firstError?.code
+            
+            switch (errorCode) {
+              case 'UNAUTHORIZED':
+                return { status: 401 }
+              case 'FORBIDDEN':
+                return { status: 403 }
+              case 'NOT_FOUND':
+                return { status: 404 }
+              case 'BAD_REQUEST':
+                return { status: 400 }
+              case 'CONFLICT':
+                return { status: 409 }
+              case 'PRECONDITION_FAILED':
+                return { status: 412 }
+              case 'PAYLOAD_TOO_LARGE':
+                return { status: 413 }
+              case 'TIMEOUT':
+                return { status: 408 }
+              case 'TOO_MANY_REQUESTS':
+                return { status: 429 }
+              default:
+                return { status: 500 }
+            }
+          }
+          // Return 200 for successful responses
+          return { status: 200 }
+        },
         onError: ({ error, path, type, ctx }) => {
           trpcLogger.error({
             event: 'trpc_error',
@@ -253,7 +289,7 @@ async function main() {
   const app = createApp()
   const appConfig = getAppConfig()
   
-  serve({
+  const server = serve({
     fetch: app.fetch,
     port: appConfig.port,
   })
@@ -261,6 +297,65 @@ async function main() {
   log.info(`✅ Kibly API Server running on port ${appConfig.port}`)
   log.info(`📡 tRPC endpoint: http://localhost:${appConfig.port}/trpc`)
   log.info(`🏥 Health check: http://localhost:${appConfig.port}/health`)
+  
+  // Setup graceful shutdown
+  let isShuttingDown = false
+  
+  const gracefulShutdown = async (signal: string) => {
+    if (isShuttingDown) {
+      log.info(`Already shutting down, ignoring ${signal}`)
+      return
+    }
+    
+    isShuttingDown = true
+    log.info(`\n📍 Received ${signal}, starting graceful shutdown...`)
+    
+    try {
+      // Stop accepting new requests
+      if (server?.close) {
+        await new Promise<void>((resolve) => {
+          server.close(() => {
+            log.info('✅ HTTP server closed')
+            resolve()
+          })
+        })
+      }
+      
+      // Run the shutdown function from bootstrap
+      await shutdown()
+      
+      log.info('✅ Graceful shutdown completed')
+      process.exit(0)
+    } catch (error) {
+      log.error('❌ Error during shutdown:', error)
+      process.exit(1)
+    }
+  }
+  
+  // Register signal handlers
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+  
+  // Handle uncaught errors
+  process.on('uncaughtException', (error) => {
+    log.error('Uncaught Exception:', error)
+    console.error('UNCAUGHT EXCEPTION DETAILS:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    })
+    gracefulShutdown('uncaughtException')
+  })
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    log.error('Unhandled Rejection at:', promise, 'reason:', reason)
+    console.error('UNHANDLED REJECTION DETAILS:', {
+      reason,
+      promise
+    })
+    gracefulShutdown('unhandledRejection')
+  })
 }
 
 // Start the application

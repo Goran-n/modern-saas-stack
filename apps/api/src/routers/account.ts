@@ -27,10 +27,10 @@ export const accountRouter = router({
     .input(z.object({
       id: z.string().uuid()
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       try {
         const accountService = await getAccountService()
-        const account = await accountService.getAccount(input.id, ctx.tenantContext.tenantId)
+        const account = await accountService.getAccount(input.id)
         
         if (!account) {
           throw new TRPCError({

@@ -3,6 +3,7 @@ import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { TenantEntity, TenantMemberEntity, type TenantStatus } from '../../core/domain/tenant/index'
 import type { TenantRepository } from '../../core/ports/tenant.repository'
+import { EntityId } from '../../core/domain/shared/value-objects/entity-id'
 import { tenants, type Tenant, type NewTenant } from '../../database/schema/tenants'
 import { tenantMembers } from '../../database/schema/tenant-members'
 
@@ -15,7 +16,7 @@ export class DrizzleTenantRepository implements TenantRepository {
     const data = tenant.toDatabase()
     
     const dbData: NewTenant = {
-      id: data.id,
+      id: data.id.toString(),
       name: data.name,
       slug: data.slug,
       email: data.email,
@@ -43,11 +44,11 @@ export class DrizzleTenantRepository implements TenantRepository {
     return this.mapToEntity(result)
   }
 
-  async findById(id: string): Promise<TenantEntity | null> {
+  async findById(id: EntityId): Promise<TenantEntity | null> {
     const [result] = await (this.db as any)
       .select()
       .from(tenants)
-      .where(eq(tenants.id, id))
+      .where(eq(tenants.id, id.toString()))
 
     return result ? this.mapToEntity(result) : null
   }
@@ -167,7 +168,7 @@ export class DrizzleTenantRepository implements TenantRepository {
 
   private mapToEntity(dbTenant: Tenant): TenantEntity {
     return TenantEntity.fromDatabase({
-      id: dbTenant.id,
+      id: EntityId.from(dbTenant.id),
       name: dbTenant.name,
       slug: dbTenant.slug,
       email: dbTenant.email || '',

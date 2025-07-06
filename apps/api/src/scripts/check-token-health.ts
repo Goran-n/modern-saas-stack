@@ -26,29 +26,20 @@ async function checkTokenHealth() {
   
   console.log(`\n📊 Found ${xeroIntegrations.length} Xero integration(s):\n`)
   
-  // Mock repository for token service (we won't save anything)
-  const mockRepo = {
-    save: async () => {},
-    findById: async () => null,
-    findByTenant: async () => [],
-    delete: async () => {}
-  } as any
-  
-  const tokenService = new XeroTokenService(mockRepo, console as any)
+  const tokenService = new XeroTokenService()
   
   for (const integration of xeroIntegrations) {
     const entity = IntegrationEntity.fromDatabase(integration as any)
     
     try {
-      const healthStatus = await tokenService.checkTokenHealth(entity)
-      const tokenStatus = await tokenService.getTokenStatus(entity)
+      const healthStatus = await tokenService.checkTokenHealth(entity.tenantId)
       
       console.log(`🔧 Integration: ${integration.name} (${integration.id})`)
       console.log(`   Status: ${integration.status}`)
       console.log(`   Health: ${healthStatus.isValid ? '✅ Healthy' : '⚠️ Issues'}`)
       console.log(`   Token expires in: ${Math.floor(healthStatus.expiresIn / 60)} minutes`)
-      console.log(`   Token Status: ${tokenStatus.status}`)
-      console.log(`   Message: ${tokenStatus.message}`)
+      console.log(`   Token Valid: ${healthStatus.isValid}`)
+      console.log(`   Expires At: ${healthStatus.expiresAt}`)
       console.log(`   Consecutive failures: ${healthStatus.consecutiveFailures}`)
       console.log(`   Needs refresh: ${healthStatus.needsRefresh ? 'Yes' : 'No'}`)
       

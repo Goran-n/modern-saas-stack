@@ -61,7 +61,7 @@ export async function safeXeroApiCall<T>(
             request: parsed.response.request
           }
         }
-      } catch (parseError) {
+      } catch {
         // If parsing fails, just throw the original error
       }
     }

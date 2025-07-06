@@ -6,7 +6,10 @@
   >
     <span class="flex items-center justify-center">
       <!-- Loading spinner -->
-      <span v-if="loading" class="mr-2">
+      <span
+        v-if="loading"
+        class="mr-2"
+      >
         <svg
           class="animate-spin h-4 w-4"
           :class="spinnerColorClass"
@@ -31,7 +34,10 @@
       </span>
       
       <!-- Icon slot -->
-      <span v-if="$slots.icon && !loading" class="mr-2">
+      <span
+        v-if="$slots.icon && !loading"
+        class="mr-2"
+      >
         <slot name="icon" />
       </span>
       

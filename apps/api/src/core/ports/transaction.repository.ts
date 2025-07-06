@@ -1,4 +1,5 @@
 import type { TransactionEntity } from '../domain/transaction/index'
+import { EntityId } from '../domain/shared/value-objects/entity-id'
 
 export interface TransactionSearchFilters {
   status?: string[]
@@ -14,7 +15,7 @@ export interface TransactionSearchFilters {
 export interface TransactionRepository {
   save(transaction: TransactionEntity): Promise<TransactionEntity>
   saveBatch(transactions: TransactionEntity[]): Promise<TransactionEntity[]>
-  findById(id: string): Promise<TransactionEntity | null>
+  findById(id: EntityId): Promise<TransactionEntity | null>
   findByTenantId(tenantId: string, filters?: TransactionSearchFilters, limit?: number, offset?: number): Promise<TransactionEntity[]>
   findByIntegrationId(integrationId: string, limit?: number, offset?: number): Promise<TransactionEntity[]>
   findByProviderTransactionId(tenantId: string, integrationId: string, providerTransactionId: string): Promise<TransactionEntity | null>

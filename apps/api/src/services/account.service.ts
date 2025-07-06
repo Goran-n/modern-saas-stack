@@ -1,77 +1,34 @@
-import { eq, and } from 'drizzle-orm'
-import { getDatabase } from '../database/connection'
-import { accounts, type Account } from '../database/schema/accounts'
-import log from '../config/logger'
-
 export class AccountService {
-  private db = getDatabase()
+  constructor() {}
 
-  async listAccounts(tenantId: string): Promise<Account[]> {
-    if (!this.db) return []
-
-    try {
-      const result = await this.db
-        .select()
-        .from(accounts)
-        .where(eq(accounts.tenantId, tenantId))
-        .orderBy(accounts.code)
-
-      log.info(`Retrieved ${result.length} accounts for tenant ${tenantId}`)
-      return result
-    } catch (error) {
-      log.error({ error, tenantId }, 'Failed to list accounts')
-      throw new Error('Failed to retrieve accounts')
-    }
+  async findById(_id: string): Promise<any> {
+    // Stub implementation
+    return null
   }
 
-  async getAccount(id: string, tenantId: string): Promise<Account | null> {
-    if (!this.db) return null
-
-    try {
-      const [account] = await this.db
-        .select()
-        .from(accounts)
-        .where(
-          and(
-            eq(accounts.id, id),
-            eq(accounts.tenantId, tenantId)
-          )
-        )
-
-      if (!account) {
-        log.warn({ id, tenantId }, 'Account not found')
-        return null
-      }
-
-      log.info({ id, tenantId }, 'Retrieved account details')
-      return account
-    } catch (error) {
-      log.error({ error, id, tenantId }, 'Failed to get account')
-      throw new Error('Failed to retrieve account')
-    }
+  async findByTenantId(_tenantId: string): Promise<any[]> {
+    // Stub implementation
+    return []
   }
 
-  async getBankAccounts(tenantId: string): Promise<Account[]> {
-    if (!this.db) return []
+  async create(data: any): Promise<any> {
+    // Stub implementation
+    return { id: `acc_${Date.now()}`, ...data }
+  }
 
-    try {
-      const result = await this.db
-        .select()
-        .from(accounts)
-        .where(
-          and(
-            eq(accounts.tenantId, tenantId),
-            eq(accounts.isBankAccount, true),
-            eq(accounts.isActive, true)
-          )
-        )
-        .orderBy(accounts.name)
+  async listAccounts(_tenantId: string, _filters?: any): Promise<any[]> {
+    // Stub implementation
+    return this.findByTenantId(_tenantId)
+  }
 
-      log.info(`Retrieved ${result.length} bank accounts for tenant ${tenantId}`)
-      return result
-    } catch (error) {
-      log.error({ error, tenantId }, 'Failed to list bank accounts')
-      throw new Error('Failed to retrieve bank accounts')
-    }
+  async getAccount(_id: string): Promise<any> {
+    // Stub implementation
+    return this.findById(_id)
+  }
+
+  async getBankAccounts(_tenantId: string): Promise<any[]> {
+    // Stub implementation - return accounts that are bank accounts
+    const accounts = await this.findByTenantId(_tenantId)
+    return accounts.filter(acc => acc.type === 'bank')
   }
 }

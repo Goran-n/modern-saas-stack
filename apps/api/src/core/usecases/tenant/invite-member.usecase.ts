@@ -1,4 +1,5 @@
 import { TenantMemberEntity, Role } from '../../domain/tenant'
+import { EntityId } from '../../domain/shared/value-objects/entity-id'
 import { NotFoundError, ConflictError, BusinessRuleError } from '../../../shared/errors'
 import type { TenantRepository, TenantMemberRepository } from '../../ports'
 import { TENANT, INVITATION } from '../../../shared/constants'
@@ -77,7 +78,7 @@ export class InviteMemberUseCase {
 
   private async validateBusinessRules(input: InviteMemberInput): Promise<void> {
     // Check if tenant exists and is active
-    const tenant = await this.tenantRepository.findById(input.tenantId)
+    const tenant = await this.tenantRepository.findById(EntityId.from(input.tenantId))
     if (!tenant) {
       throw new NotFoundError('Tenant', input.tenantId)
     }

@@ -37,6 +37,7 @@ export const QUEUE_NAMES = {
   SYNC_INTEGRATION: 'sync-integration',
   IMPORT_TRANSACTIONS: 'import-transactions',
   ENRICH_TRANSACTIONS: 'enrich-transactions',
+  CONVERSATION: 'conversation',
 } as const
 
 // Create queue instances for monitoring (read-only)
@@ -44,6 +45,7 @@ export const queues = [
   new Queue(QUEUE_NAMES.SYNC_INTEGRATION, { connection: redisConnection }),
   new Queue(QUEUE_NAMES.IMPORT_TRANSACTIONS, { connection: redisConnection }),
   new Queue(QUEUE_NAMES.ENRICH_TRANSACTIONS, { connection: redisConnection }),
+  new Queue(QUEUE_NAMES.CONVERSATION, { connection: redisConnection }),
 ]
 
 // Queue metadata for display
@@ -59,6 +61,10 @@ export const queueMetadata = {
   [QUEUE_NAMES.ENRICH_TRANSACTIONS]: {
     name: 'Enrich Transactions',
     description: 'Enriches transaction data with additional information',
+  },
+  [QUEUE_NAMES.CONVERSATION]: {
+    name: 'Conversation',
+    description: 'Processes WhatsApp messages and AI orchestration',
   },
 }
 

@@ -1,6 +1,13 @@
 <template>
-  <TransitionRoot as="template" :show="isOpen">
-    <Dialog as="div" class="relative z-10" @close="handleClose">
+  <TransitionRoot
+    as="template"
+    :show="isOpen"
+  >
+    <Dialog
+      as="div"
+      class="relative z-10"
+      @close="handleClose"
+    >
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -28,19 +35,25 @@
               <!-- Header -->
               <div class="bg-white px-6 py-4 border-b border-neutral-200">
                 <div class="flex items-center justify-between">
-                  <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-neutral-900">
+                  <DialogTitle
+                    as="h3"
+                    class="text-lg font-semibold leading-6 text-neutral-900"
+                  >
                     {{ isEditing ? `Edit ${integration?.name}` : 'Add Integration' }}
                   </DialogTitle>
                   <button
-                    @click="handleClose"
                     class="rounded-md bg-white text-neutral-400 hover:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    @click="handleClose"
                   >
                     <XMarkIcon class="h-6 w-6" />
                   </button>
                 </div>
                 
                 <!-- Step indicator -->
-                <div v-if="!isEditing" class="mt-4">
+                <div
+                  v-if="!isEditing"
+                  class="mt-4"
+                >
                   <div class="flex items-center">
                     <div
                       v-for="(step, index) in steps"
@@ -53,8 +66,8 @@
                           index < currentStep
                             ? 'bg-blue-600 text-white'
                             : index === currentStep
-                            ? 'bg-blue-100 text-blue-600 border-2 border-blue-600'
-                            : 'bg-neutral-100 text-neutral-500'
+                              ? 'bg-blue-100 text-blue-600 border-2 border-blue-600'
+                              : 'bg-neutral-100 text-neutral-500'
                         ]"
                       >
                         {{ index + 1 }}
@@ -77,11 +90,16 @@
               <!-- Content -->
               <div class="bg-white px-6 py-6">
                 <!-- Error display -->
-                <div v-if="error" class="mb-4 rounded-md bg-red-50 p-4">
+                <div
+                  v-if="error"
+                  class="mb-4 rounded-md bg-red-50 p-4"
+                >
                   <div class="flex">
                     <XCircleIcon class="h-5 w-5 text-red-400" />
                     <div class="ml-3">
-                      <h3 class="text-sm font-medium text-red-800">Error</h3>
+                      <h3 class="text-sm font-medium text-red-800">
+                        Error
+                      </h3>
                       <div class="mt-2 text-sm text-red-700">
                         <p>{{ error }}</p>
                       </div>
@@ -90,7 +108,10 @@
                 </div>
 
                 <!-- Step 1: Configuration -->
-                <div v-if="currentStep === 0 || isEditing" class="space-y-6">
+                <div
+                  v-if="currentStep === 0 || isEditing"
+                  class="space-y-6"
+                >
                   <div>
                     <h4 class="text-lg font-medium text-neutral-900 mb-4">
                       {{ isEditing ? 'Integration Settings' : 'Configure Integration' }}
@@ -113,28 +134,42 @@
                     </FormField>
 
                     <!-- Sync frequency -->
-                    <FormField label="Sync Frequency" class="mb-6">
+                    <FormField
+                      label="Sync Frequency"
+                      class="mb-6"
+                    >
                       <select
                         id="sync-frequency"
                         v-model="form.settings.syncFrequency"
                         class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm h-10 px-3 py-2 bg-white text-neutral-900"
                       >
-                        <option value="realtime">Real-time (if supported)</option>
-                        <option value="hourly">Hourly</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
+                        <option value="realtime">
+                          Real-time (if supported)
+                        </option>
+                        <option value="hourly">
+                          Hourly
+                        </option>
+                        <option value="daily">
+                          Daily
+                        </option>
+                        <option value="weekly">
+                          Weekly
+                        </option>
                       </select>
                     </FormField>
 
                     <!-- Notifications -->
-                    <FormField label="Notifications" class="mb-6">
+                    <FormField
+                      label="Notifications"
+                      class="mb-6"
+                    >
                       <div class="space-y-3">
                         <label class="flex items-center">
                           <input
                             v-model="form.settings.notifications.onSync"
                             type="checkbox"
                             class="rounded border-neutral-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 w-4 h-4"
-                          />
+                          >
                           <span class="ml-3 text-sm text-neutral-700">Notify when sync completes</span>
                         </label>
                         <label class="flex items-center">
@@ -142,7 +177,7 @@
                             v-model="form.settings.notifications.onError"
                             type="checkbox"
                             class="rounded border-neutral-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 w-4 h-4"
-                          />
+                          >
                           <span class="ml-3 text-sm text-neutral-700">Notify when errors occur</span>
                         </label>
                       </div>
@@ -151,56 +186,80 @@
                 </div>
 
                 <!-- Step 2: OAuth Connection (for new integrations) -->
-                <div v-if="currentStep === 1 && !isEditing" class="space-y-6">
+                <div
+                  v-if="currentStep === 1 && !isEditing"
+                  class="space-y-6"
+                >
                   <div class="text-center">
                     <div class="mx-auto h-12 w-12 text-primary-600 mb-4">
                       <LinkIcon class="w-full h-full" />
                     </div>
-                    <h4 class="text-lg font-medium text-neutral-900 mb-2">Connect to Xero</h4>
+                    <h4 class="text-lg font-medium text-neutral-900 mb-2">
+                      Connect to Xero
+                    </h4>
                     <p class="text-sm text-neutral-600 mb-6">
                       You'll be redirected to Xero to authorise the connection. 
                       This allows us to securely access your data.
                     </p>
                     
-                    <div v-if="oauthProcessing" class="space-y-4">
-                      <div class="animate-spin mx-auto h-8 w-8 border-b-2 border-primary-600 rounded-full"></div>
-                      <p class="text-sm text-neutral-600">{{ oauthStatusMessage }}</p>
+                    <div
+                      v-if="oauthProcessing"
+                      class="space-y-4"
+                    >
+                      <div class="animate-spin mx-auto h-8 w-8 border-b-2 border-primary-600 rounded-full" />
+                      <p class="text-sm text-neutral-600">
+                        {{ oauthStatusMessage }}
+                      </p>
                     </div>
                     
                     <!-- Debug information -->
                     <div class="mt-4 p-3 bg-neutral-50 rounded text-xs text-left">
-                      <p class="text-neutral-900"><strong>Debug Info:</strong></p>
-                      <p class="text-neutral-700">Integration name: {{ form.name || 'Not set' }}</p>
-                      <p class="text-neutral-700">Selected provider: {{ selectedProvider?.provider || 'None' }}</p>
-                      <p class="text-neutral-700">OAuth processing: {{ oauthProcessing }}</p>
-                      <p class="text-neutral-700">Can proceed: {{ canProceed }}</p>
-                      <p class="text-neutral-700">Current step: {{ currentStep }}</p>
-                      <p class="text-neutral-700">Is editing: {{ isEditing }}</p>
+                      <p class="text-neutral-900">
+                        <strong>Debug Info:</strong>
+                      </p>
+                      <p class="text-neutral-700">
+                        Integration name: {{ form.name || 'Not set' }}
+                      </p>
+                      <p class="text-neutral-700">
+                        Selected provider: {{ selectedProvider?.provider || 'None' }}
+                      </p>
+                      <p class="text-neutral-700">
+                        OAuth processing: {{ oauthProcessing }}
+                      </p>
+                      <p class="text-neutral-700">
+                        Can proceed: {{ canProceed }}
+                      </p>
+                      <p class="text-neutral-700">
+                        Current step: {{ currentStep }}
+                      </p>
+                      <p class="text-neutral-700">
+                        Is editing: {{ isEditing }}
+                      </p>
                     </div>
                     
                     <!-- Manual test button -->
                     <div class="mt-4 space-y-2">
                       <button
-                        @click="testOAuthFlow"
                         class="px-4 py-2 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                        @click="testOAuthFlow"
                       >
                         🐛 Test OAuth Flow
                       </button>
                       <button
-                        @click="testOAuthURL"
                         class="px-4 py-2 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                        @click="testOAuthURL"
                       >
                         🔗 Test OAuth URL Generation
                       </button>
                       <button
-                        @click="testSkipToOrganisationSelection"
                         class="px-4 py-2 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                        @click="testSkipToOrganisationSelection"
                       >
                         🔄 Skip to Organisation Selection
                       </button>
                       <button
-                        @click="debugOAuthState"
                         class="px-4 py-2 bg-purple-500 text-white text-sm rounded hover:bg-purple-600"
+                        @click="debugOAuthState"
                       >
                         🔍 Debug OAuth State
                       </button>
@@ -209,7 +268,10 @@
                 </div>
 
                 <!-- Step 3: Organisation Selection (for new integrations) -->
-                <div v-if="currentStep === 2 && !isEditing" class="space-y-6">
+                <div
+                  v-if="currentStep === 2 && !isEditing"
+                  class="space-y-6"
+                >
                   <AccountSelector
                     v-model="selectedOrganisationId"
                     :organisations="availableOrganisations"
@@ -224,41 +286,44 @@
               <div class="bg-gray-50 px-6 py-3 flex justify-between">
                 <button
                   v-if="currentStep > 0 && !isEditing"
-                  @click="previousStep"
                   :disabled="loading"
                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  @click="previousStep"
                 >
                   <ChevronLeftIcon class="h-4 w-4 mr-1" />
                   Back
                 </button>
-                <div v-else></div>
+                <div v-else />
 
                 <div class="flex space-x-3">
                   <button
-                    @click="handleClose"
                     :disabled="loading || oauthProcessing"
                     class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    @click="handleClose"
                   >
                     Cancel
                   </button>
                   
                   <button
                     v-if="isEditing"
-                    @click="handleUpdate"
                     :disabled="loading || !isFormValid"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    @click="handleUpdate"
                   >
-                    <span v-if="loading" class="mr-2">
-                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                    <span
+                      v-if="loading"
+                      class="mr-2"
+                    >
+                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full" />
                     </span>
                     Update Integration
                   </button>
                   
                   <button
                     v-else-if="currentStep < steps.length - 1"
-                    @click="nextStep"
                     :disabled="!canProceed"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    @click="nextStep"
                   >
                     Continue
                     <ChevronRightIcon class="h-4 w-4 ml-1" />
@@ -266,24 +331,30 @@
                   
                   <button
                     v-else-if="currentStep === 1"
-                    @click="handleConnect"
                     :disabled="loading || oauthProcessing || !canProceed"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    @click="handleConnect"
                   >
-                    <span v-if="loading || oauthProcessing" class="mr-2">
-                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                    <span
+                      v-if="loading || oauthProcessing"
+                      class="mr-2"
+                    >
+                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full" />
                     </span>
                     Connect to Xero
                   </button>
                   
                   <button
                     v-else-if="currentStep === 2"
-                    @click="handleCompleteIntegration"
                     :disabled="loading || !canProceed"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    @click="handleCompleteIntegration"
                   >
-                    <span v-if="loading" class="mr-2">
-                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                    <span
+                      v-if="loading"
+                      class="mr-2"
+                    >
+                      <div class="animate-spin h-4 w-4 border-b-2 border-white rounded-full" />
                     </span>
                     Complete Integration
                   </button>

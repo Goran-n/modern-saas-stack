@@ -37,9 +37,9 @@ const PatchedApiError = class extends OriginalApiError {
 }
 
 // Export function to apply the patch
-export function applyXeroApiPatch() {
+export async function applyXeroApiPatch() {
   // Replace the ApiError export in the module
-  const apiErrorModule = require('xero-node/dist/model/ApiError')
+  const apiErrorModule = await import('xero-node/dist/model/ApiError')
   apiErrorModule.ApiError = PatchedApiError
   
   console.log('Xero API error handling patch applied')

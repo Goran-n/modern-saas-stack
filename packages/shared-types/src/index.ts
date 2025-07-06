@@ -1,3 +1,12 @@
+// Re-export all types from organized modules
+export * from './branded-types'
+export * from './enums'
+export * from './api/dtos'
+export * from './api/validation'
+export * from './mappers'
+export * from './conversation'
+
+// Legacy types - TO BE REMOVED after migration
 export interface User {
   id: number
   name: string
@@ -240,3 +249,10 @@ export interface TransactionSummary {
   byStatus: Record<string, number>
   byType: Record<string, number>
 }
+
+// Export conversation types
+export * from './conversation'
+
+// Export orchestration and AI types
+export * from './orchestration'
+export * from './ai'

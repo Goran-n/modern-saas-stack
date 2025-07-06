@@ -106,7 +106,7 @@ export class RequestContextManager {
     return {
       requestId: crypto.randomUUID(),
       tenantId: integration.tenantId,
-      integrationId: integration.id,
+      integrationId: integration.id.toString(),
       xeroTenantId: authData.tenantId,
       startTime: Date.now(),
       credentials: {

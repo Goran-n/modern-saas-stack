@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { BaseEntity } from '../base.entity'
+import { EntityId } from '../shared/value-objects/entity-id'
 
 export const integrationProviderSchema = z.enum(['xero', 'quickbooks', 'sage', 'freshbooks'])
 export type IntegrationProvider = z.infer<typeof integrationProviderSchema>
@@ -69,7 +71,7 @@ export const PROVIDER_CAPABILITIES: Record<IntegrationProvider, IntegrationCapab
 }
 
 export interface IntegrationEntityProps {
-  id: string
+  id: EntityId
   tenantId: string
   provider: IntegrationProvider
   integrationType: IntegrationType
@@ -95,14 +97,16 @@ export interface IntegrationEntityProps {
   updatedAt: Date
 }
 
-export class IntegrationEntity {
-  private constructor(private props: IntegrationEntityProps) {}
+export class IntegrationEntity extends BaseEntity<IntegrationEntityProps> {
+  private constructor(props: IntegrationEntityProps) {
+    super(props)
+  }
 
   static create(props: Omit<IntegrationEntityProps, 'id' | 'createdAt' | 'updatedAt' | 'lastSyncAt' | 'lastErrorAt' | 'lastErrorMessage' | 'nextScheduledSync' | 'syncHealth' | 'syncCount' | 'errorCount'>): IntegrationEntity {
     const now = new Date()
     return new IntegrationEntity({
       ...props,
-      id: crypto.randomUUID(),
+      id: EntityId.generate(),
       lastSyncAt: null,
       lastErrorAt: null,
       lastErrorMessage: null,
@@ -119,7 +123,7 @@ export class IntegrationEntity {
     return new IntegrationEntity(props)
   }
 
-  get id(): string { return this.props.id }
+  get id(): EntityId { return this.props.id }
   get tenantId(): string { return this.props.tenantId }
   get provider(): IntegrationProvider { return this.props.provider }
   get integrationType(): IntegrationType { return this.props.integrationType }
@@ -316,16 +320,13 @@ export class IntegrationEntity {
     return this.props.nextScheduledSync.getTime() - Date.now()
   }
 
-  private touch(): void {
-    this.props.updatedAt = new Date()
-  }
 
   toDatabase(): IntegrationEntityProps {
     return { ...this.props }
   }
 
   toPublic(): Omit<IntegrationEntityProps, 'authData'> {
-    const { authData, ...publicProps } = this.props
+    const { authData: _authData, ...publicProps } = this.props
     return {
       ...publicProps,
       capabilities: this.capabilities,

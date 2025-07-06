@@ -105,60 +105,68 @@ onMounted(() => {
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Contacts</h1>
-      <p class="text-gray-600">Manage your suppliers, customers, and other contacts</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        Contacts
+      </h1>
+      <p class="text-gray-600">
+        Manage your suppliers, customers, and other contacts
+      </p>
     </div>
 
     <!-- Error state -->
-    <ErrorAlert v-if="error" :error="error" class="mb-6" />
+    <ErrorAlert
+      v-if="error"
+      :error="error"
+      class="mb-6"
+    />
 
     <!-- Filters and Search -->
     <div class="mb-6 space-y-4">
       <!-- Filter buttons -->
       <div class="flex flex-wrap gap-2">
         <button
-          @click="setFilter('all')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
           :class="activeFilter === 'all' 
             ? 'bg-slate-900 text-white' 
             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          @click="setFilter('all')"
         >
           All ({{ stats.total }})
         </button>
         <button
-          @click="setFilter('supplier')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
           :class="activeFilter === 'supplier' 
             ? 'bg-slate-900 text-white' 
             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          @click="setFilter('supplier')"
         >
           Suppliers ({{ stats.suppliers }})
         </button>
         <button
-          @click="setFilter('customer')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
           :class="activeFilter === 'customer' 
             ? 'bg-slate-900 text-white' 
             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          @click="setFilter('customer')"
         >
           Customers ({{ stats.customers }})
         </button>
         <button
-          @click="setFilter('employee')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
           :class="activeFilter === 'employee' 
             ? 'bg-slate-900 text-white' 
             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          @click="setFilter('employee')"
         >
           Employees ({{ stats.employees }})
         </button>
         <button
           v-if="stats.other > 0"
-          @click="setFilter('other')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
           :class="activeFilter === 'other' 
             ? 'bg-slate-900 text-white' 
             : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          @click="setFilter('other')"
         >
           Other ({{ stats.other }})
         </button>
@@ -169,20 +177,26 @@ onMounted(() => {
         <SearchInput
           v-model="searchQuery"
           placeholder="Search by name, email, or contact number..."
-          @update:modelValue="handleSearch"
+          @update:model-value="handleSearch"
         />
       </div>
     </div>
 
     <!-- Loading state -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    <div
+      v-if="isLoading"
+      class="flex justify-center py-12"
+    >
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
     </div>
 
     <!-- Content -->
     <div v-else>
       <!-- Contacts table -->
-      <div v-if="contacts.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+      <div
+        v-if="contacts.length > 0"
+        class="bg-white rounded-lg shadow overflow-hidden"
+      >
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -212,8 +226,13 @@ onMounted(() => {
             >
               <td class="px-6 py-4 whitespace-nowrap">
                 <div>
-                  <div class="text-sm font-medium text-gray-900">{{ contact.name }}</div>
-                  <div v-if="contact.contactNumber" class="text-sm text-gray-500">
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ contact.name }}
+                  </div>
+                  <div
+                    v-if="contact.contactNumber"
+                    class="text-sm text-gray-500"
+                  >
                     #{{ contact.contactNumber }}
                   </div>
                 </div>
@@ -228,8 +247,15 @@ onMounted(() => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900">
-                  <div v-if="contact.email">{{ contact.email }}</div>
-                  <div v-if="contact.phone" class="text-gray-500">{{ contact.phone }}</div>
+                  <div v-if="contact.email">
+                    {{ contact.email }}
+                  </div>
+                  <div
+                    v-if="contact.phone"
+                    class="text-gray-500"
+                  >
+                    {{ contact.phone }}
+                  </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
@@ -237,11 +263,19 @@ onMounted(() => {
                   <div :class="parseFloat(contact.outstandingBalance || '0') < 0 ? 'text-red-600' : 'text-gray-900'">
                     {{ formatCurrency(contact.outstandingBalance) }}
                   </div>
-                  <div v-if="contact.overdueBalance && parseFloat(contact.overdueBalance) > 0" class="text-xs text-red-600">
+                  <div
+                    v-if="contact.overdueBalance && parseFloat(contact.overdueBalance) > 0"
+                    class="text-xs text-red-600"
+                  >
                     {{ formatCurrency(contact.overdueBalance) }} overdue
                   </div>
                 </div>
-                <div v-else class="text-gray-400">-</div>
+                <div
+                  v-else
+                  class="text-gray-400"
+                >
+                  -
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-center">
                 <span
@@ -259,11 +293,26 @@ onMounted(() => {
       </div>
 
       <!-- Empty state -->
-      <div v-else class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      <div
+        v-else
+        class="text-center py-12"
+      >
+        <svg
+          class="mx-auto h-12 w-12 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No contacts found</h3>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">
+          No contacts found
+        </h3>
         <p class="mt-1 text-sm text-gray-500">
           {{ searchQuery ? 'Try adjusting your search criteria.' : 'Sync your data from your accounting provider to see contacts.' }}
         </p>

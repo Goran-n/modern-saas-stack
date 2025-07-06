@@ -271,7 +271,11 @@ export const useIntegrationStore = defineStore('integration', () => {
     error.value = null
 
     try {
-      const result = await trpc.integration.testConnection.mutate({ integrationId: id }) as TestConnectionResponse
+      const success = await trpc.integration.testConnection.mutate({ integrationId: id })
+      const result: TestConnectionResponse = { 
+        success,
+        message: success ? 'Connection successful' : 'Connection failed'
+      }
       
       // Update the integration status in local state
       const integration = integrations.value.find(i => i.id === id)
@@ -438,7 +442,11 @@ export const useIntegrationStore = defineStore('integration', () => {
       provider,
       redirectUri: `${window.location.origin}/integrations/oauth/callback`
     })
-    return response as OAuthUrlResponse
+    // Map the response to match OAuthUrlResponse interface
+    return {
+      authUrl: response.url,
+      state: response.state
+    }
   }
 
   const reconnectIntegration = async (id: string) => {

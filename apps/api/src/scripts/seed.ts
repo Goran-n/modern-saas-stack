@@ -15,7 +15,9 @@ async function seed() {
     log.info('Seeding database...')
 
     const tenantService = new TenantService()
-    const memberService = new TenantMemberService()
+    const { container, TOKENS } = await import('../shared/utils/container')
+    const tenantMemberRepository = container.resolve<any>(String(TOKENS.TENANT_MEMBER_REPOSITORY))
+    const memberService = new TenantMemberService(tenantMemberRepository)
 
     // Create sample tenant
     const tenant = await tenantService.createTenant({
@@ -41,11 +43,6 @@ async function seed() {
           timezone: 'Europe/London',
         }
       },
-      subscription: {
-        plan: 'professional',
-        status: 'active',
-        billingCycle: 'monthly',
-      },
       metadata: {
         company: {
           industry: 'Technology',
@@ -56,16 +53,14 @@ async function seed() {
           currentStep: 'setup_integrations',
           completedSteps: ['create_account', 'basic_setup'],
         }
-      },
-      // Note: In real app, this would be a real user ID from auth system
-      ownerId: 'demo-user-id-12345',
+      }
     })
 
     log.info(`Created demo tenant: ${tenant.name} (${tenant.slug})`)
 
     // Create a sample member invitation
     await memberService.inviteMember({
-      tenantId: tenant.id,
+      tenantId: tenant.id.toString(),
       invitedEmail: 'member@democompany.com',
       invitedBy: 'demo-user-id-12345',
       role: 'admin',

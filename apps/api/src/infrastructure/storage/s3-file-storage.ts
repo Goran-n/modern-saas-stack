@@ -3,7 +3,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Readable } from 'stream'
 import path from 'path'
 import type { FileStorage, FileMetadata, FileStorageResult, PresignedUrlOptions } from '../../core/ports/storage/file-storage'
-import logger from '@vepler/logger'
+import log from '../../config/logger'
 import { FileStorageError } from '../../shared/errors/file.errors'
 
 export interface S3Config {
@@ -65,7 +65,7 @@ export class S3FileStorage implements FileStorage {
         ServerSideEncryption: 'AES256',
       }))
       
-      logger.info('File stored in S3', { storageKey, tenantId, fileId })
+      log.info('File stored in S3', { storageKey, tenantId, fileId })
       
       return {
         storageKey,
@@ -73,7 +73,7 @@ export class S3FileStorage implements FileStorage {
         url: `s3://${this.bucket}/${storageKey}`,
       }
     } catch (error) {
-      logger.error('Failed to store file in S3', { error, storageKey, tenantId, fileId })
+      log.error('Failed to store file in S3', { error, storageKey, tenantId, fileId })
       throw new FileStorageError(`Failed to store file: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey, tenantId, fileId })
     }
   }
@@ -97,7 +97,7 @@ export class S3FileStorage implements FileStorage {
       
       return Buffer.concat(chunks)
     } catch (error) {
-      logger.error('Failed to retrieve file from S3', { error, storageKey })
+      log.error('Failed to retrieve file from S3', { error, storageKey })
       throw new FileStorageError(`Failed to retrieve file: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey })
     }
   }
@@ -115,7 +115,7 @@ export class S3FileStorage implements FileStorage {
       
       return response.Body as NodeJS.ReadableStream
     } catch (error) {
-      logger.error('Failed to stream file from S3', { error, storageKey })
+      log.error('Failed to stream file from S3', { error, storageKey })
       throw new FileStorageError(`Failed to stream file: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey })
     }
   }
@@ -127,9 +127,9 @@ export class S3FileStorage implements FileStorage {
         Key: storageKey,
       }))
       
-      logger.info('File deleted from S3', { storageKey })
+      log.info('File deleted from S3', { storageKey })
     } catch (error) {
-      logger.error('Failed to delete file from S3', { error, storageKey })
+      log.error('Failed to delete file from S3', { error, storageKey })
       throw new FileStorageError(`Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey })
     }
   }
@@ -152,7 +152,7 @@ export class S3FileStorage implements FileStorage {
       
       return url
     } catch (error) {
-      logger.error('Failed to generate presigned URL', { error, storageKey })
+      log.error('Failed to generate presigned URL', { error, storageKey })
       throw new FileStorageError(`Failed to generate presigned URL: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey })
     }
   }
@@ -185,7 +185,7 @@ export class S3FileStorage implements FileStorage {
       
       return url
     } catch (error) {
-      logger.error('Failed to generate upload URL', { error, storageKey })
+      log.error('Failed to generate upload URL', { error, storageKey })
       throw new FileStorageError(`Failed to generate upload URL: ${error instanceof Error ? error.message : 'Unknown error'}`, { storageKey })
     }
   }
@@ -203,7 +203,7 @@ export class S3FileStorage implements FileStorage {
         return false
       }
       
-      logger.error('Failed to check file existence', { error, storageKey })
+      log.error('Failed to check file existence', { error, storageKey })
       throw new Error(`Failed to check file existence: ${error.message}`)
     }
   }
@@ -230,7 +230,7 @@ export class S3FileStorage implements FileStorage {
       
       return metadata
     } catch (error) {
-      logger.error('Failed to get file metadata', { error, storageKey })
+      log.error('Failed to get file metadata', { error, storageKey })
       throw new Error(`Failed to get file metadata: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
@@ -244,9 +244,9 @@ export class S3FileStorage implements FileStorage {
         ServerSideEncryption: 'AES256',
       }))
       
-      logger.info('File copied in S3', { sourceKey, destinationKey })
+      log.info('File copied in S3', { sourceKey, destinationKey })
     } catch (error) {
-      logger.error('Failed to copy file in S3', { error, sourceKey, destinationKey })
+      log.error('Failed to copy file in S3', { error, sourceKey, destinationKey })
       throw new Error(`Failed to copy file: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
@@ -292,7 +292,7 @@ export class S3FileStorage implements FileStorage {
         }
       }
     } catch (error: any) {
-      logger.error('S3 healthcheck failed', { error, bucket: this.bucket })
+      log.error('S3 healthcheck failed', { error, bucket: this.bucket })
       
       return {
         healthy: false,

@@ -1,5 +1,8 @@
 <template>
-  <TransitionRoot as="template" :show="isOpen">
+  <TransitionRoot
+    as="template"
+    :show="isOpen"
+  >
     <Dialog
       as="div"
       class="relative z-50"
@@ -37,7 +40,10 @@
               ]"
             >
               <!-- Header -->
-              <div v-if="$slots.header || title" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div
+                v-if="$slots.header || title"
+                class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4"
+              >
                 <div class="flex items-start">
                   <div
                     v-if="icon"
@@ -55,7 +61,10 @@
                       aria-hidden="true"
                     />
                   </div>
-                  <div class="mt-3 text-center sm:mt-0 sm:text-left" :class="{ 'sm:ml-4': icon }">
+                  <div
+                    class="mt-3 text-center sm:mt-0 sm:text-left"
+                    :class="{ 'sm:ml-4': icon }"
+                  >
                     <DialogTitle
                       v-if="title"
                       as="h3"
@@ -90,16 +99,16 @@
                     :variant="primaryButtonVariant"
                     :disabled="primaryButtonDisabled"
                     :loading="primaryButtonLoading"
-                    @click="$emit('primary-action')"
                     class="w-full sm:ml-3 sm:w-auto"
+                    @click="$emit('primary-action')"
                   >
                     {{ primaryButtonText }}
                   </BaseButton>
                   <BaseButton
                     v-if="showDefaultFooter && showCancelButton"
                     variant="secondary"
-                    @click="handleClose"
                     class="mt-3 w-full sm:mt-0 sm:w-auto"
+                    @click="handleClose"
                   >
                     {{ cancelButtonText }}
                   </BaseButton>

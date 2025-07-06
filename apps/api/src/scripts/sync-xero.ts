@@ -13,6 +13,7 @@ import {
   type IntegrationStatus,
   integrationSettingsSchema
 } from '../core/domain/integration/index'
+import { EntityId } from '../core/domain/shared/value-objects/entity-id'
 import { ImportTransactionsUseCase } from '../core/usecases/sync/import-transactions.usecase'
 import { container, TOKENS } from '../shared/utils/container'
 import { RequestContextManager } from '../core/context/request-context'
@@ -87,7 +88,7 @@ async function main() {
         
         // Create properly typed integration properties
         const integrationProps: IntegrationEntityProps = {
-          id: dbRow.id,
+          id: EntityId.from(dbRow.id),
           tenantId: dbRow.tenantId,
           provider: dbRow.provider as IntegrationProvider,
           integrationType: dbRow.integrationType as IntegrationType,

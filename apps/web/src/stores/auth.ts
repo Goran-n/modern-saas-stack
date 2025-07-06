@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase, type User, type Session } from '../lib/supabase'
 import { useRouter } from 'vue-router'
+import { getErrorMessage } from '@/utils/error'
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
@@ -20,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
   const authToken = computed(() => session.value?.access_token ?? null)
 
   // Actions
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  async function signUp(email: string, password: string, fullName?: string) {
     loading.value = true
     error.value = null
 
@@ -39,14 +40,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { user: data.user, session: data.session }
     } catch (err) {
-      error.value = (err as Error).message
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  async function signIn(email: string, password: string) {
     loading.value = true
     error.value = null
 
@@ -63,14 +64,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { user: data.user, session: data.session }
     } catch (err) {
-      error.value = (err as Error).message
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const signOut = async () => {
+  async function signOut() {
     loading.value = true
     error.value = null
 
@@ -84,14 +85,14 @@ export const useAuthStore = defineStore('auth', () => {
       // Redirect to login
       router.push('/auth/login')
     } catch (err) {
-      error.value = (err as Error).message
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const resetPassword = async (email: string) => {
+  async function resetPassword(email: string) {
     loading.value = true
     error.value = null
 
@@ -99,14 +100,14 @@ export const useAuthStore = defineStore('auth', () => {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email)
       if (resetError) throw resetError
     } catch (err) {
-      error.value = (err as Error).message
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const initAuth = async () => {
+  async function initAuth() {
     if (initialized.value) return
     
     loading.value = true
@@ -122,58 +123,38 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-        console.debug('Auth state change:', { event, hasSession: !!newSession })
-        
         session.value = newSession
         user.value = newSession?.user ?? null
 
-        if (event === 'SIGNED_OUT') {
-          user.value = null
-          session.value = null
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token was successfully refreshed
-          if (newSession) {
-            session.value = newSession
-            user.value = newSession.user
-          }
-        } else if (event === 'SIGNED_IN') {
-          // User signed in
-          if (newSession) {
-            session.value = newSession
-            user.value = newSession.user
-          }
-        }
-        
         // Handle session expiry/invalid session
         if (!newSession && (event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT')) {
-          console.warn('Session expired or invalid - clearing auth state')
           user.value = null
           session.value = null
         }
       })
 
-      // Store subscription for cleanup if needed
-      // subscription.unsubscribe() can be called later
-      
       initialized.value = true
+      
+      // Return unsubscribe function for cleanup
+      return () => subscription.unsubscribe()
     } catch (err) {
-      error.value = (err as Error).message
+      error.value = getErrorMessage(err)
     } finally {
       loading.value = false
     }
   }
 
-  const clearError = () => {
+  function clearError() {
     error.value = null
   }
 
   return {
     // State
-    user: computed(() => user.value),
-    session: computed(() => session.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
-    initialized: computed(() => initialized.value),
+    user,
+    session,
+    loading,
+    error,
+    initialized,
     
     // Computed
     isAuthenticated,

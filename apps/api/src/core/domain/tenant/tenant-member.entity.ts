@@ -34,6 +34,26 @@ export const memberPermissionsSchema = z.object({
     delete: z.boolean().optional(),
     billing: z.boolean().optional(),
   }).optional(),
+  suppliers: z.object({
+    create: z.boolean().optional(),
+    view: z.boolean().optional(),
+    update: z.boolean().optional(),
+    delete: z.boolean().optional(),
+    merge: z.boolean().optional(),
+    verify: z.boolean().optional(),
+  }).optional(),
+  api: z.object({
+    access: z.boolean().optional(),
+    createTokens: z.boolean().optional(),
+    revokeTokens: z.boolean().optional(),
+  }).optional(),
+  matching: z.object({
+    viewMatches: z.boolean().optional(),
+    approveMatches: z.boolean().optional(),
+    rejectMatches: z.boolean().optional(),
+    manualMatch: z.boolean().optional(),
+    bulkOperations: z.boolean().optional(),
+  }).optional(),
 }).strict()
 
 export type MemberPermissions = z.infer<typeof memberPermissionsSchema>
@@ -52,6 +72,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, MemberPermissions> = {
     analytics: { view: true, export: true },
     team: { view: true, invite: true, remove: true, changeRoles: true },
     tenant: { view: true, edit: true, delete: true, billing: true },
+    suppliers: { create: true, view: true, update: true, delete: true, merge: true, verify: true },
+    api: { access: true, createTokens: true, revokeTokens: true },
+    matching: { viewMatches: true, approveMatches: true, rejectMatches: true, manualMatch: true, bulkOperations: true },
   },
   admin: {
     files: { view: true, create: true, edit: true, delete: true },
@@ -59,6 +82,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, MemberPermissions> = {
     analytics: { view: true, export: true },
     team: { view: true, invite: true, remove: true, changeRoles: false },
     tenant: { view: true, edit: true, delete: false, billing: false },
+    suppliers: { create: true, view: true, update: true, delete: true, merge: true, verify: true },
+    api: { access: true, createTokens: true, revokeTokens: false },
+    matching: { viewMatches: true, approveMatches: true, rejectMatches: true, manualMatch: true, bulkOperations: true },
   },
   member: {
     files: { view: true, create: true, edit: true, delete: false },
@@ -66,6 +92,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, MemberPermissions> = {
     analytics: { view: true, export: false },
     team: { view: true, invite: false, remove: false, changeRoles: false },
     tenant: { view: true, edit: false, delete: false, billing: false },
+    suppliers: { create: true, view: true, update: true, delete: false, merge: false, verify: false },
+    api: { access: true, createTokens: false, revokeTokens: false },
+    matching: { viewMatches: true, approveMatches: true, rejectMatches: false, manualMatch: true, bulkOperations: false },
   },
   viewer: {
     files: { view: true, create: false, edit: false, delete: false },
@@ -73,6 +102,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, MemberPermissions> = {
     analytics: { view: true, export: false },
     team: { view: true, invite: false, remove: false, changeRoles: false },
     tenant: { view: true, edit: false, delete: false, billing: false },
+    suppliers: { create: false, view: true, update: false, delete: false, merge: false, verify: false },
+    api: { access: false, createTokens: false, revokeTokens: false },
+    matching: { viewMatches: true, approveMatches: false, rejectMatches: false, manualMatch: false, bulkOperations: false },
   },
 }
 
@@ -159,11 +191,6 @@ export class TenantMemberEntity {
     return ROLE_HIERARCHY[this.props.role] < ROLE_HIERARCHY[targetRole]
   }
 
-  hasPermission(category: keyof MemberPermissions, permission: string): boolean {
-    const categoryPerms = this.props.permissions[category]
-    if (!categoryPerms) return false
-    return (categoryPerms as any)[permission] === true
-  }
 
   activate(): void {
     this.props.status = 'active'
@@ -214,6 +241,15 @@ export class TenantMemberEntity {
       throw new Error('Invalid or expired invitation')
     }
     this.activate()
+  }
+
+  hasPermission(module: keyof MemberPermissions, action: string): boolean {
+    const modulePermissions = this.props.permissions[module]
+    if (!modulePermissions) {
+      return false
+    }
+    
+    return modulePermissions[action as keyof typeof modulePermissions] === true
   }
 
   private touch(): void {

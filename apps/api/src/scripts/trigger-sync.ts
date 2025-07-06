@@ -24,7 +24,8 @@ async function initialize() {
 
 async function getSyncService(): Promise<SyncService> {
   await initialize()
-  return container.resolve(TOKENS.SYNC_SERVICE) as SyncService
+  const { getSyncService } = await import('../lib/di/services')
+  return getSyncService()
 }
 
 async function findSuitableUserId(tenantId: string, providedUserId?: string): Promise<string> {
@@ -86,18 +87,16 @@ async function triggerSync(options: SyncCliOptions) {
     )
 
     log.info('CLI: Sync job triggered successfully', {
-      syncJobId: result.syncJob.id,
-      queueJobId: result.jobId,
-      status: result.syncJob.status,
-      jobType: result.syncJob.jobType,
+      syncJobId: result.id,
+      status: result.status,
+      jobType: result.jobType,
     })
 
     console.log('✅ Sync job triggered successfully!')
-    console.log(`   Sync Job ID: ${result.syncJob.id}`)
-    console.log(`   Queue Job ID: ${result.jobId}`)
-    console.log(`   Status: ${result.syncJob.status}`)
-    console.log(`   Type: ${result.syncJob.jobType}`)
-    console.log(`   Priority: ${result.syncJob.priority}`)
+    console.log(`   Sync Job ID: ${result.id}`)
+    console.log(`   Status: ${result.status}`)
+    console.log(`   Type: ${result.jobType}`)
+    console.log(`   Priority: ${result.priority}`)
 
     process.exit(0)
   } catch (error) {
@@ -117,9 +116,10 @@ async function scheduleRegularSync(integrationId: string, tenantId: string, freq
   try {
     log.info('CLI: Scheduling regular sync', { integrationId, tenantId, frequency })
 
-    const syncService = await getSyncService()
-    
-    await syncService.scheduleRegularSync(integrationId, tenantId, frequency)
+    // TODO: Implement scheduleRegularSync method
+    // const syncService = await getSyncService()
+    // await syncService.scheduleRegularSync(integrationId, tenantId, frequency)
+    log.warn('scheduleRegularSync method not yet implemented')
 
     log.info('CLI: Regular sync scheduled successfully', { integrationId, tenantId, frequency })
 

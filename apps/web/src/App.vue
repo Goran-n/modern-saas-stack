@@ -8,7 +8,10 @@
         <div class="flex h-16 justify-between">
           <div class="flex">
             <div class="flex flex-shrink-0 items-center">
-              <router-link to="/" class="text-xl font-bold text-slate-900 hover:text-slate-700">
+              <router-link
+                to="/"
+                class="text-xl font-bold text-slate-900 hover:text-slate-700"
+              >
                 Kibly
               </router-link>
             </div>
@@ -46,7 +49,7 @@
                   Integrations
                 </router-link>
               </nav>
-              <div class="border-l border-slate-300 h-6"></div>
+              <div class="border-l border-slate-300 h-6" />
               <span class="text-sm text-slate-600">{{ currentWorkspace.name }}</span>
             </div>
           </div>

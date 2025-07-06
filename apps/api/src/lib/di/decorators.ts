@@ -5,7 +5,7 @@ const INJECT_METADATA_KEY = Symbol('inject')
 const INJECTABLE_METADATA_KEY = Symbol('injectable')
 
 export function Injectable(token?: string, scope: 'singleton' | 'request' = 'singleton') {
-  return function <T extends { new(...args: any[]): {} }>(constructor: T) {
+  return function <T extends { new(...args: any[]): object }>(constructor: T) {
     const serviceToken = token || constructor.name
     Reflect.defineMetadata(INJECTABLE_METADATA_KEY, serviceToken, constructor)
     

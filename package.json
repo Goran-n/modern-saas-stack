@@ -29,15 +29,17 @@
     "dev:api": "turbo run dev --filter @kibly/api",
     "dev:web": "doppler run -p kibly-web -c dev -- turbo run dev --filter @kibly/web",
     "dev:monitor": "turbo run dev --filter @kibly/queue-monitor",
-    "dev:all": "concurrently \"bun dev:api\" \"bun dev:web\" \"bun dev:monitor\"",
-    "dev:with-monitor": "concurrently \"bun dev:api\" \"bun dev:web\" \"bun dev:monitor\"",
+    "dev:all": "concurrently --kill-others --kill-others-on-fail --prefix-colors \"auto\" --prefix \"[{index}] {name}:\" --names \"api,web,monitor\" \"bun dev:api\" \"bun dev:web\" \"bun dev:monitor\"",
+    "dev:with-monitor": "concurrently --kill-others --kill-others-on-fail --prefix-colors \"auto\" --prefix \"[{index}] {name}:\" --names \"api,web,monitor\" \"bun dev:api\" \"bun dev:web\" \"bun dev:monitor\"",
     "test:api": "turbo run test --filter @kibly/api",
     "test:web": "turbo run test --filter @kibly/web",
     "lint:api": "turbo run lint --filter @kibly/api",
     "lint:web": "turbo run lint --filter @kibly/web",
     "lint:tsc": "turbo run typecheck",
     "db:migrate": "turbo run db:migrate --filter @kibly/api",
-    "db:seed": "turbo run db:seed --filter @kibly/api"
+    "db:seed": "turbo run db:seed --filter @kibly/api",
+    "dev:cleanup": "bun scripts/cleanup-dev.ts",
+    "dev:clean": "bun scripts/cleanup-dev.ts"
   },
   "devDependencies": {
     "@turbo/gen": "^2.5.4",

@@ -22,16 +22,26 @@ export const supplierRouter = router({
         if (input.search !== undefined) filters.search = input.search
         if (input.isActive !== undefined) filters.isActive = input.isActive
         
-        const suppliers = await supplierService.listSuppliers(
-          ctx.tenantContext.tenantId,
-          filters,
-          input.limit,
-          input.offset
-        )
+        const params: {
+          tenantId: string
+          limit?: number
+          offset?: number
+          type?: string
+        } = {
+          tenantId: ctx.tenantContext.tenantId,
+          limit: input.limit,
+          offset: input.offset
+        }
+        
+        if (input.type) {
+          params.type = input.type
+        }
+        
+        const result = await supplierService.listSuppliers(params)
         
         return {
-          suppliers,
-          count: suppliers.length
+          suppliers: result.data,
+          count: result.total
         }
       } catch (error) {
         throw new TRPCError({

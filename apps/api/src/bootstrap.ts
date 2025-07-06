@@ -2,10 +2,12 @@ import { connectDatabase } from './database/connection'
 import { getConfig } from './config/config'
 import { getRedisConnection } from './config/redis'
 import { registerServices } from './lib/di/services'
+import { bootstrapDependencies, initializeAsyncServices } from './infrastructure/bootstrap'
 import log, { dbLogger } from './config/logger'
 import { container, TOKENS } from './shared/utils/container'
 import { FileService } from './services/file.service'
 import { syncIntegrationProcessor, importTransactionsProcessor } from './jobs/processors/sync.processor'
+import { conversationProcessor } from './jobs/processors/conversation.processor'
 
 /**
  * Bootstrap: validate security configuration, connect to database, start job processors
@@ -35,8 +37,12 @@ export async function bootstrap(): Promise<void> {
 
     // Initialize dependency injection container
     log.info('🏗️  Bootstrapping dependency injection container...')
+    // Register new services (conversation, file, etc.)
+    bootstrapDependencies()
     // Register all services (includes core services, repositories, and @Injectable services)
     await registerServices()
+    // Initialize async application services
+    await initializeAsyncServices()
     log.info('✅ Dependency injection container ready')
 
     // Initialize Redis connection for job queue
@@ -47,30 +53,44 @@ export async function bootstrap(): Promise<void> {
     try {
       await redis.ping()
       log.info('✅ Redis connected successfully')
-    } catch (error) {
+    } catch {
       log.warn('⚠️  Redis connection failed, continuing with mock Redis for development')
       log.warn('💡 To enable Redis: Set REDIS_URL in your environment variables')
     }
 
-    // Perform S3 healthcheck
-    log.info('🗄️  Checking S3 storage configuration...')
+    // Perform File Service healthcheck (checks both S3 and database)
+    log.info('🗄️  Checking File Service (S3 storage + database)...')
     try {
       const fileService = container.resolve(TOKENS.FILE_SERVICE) as InstanceType<typeof FileService>
       const healthcheck = await fileService.performHealthcheck()
       
       if (healthcheck.healthy) {
-        log.info('✅ S3 storage configured and accessible')
-        log.info(`   Bucket: ${healthcheck.details.storage.details?.bucket}`)
-        log.info(`   Region: ${healthcheck.details.storage.details?.region}`)
+        log.info('✅ File Service is healthy')
+        log.info(`   S3 Bucket: ${healthcheck.details.storage.details?.bucket}`)
+        log.info(`   S3 Region: ${healthcheck.details.storage.details?.region}`)
       } else {
-        log.warn('⚠️  S3 storage healthcheck failed:', healthcheck.message)
-        log.warn('   Details:', healthcheck.details)
-        log.warn('💡 File uploads will fail until S3 is properly configured')
-        log.warn('💡 Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and S3_BUCKET in your environment')
+        log.error('❌ File Service healthcheck failed:', healthcheck.message || 'Unknown error')
+        
+        // Check which component failed
+        if (healthcheck.details?.storage && !healthcheck.details.storage.healthy) {
+          log.error('   ❌ S3 Storage Error:', healthcheck.details.storage.message)
+          log.error('   S3 is required for the application to function properly.')
+          log.error('   Please ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are configured in Doppler.')
+        }
+        
+        if (healthcheck.details?.database && !healthcheck.details.database.healthy) {
+          log.error('   ❌ Database Error:', healthcheck.details.database.message)
+          log.error('   The files table may be missing or inaccessible.')
+          log.error('   Run "bun run db:migrate" to ensure all migrations are applied.')
+        }
+        
+        log.error('   Full details:', JSON.stringify(healthcheck.details, null, 2))
+        process.exit(1)
       }
     } catch (error) {
-      log.warn('⚠️  Could not perform S3 healthcheck:', error instanceof Error ? error.message : 'Unknown error')
-      log.warn('💡 File service may not be properly configured')
+      log.error('❌ Could not initialize File Service:', error instanceof Error ? error.message : 'Unknown error')
+      log.error('The File Service requires both S3 storage and database access.')
+      process.exit(1)
     }
 
     // Start job processors
@@ -101,6 +121,7 @@ export async function shutdown(): Promise<void> {
     // Stop job processors
     await syncIntegrationProcessor.close()
     await importTransactionsProcessor.close()
+    await conversationProcessor.close()
     log.info('✅ Job processors stopped')
 
     // Close Redis connection

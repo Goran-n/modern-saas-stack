@@ -10,14 +10,11 @@ export const bankFeedRouter = router({
       limit: z.number().min(1).max(200).default(100),
       offset: z.number().min(0).default(0)
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       try {
         const bankFeedService = await getBankFeedService()
         const statements = await bankFeedService.listByAccount(
-          input.accountIdentifier,
-          ctx.tenantContext.tenantId,
-          input.limit,
-          input.offset
+          input.accountIdentifier
         )
         
         return {
@@ -37,12 +34,11 @@ export const bankFeedRouter = router({
     .input(z.object({
       accountIdentifier: z.string()
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       try {
         const bankFeedService = await getBankFeedService()
         const count = await bankFeedService.getUnreconciledCount(
-          input.accountIdentifier,
-          ctx.tenantContext.tenantId
+          input.accountIdentifier
         )
         
         return { count }
@@ -59,12 +55,11 @@ export const bankFeedRouter = router({
     .input(z.object({
       accountIdentifier: z.string()
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       try {
         const bankFeedService = await getBankFeedService()
         const dateRange = await bankFeedService.getDateRange(
-          input.accountIdentifier,
-          ctx.tenantContext.tenantId
+          input.accountIdentifier
         )
         
         return dateRange

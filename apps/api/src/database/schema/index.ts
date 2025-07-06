@@ -13,16 +13,24 @@ import { reconciliations } from './reconciliations'
 import { manualJournals } from './manual-journals'
 import { importBatches } from './import-batches'
 import { files, fileVersions } from './files'
+import { userChannels, conversations, conversationMessages, conversationFiles } from './conversations'
+import {
+  orchestrationContexts,
+  aiDecisions,
+  promptTemplates,
+  aiFunctions,
+  conversationSummaries,
+} from './orchestration'
 
 // Export individual tables
-export { 
-  tenants, 
+export {
+  tenants,
   tenantMembers,
-  users, 
-  integrations, 
-  integrationSyncLogs, 
-  syncJobs, 
-  transactions, 
+  users,
+  integrations,
+  integrationSyncLogs,
+  syncJobs,
+  transactions,
   transactionLineItems,
   suppliers,
   invoices,
@@ -32,23 +40,32 @@ export {
   manualJournals,
   importBatches,
   files,
-  fileVersions
+  fileVersions,
+  userChannels,
+  conversations,
+  conversationMessages,
+  conversationFiles,
+  orchestrationContexts,
+  aiDecisions,
+  promptTemplates,
+  aiFunctions,
+  conversationSummaries
 }
 
 // Export type definitions
 export type { Tenant, TenantSettings, TenantSubscription, TenantMetadata } from './tenants'
-export type { 
-  TenantMember, 
-  MemberPermissions, 
+export type {
+  TenantMember,
+  MemberPermissions,
   RoleType
 } from './tenant-members'
 export type { User, NewUser } from './users'
 export type { Integration, IntegrationSyncLog, ProviderType } from './integrations'
 export type { SyncJob, NewSyncJob } from './sync-jobs'
-export type { 
-  Transaction, 
-  NewTransaction, 
-  TransactionLineItem, 
+export type {
+  Transaction,
+  NewTransaction,
+  TransactionLineItem,
   NewTransactionLineItem,
   TransactionWithLineItems,
   UnreconciledTransaction,
@@ -62,6 +79,28 @@ export type { Reconciliation, NewReconciliation } from './reconciliations'
 export type { ManualJournal, NewManualJournal } from './manual-journals'
 export type { ImportBatch, NewImportBatch } from './import-batches'
 export type { File, NewFile, FileVersion, NewFileVersion } from './files'
+export type {
+  UserChannelRow,
+  NewUserChannelRow,
+  ConversationRow,
+  NewConversationRow,
+  ConversationMessageRow,
+  NewConversationMessageRow,
+  ConversationFileRow,
+  NewConversationFileRow
+} from './conversations'
+export type {
+  OrchestrationContext,
+  NewOrchestrationContext,
+  AIDecision,
+  NewAIDecision,
+  PromptTemplate,
+  NewPromptTemplate,
+  AIFunction,
+  NewAIFunction,
+  ConversationSummary,
+  NewConversationSummary
+} from './orchestration'
 
 // Export constants and enums
 export { DEFAULT_ROLE_PERMISSIONS, ROLE_HIERARCHY, memberStatusEnum, memberRoleEnum } from './tenant-members'
@@ -73,6 +112,7 @@ export { IMPORT_SOURCE as BANK_IMPORT_SOURCE, MATCH_STATUS, TRANSACTION_TYPE as 
 export { MATCH_TYPE, MATCH_METHOD, CREATED_BY } from './reconciliations'
 export { JOURNAL_STATUS } from './manual-journals'
 export { BATCH_TYPE, IMPORT_SOURCE, BATCH_STATUS } from './import-batches'
+export { intentTypeEnum, intentSubTypeEnum, decisionActionEnum } from './orchestration'
 
 // Schema object for drizzle migrations
 export const schema = {
@@ -93,4 +133,13 @@ export const schema = {
   importBatches,
   files,
   fileVersions,
+  userChannels,
+  conversations,
+  conversationMessages,
+  conversationFiles,
+  orchestrationContexts,
+  aiDecisions,
+  promptTemplates,
+  aiFunctions,
+  conversationSummaries,
 }

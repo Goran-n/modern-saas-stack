@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { router, authedProcedure, tenantProcedure } from '../lib/trpc'
-import { getTenantService, getTenantMemberService } from '../lib/di/services'
-import { validateSlug } from '../utils/slug'
+import { container, TOKENS } from '../shared/utils/container'
+import type { TenantApplicationService } from '../core/application/tenant.application-service'
 
 // Input validation schemas
 const createTenantSchema = z.object({
@@ -34,31 +34,21 @@ export const tenantRouter = router({
   create: authedProcedure
     .input(createTenantSchema)
     .mutation(async ({ input, ctx }) => {
-      const tenantService = await getTenantService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Validate slug if provided
-      if (input.slug && !validateSlug(input.slug)) {
-        throw new Error('Invalid slug format')
-      }
-      
-      const tenantData: any = {
+      return await tenantAppService.createTenant({
         name: input.name,
         email: input.email,
         ownerId: ctx.user.id,
-      }
-      if (input.slug !== undefined) tenantData.slug = input.slug
-      
-      const tenant = await tenantService.createTenant(tenantData)
-      
-      return tenant
+        ...(input.slug && { slug: input.slug }),
+      })
     }),
 
   // Get user's tenants
   list: authedProcedure
     .query(async ({ ctx }) => {
-      const tenantService = await getTenantService()
-      
-      return await tenantService.getUserTenants(ctx.user.id)
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
+      return await tenantAppService.getUserTenants(ctx.user.id)
     }),
 
   // Get current tenant details
@@ -71,145 +61,102 @@ export const tenantRouter = router({
   update: tenantProcedure
     .input(updateTenantSchema)
     .mutation(async ({ input, ctx }) => {
-      const tenantService = await getTenantService()
-      const memberService = await getTenantMemberService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Check if user has permission to update tenant
-      const hasPermission = memberService.hasPermission(
-        ctx.tenantContext.membership,
-        'tenant',
-        'manageSettings'
-      )
-      
-      if (!hasPermission) {
-        throw new Error('Insufficient permissions to update tenant')
-      }
-      
-      const updateData: any = {}
-      if (input.name !== undefined) updateData.name = input.name
-      if (input.email !== undefined) updateData.email = input.email
-      if (input.settings !== undefined) updateData.settings = input.settings
-      if (input.subscription !== undefined) updateData.subscription = input.subscription
-      if (input.metadata !== undefined) updateData.metadata = input.metadata
-      
-      return await tenantService.updateTenant(ctx.tenantContext.tenantId, updateData)
+      return await tenantAppService.updateTenant({
+        tenantId: ctx.tenantContext.tenantId,
+        membership: ctx.tenantContext.membership,
+        ...(input.name && { name: input.name }),
+        ...(input.email && { email: input.email }),
+        ...(input.settings && { settings: input.settings }),
+        ...(input.subscription && { subscription: input.subscription }),
+        ...(input.metadata && { metadata: input.metadata }),
+      })
     }),
 
   // Get tenant members
   members: tenantProcedure
     .query(async ({ ctx }) => {
-      const memberService = await getTenantMemberService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Check if user can view members
-      const hasPermission = memberService.hasPermission(
-        ctx.tenantContext.membership,
-        'team',
-        'viewMembers'
-      )
-      
-      if (!hasPermission) {
-        throw new Error('Insufficient permissions to view members')
-      }
-      
-      return await memberService.getMembersByTenant(ctx.tenantContext.tenantId)
+      return await tenantAppService.getMembers({
+        tenantId: ctx.tenantContext.tenantId,
+        membership: ctx.tenantContext.membership,
+      })
     }),
 
   // Invite member
   inviteMember: tenantProcedure
     .input(inviteMemberSchema)
     .mutation(async ({ input, ctx }) => {
-      const memberService = await getTenantMemberService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Check if user can invite members
-      const hasPermission = memberService.hasPermission(
-        ctx.tenantContext.membership,
-        'team',
-        'inviteMembers'
-      )
-      
-      if (!hasPermission) {
-        throw new Error('Insufficient permissions to invite members')
-      }
-      
-      const inviteData: any = {
+      return await tenantAppService.inviteMember({
         tenantId: ctx.tenantContext.tenantId,
         invitedEmail: input.email,
         invitedBy: ctx.user!.id,
         role: input.role,
-      }
-      if (input.customPermissions !== undefined) {
-        inviteData.customPermissions = input.customPermissions
-      }
-      
-      return await memberService.inviteMember(inviteData)
+        membership: ctx.tenantContext.membership,
+        ...(input.customPermissions && { customPermissions: input.customPermissions }),
+      })
     }),
 
   // Update member role
   updateMemberRole: tenantProcedure
     .input(updateMemberRoleSchema)
     .mutation(async ({ input, ctx }) => {
-      const memberService = await getTenantMemberService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Check if user can manage members
-      const hasPermission = memberService.hasPermission(
-        ctx.tenantContext.membership,
-        'team',
-        'manageMembers'
-      )
-      
-      if (!hasPermission) {
-        throw new Error('Insufficient permissions to manage members')
-      }
-      
-      return await memberService.updateMemberRole(
-        input.memberId,
-        input.role,
-        ctx.user!.id
-      )
+      return await tenantAppService.updateMemberRole({
+        memberId: input.memberId,
+        role: input.role,
+        updatedBy: ctx.user!.id,
+        membership: ctx.tenantContext.membership,
+      })
     }),
 
   // Remove member
   removeMember: tenantProcedure
     .input(z.object({ memberId: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
-      const memberService = await getTenantMemberService()
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
       
-      // Check if user can remove members
-      const hasPermission = memberService.hasPermission(
-        ctx.tenantContext.membership,
-        'team',
-        'removeMembers'
-      )
+      await tenantAppService.removeMember({
+        memberId: input.memberId,
+        removedBy: ctx.user!.id,
+        membership: ctx.tenantContext.membership,
+      })
       
-      if (!hasPermission) {
-        throw new Error('Insufficient permissions to remove members')
-      }
-      
-      await memberService.removeMember(input.memberId, ctx.user!.id)
       return { success: true }
     }),
 
   // Get member permissions
   myPermissions: tenantProcedure
     .query(async ({ ctx }) => {
-      const memberService = await getTenantMemberService()
-      return memberService.getMemberPermissions(ctx.tenantContext.membership)
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
+      return tenantAppService.getMemberPermissions(ctx.tenantContext.membership)
     }),
 
   // Accept invitation (public endpoint)
   acceptInvitation: authedProcedure
     .input(z.object({ token: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const memberService = await getTenantMemberService()
-      return await memberService.acceptInvitation(input.token, ctx.user!.id)
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
+      return await tenantAppService.acceptInvitation({
+        token: input.token,
+        userId: ctx.user!.id,
+      })
     }),
 
   // Validate tenant access
   validateAccess: authedProcedure
     .input(z.object({ tenantId: z.string().uuid() }))
     .query(async ({ input, ctx }) => {
-      const tenantService = await getTenantService()
-      const hasAccess = await tenantService.validateTenantAccess(input.tenantId, ctx.user!.id)
+      const tenantAppService = container.resolve(TOKENS.TENANT_APPLICATION_SERVICE) as TenantApplicationService
+      const hasAccess = await tenantAppService.validateAccess({
+        tenantId: input.tenantId,
+        userId: ctx.user!.id,
+      })
       return { hasAccess }
     }),
 })

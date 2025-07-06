@@ -1,4 +1,5 @@
 import { IntegrationEntity, IntegrationProvider, IntegrationType } from '../../domain/integration'
+import { EntityId } from '../../domain/shared/value-objects/entity-id'
 import { NotFoundError, ConflictError, BusinessRuleError } from '../../../shared/errors'
 import type { TenantRepository, IntegrationRepository, TenantMemberRepository } from '../../ports'
 import { INTEGRATION } from '../../../shared/constants'
@@ -77,7 +78,7 @@ export class CreateIntegrationUseCase {
 
   private async validateBusinessRules(input: CreateIntegrationInput): Promise<void> {
     // Check if tenant exists and is active
-    const tenant = await this.tenantRepository.findById(input.tenantId)
+    const tenant = await this.tenantRepository.findById(EntityId.from(input.tenantId))
     if (!tenant) {
       throw new NotFoundError('Tenant', input.tenantId)
     }
@@ -205,8 +206,8 @@ export class CreateIntegrationUseCase {
         userId,
       })
 
-      const syncResult = await this.syncService.triggerSync(
-        integration.id,
+      const syncJob = await this.syncService.triggerSync(
+        integration.id.toString(),
         integration.tenantId,
         userId,
         'full', // Use 'full' sync type for first sync
@@ -217,8 +218,8 @@ export class CreateIntegrationUseCase {
 
       log.info('Initial sync triggered successfully', {
         integrationId: integration.id,
-        syncJobId: syncResult.syncJob.id,
-        queueJobId: syncResult.jobId,
+        syncJobId: syncJob.id,
+        syncJobStatus: syncJob.status,
       })
 
       // Integration will be updated by the sync job when it completes

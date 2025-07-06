@@ -1,42 +1,28 @@
 import { ref, type Ref } from 'vue'
+import { getErrorMessage } from '@/utils/error'
 
 export interface AsyncOperationOptions {
   onError?: (error: Error) => void
   onSuccess?: () => void
 }
 
-export interface AsyncOperationReturn<T> {
+export interface AsyncOperationReturn<T, Args extends unknown[]> {
   data: Ref<T | null>
   loading: Ref<boolean>
   error: Ref<string | null>
-  execute: (...args: any[]) => Promise<T | null>
+  execute: (...args: Args) => Promise<T | null>
   reset: () => void
 }
 
-/**
- * Composable for handling async operations with loading and error states
- * 
- * @example
- * ```ts
- * const { data, loading, error, execute } = useAsyncOperation(
- *   async (id: string) => {
- *     return await api.fetchUser(id)
- *   }
- * )
- * 
- * // Execute the operation
- * await execute('user-123')
- * ```
- */
-export function useAsyncOperation<T, Args extends any[] = any[]>(
+export function useAsyncOperation<T, Args extends unknown[] = []>(
   operation: (...args: Args) => Promise<T>,
   options?: AsyncOperationOptions
-): AsyncOperationReturn<T> {
+): AsyncOperationReturn<T, Args> {
   const data = ref<T | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const execute = async (...args: Args): Promise<T | null> => {
+  async function execute(...args: Args): Promise<T | null> {
     loading.value = true
     error.value = null
 
@@ -46,8 +32,7 @@ export function useAsyncOperation<T, Args extends any[] = any[]>(
       options?.onSuccess?.()
       return result
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-      error.value = errorMessage
+      error.value = getErrorMessage(err)
       options?.onError?.(err as Error)
       
       // Don't throw by default to allow graceful error handling
@@ -57,7 +42,7 @@ export function useAsyncOperation<T, Args extends any[] = any[]>(
     }
   }
 
-  const reset = () => {
+  function reset(): void {
     data.value = null
     loading.value = false
     error.value = null
@@ -72,16 +57,13 @@ export function useAsyncOperation<T, Args extends any[] = any[]>(
   }
 }
 
-/**
- * Variant that throws errors for use in try-catch blocks
- */
-export function useAsyncOperationWithThrow<T, Args extends any[] = any[]>(
+export function useAsyncOperationWithThrow<T, Args extends unknown[] = []>(
   operation: (...args: Args) => Promise<T>,
   options?: AsyncOperationOptions
-): AsyncOperationReturn<T> {
+): AsyncOperationReturn<T, Args> {
   const { data, loading, error, reset } = useAsyncOperation(operation, options)
 
-  const execute = async (...args: Args): Promise<T | null> => {
+  async function execute(...args: Args): Promise<T | null> {
     loading.value = true
     error.value = null
 
@@ -91,8 +73,7 @@ export function useAsyncOperationWithThrow<T, Args extends any[] = any[]>(
       options?.onSuccess?.()
       return result
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-      error.value = errorMessage
+      error.value = getErrorMessage(err)
       options?.onError?.(err as Error)
       throw err
     } finally {

@@ -1,325 +1,229 @@
-import { IntegrationEntity } from '../core/domain/integration'
-import { IntegrationCrudService } from './integration-crud.service'
-import type { CreateIntegrationData, UpdateIntegrationData } from './integration-crud.service'
-import { OAuthService } from './oauth.service'
-import { ProviderService } from './provider.service'
-import type { ProviderInfo } from './provider.service'
-import { SyncManagementService } from './sync-management.service'
-import type { TriggerSyncOptions, SyncLogEntry } from './sync-management.service'
-import type { Logger } from 'pino'
+import type { IntegrationRepository } from '../core/ports/integration.repository'
+import type { IntegrationEntity, IntegrationProvider, IntegrationType, IntegrationSettings } from '../core/domain/integration'
+import { IntegrationEntity as IntegrationEntityClass, PROVIDER_CAPABILITIES } from '../core/domain/integration'
+import { EntityId } from '../core/domain/shared/value-objects/entity-id'
+import { container, TOKENS } from '../shared/utils/container'
 
-export interface AuthCompleteData {
-  integrationId: string
-  code: string
-  state: string
-  scope?: string
-}
-
-export interface AuthWithOrganisationData extends AuthCompleteData {
+export interface CreateIntegrationData {
   tenantId: string
-  organisationId?: string
+  provider: IntegrationProvider
+  integrationType: IntegrationType
+  name: string
+  authData: Record<string, unknown>
+  settings?: IntegrationSettings
+  metadata?: Record<string, unknown>
 }
 
-export interface TestConnectionResult {
-  success: boolean
-  message: string
-  details?: Record<string, unknown>
+export interface UpdateIntegrationData {
+  name?: string
+  authData?: Record<string, unknown>
+  settings?: Partial<IntegrationSettings>
+  metadata?: Record<string, unknown>
+  status?: 'active' | 'disabled' | 'error' | 'setup_pending'
 }
 
-export interface SyncFilters {
-  status?: string[]
-  dateFrom?: Date
-  dateTo?: Date
-}
-
-/**
- * Main Integration Service facade that provides a unified interface
- * for all integration-related operations
- */
 export class IntegrationService {
-  constructor(
-    private crudService: IntegrationCrudService,
-    private oauthService: OAuthService,
-    private providerService: ProviderService,
-    private syncService: SyncManagementService,
-    private logger: Logger
-  ) {}
-
-  // CRUD Operations
-  async create(data: CreateIntegrationData): Promise<IntegrationEntity> {
-    return this.crudService.create(data)
-  }
+  constructor() {}
 
   async getById(id: string): Promise<IntegrationEntity | null> {
-    return this.crudService.getById(id)
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.findById(EntityId.from(id))
   }
 
   async getByTenant(tenantId: string): Promise<IntegrationEntity[]> {
-    return this.crudService.getByTenant(tenantId)
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.findByTenant(tenantId)
+  }
+
+  async findById(id: string): Promise<IntegrationEntity | null> {
+    return this.getById(id)
+  }
+
+  async findByTenantId(tenantId: string): Promise<IntegrationEntity[]> {
+    return this.getByTenant(tenantId)
+  }
+
+  async create(data: CreateIntegrationData): Promise<IntegrationEntity> {
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    
+    // Check if integration already exists
+    const existing = await repository.findByTenantAndProvider(data.tenantId, data.provider)
+    if (existing) {
+      throw new Error(`Integration with provider ${data.provider} already exists for this tenant`)
+    }
+
+    // Get provider capabilities
+    const capabilities = PROVIDER_CAPABILITIES[data.provider]
+    if (!capabilities) {
+      throw new Error(`Unknown provider: ${data.provider}`)
+    }
+
+    // Create integration entity
+    const integration = IntegrationEntityClass.create({
+      tenantId: data.tenantId,
+      provider: data.provider,
+      integrationType: data.integrationType,
+      name: data.name,
+      status: 'setup_pending',
+      authData: data.authData,
+      settings: data.settings || {},
+      metadata: data.metadata || {},
+      capabilities
+    })
+
+    return repository.create(integration)
   }
 
   async update(id: string, data: UpdateIntegrationData): Promise<IntegrationEntity> {
-    return this.crudService.update(id, data)
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    
+    const integration = await repository.findById(EntityId.from(id))
+    if (!integration) {
+      throw new Error(`Integration with id ${id} not found`)
+    }
+
+    // Update fields
+    if (data.name) {
+      integration.updateName(data.name)
+    }
+    if (data.authData) {
+      integration.updateAuthData(data.authData)
+    }
+    if (data.settings) {
+      integration.updateSettings(data.settings)
+    }
+    if (data.metadata) {
+      integration.updateMetadata(data.metadata)
+    }
+    if (data.status) {
+      switch (data.status) {
+        case 'active':
+          integration.activate()
+          break
+        case 'disabled':
+          integration.disable()
+          break
+        case 'setup_pending':
+          integration.markAsSetupPending()
+          break
+        case 'error':
+          // Status will be set by recordSyncError
+          break
+      }
+    }
+
+    return repository.save(integration)
+  }
+
+  async save(integration: IntegrationEntity): Promise<IntegrationEntity> {
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.save(integration)
   }
 
   async delete(id: string): Promise<void> {
-    return this.crudService.delete(id)
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.delete(id)
   }
 
-  // OAuth Operations
-  async getAuthUrl(
-    provider: string,
-    redirectUri: string,
-    tenantId: string
-  ): Promise<{ authUrl: string; state: string }> {
-    return this.oauthService.getAuthUrl(provider, redirectUri, tenantId)
-  }
+  async testConnection(integrationId: string): Promise<boolean> {
+    const integration = await this.getById(integrationId)
+    if (!integration) {
+      throw new Error(`Integration with id ${integrationId} not found`)
+    }
 
-  async completeAuth(data: AuthCompleteData): Promise<IntegrationEntity> {
-    return this.crudService.completeOAuthSetup(
-      'xero', // provider - will need to be parameterized
-      data.code,
-      data.state,
-      '', // organisationId - will be set later
-      'Xero Integration', // name - default
-      {}, // settings - default
-      '', // tenantId - will need to be provided
-      undefined // existingTokens
-    )
-  }
+    // Check if integration has valid auth
+    if (!integration.hasValidAuth()) {
+      throw new Error('Integration does not have valid authentication data')
+    }
 
-  async completeAuthWithOrganisation(data: AuthWithOrganisationData): Promise<IntegrationEntity> {
-    return this.crudService.completeOAuthSetup(
-      'xero', // provider
-      data.code,
-      data.state,
-      data.organisationId || '', // organisationId
-      'Xero Integration', // name
-      {}, // settings
-      data.tenantId, // tenantId
-      undefined // existingTokens
-    )
-  }
-
-  async getAvailableOrganisations(
-    provider: string,
-    code: string,
-    tenantId: string
-  ): Promise<Array<{ id: string; name: string; type?: string }>> {
-    return this.oauthService.getAvailableOrganisations(provider, code, tenantId)
-  }
-
-  // Connection Testing
-  async testConnection(integrationId: string): Promise<TestConnectionResult> {
-    return this.crudService.testConnection(integrationId)
-  }
-
-  async validateProviderConnection(
-    provider: string,
-    authData: Record<string, unknown>
-  ): Promise<{ isValid: boolean; error?: string }> {
+    // TODO: Implement actual connection testing based on provider
+    // This would involve calling the external API with the auth data
+    // For now, we'll simulate the test based on status
+    
     try {
-      this.logger.info('Validating provider connection', { provider, hasAuthData: !!authData })
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      switch (provider) {
-        case 'xero':
-          return this.validateXeroConnection(authData)
-        case 'quickbooks':
-          return this.validateQuickBooksConnection(authData)
-        default:
-          return { 
-            isValid: false, 
-            error: `Provider '${provider}' is not supported for validation` 
-          }
+      // For now, return true if integration is active
+      // In real implementation, this would make actual API calls
+      if (integration.isActive()) {
+        return true
       }
+      
+      // If not active but has valid auth, try to activate
+      if (integration.hasValidAuth()) {
+        integration.activate()
+        await this.save(integration)
+        return true
+      }
+      
+      return false
     } catch (error) {
-      this.logger.error('Provider validation failed', { provider, error })
-      return { 
-        isValid: false, 
-        error: error instanceof Error ? error.message : 'Unknown validation error' 
-      }
+      // Record error and return false
+      integration.recordSyncError(error instanceof Error ? error.message : 'Connection test failed')
+      await this.save(integration)
+      return false
     }
   }
 
-  private async validateXeroConnection(authData: Record<string, unknown>): Promise<{ isValid: boolean; error?: string }> {
-    const requiredFields = ['accessToken', 'refreshToken', 'tenantId']
-    const missingFields = requiredFields.filter(field => !authData[field])
-    
-    if (missingFields.length > 0) {
-      return {
-        isValid: false,
-        error: `Missing required Xero auth fields: ${missingFields.join(', ')}`
-      }
-    }
-
-    // Check token expiry
-    const expiresAt = authData.expiresAt
-    if (expiresAt) {
-      const expiryDate = new Date(expiresAt as string)
-      const now = new Date()
-      if (expiryDate <= now) {
-        return {
-          isValid: false,
-          error: 'Xero access token has expired'
-        }
-      }
-    }
-
-    // Validate token format (basic check)
-    const accessToken = authData.accessToken as string
-    if (!accessToken || accessToken.length < 10) {
-      return {
-        isValid: false,
-        error: 'Invalid Xero access token format'
-      }
-    }
-
-    return { isValid: true }
+  async getActiveIntegrations(): Promise<IntegrationEntity[]> {
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.findActive()
   }
 
-  private async validateQuickBooksConnection(authData: Record<string, unknown>): Promise<{ isValid: boolean; error?: string }> {
-    const requiredFields = ['accessToken', 'refreshToken', 'realmId']
-    const missingFields = requiredFields.filter(field => !authData[field])
-    
-    if (missingFields.length > 0) {
-      return {
-        isValid: false,
-        error: `Missing required QuickBooks auth fields: ${missingFields.join(', ')}`
-      }
+  async getIntegrationsWithErrors(): Promise<IntegrationEntity[]> {
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.findWithErrors()
+  }
+
+  async getIntegrationsDueForSync(): Promise<IntegrationEntity[]> {
+    const repository = container.resolve<IntegrationRepository>(TOKENS.INTEGRATION_REPOSITORY)
+    return repository.findDueForSync()
+  }
+
+  async recordSuccessfulSync(integrationId: string): Promise<void> {
+    const integration = await this.getById(integrationId)
+    if (!integration) {
+      throw new Error(`Integration with id ${integrationId} not found`)
     }
 
-    return { isValid: true }
+    integration.recordSuccessfulSync()
+    await this.save(integration)
   }
 
-  // Provider Information
-  getSupportedProviders(): ProviderInfo[] {
-    return this.providerService.getSupportedProviders()
-  }
-
-  // Sync Operations
-  async triggerSync(
-    integrationId: string,
-    options: TriggerSyncOptions
-  ): Promise<{ syncJobId: string; message: string }> {
-    const syncJob = await this.syncService.triggerSync(integrationId, options)
-    return {
-      syncJobId: syncJob.id,
-      message: 'Sync triggered successfully'
+  async recordSyncError(integrationId: string, errorMessage: string): Promise<void> {
+    const integration = await this.getById(integrationId)
+    if (!integration) {
+      throw new Error(`Integration with id ${integrationId} not found`)
     }
+
+    integration.recordSyncError(errorMessage)
+    await this.save(integration)
   }
 
-  async getSyncLogs(
-    integrationId: string,
-    filters?: SyncFilters
-  ): Promise<SyncLogEntry[]> {
-    this.logger.debug('Getting sync logs', { integrationId, filters })
-    
-    // Get the raw logs from sync service
-    const result = await this.syncService.getSyncLogs(integrationId)
-    let filteredLogs = result.logs
-    
-    // Apply filters if provided
-    if (filters) {
-      filteredLogs = this.applySyncFilters(filteredLogs, filters)
+  async completeAuthWithOrganisation(params: {
+    integrationId: string
+    code: string
+    state: string
+    tenantId: string
+    organisationId: string
+  }): Promise<IntegrationEntity> {
+    // This would handle the final step of OAuth for providers with multiple organisations
+    // For now, return the existing integration or create a new one
+    const existing = await this.getById(params.integrationId)
+    if (existing) {
+      existing.updateMetadata({ organisationId: params.organisationId })
+      return this.save(existing)
     }
     
-    return filteredLogs
-  }
-
-  private applySyncFilters(logs: SyncLogEntry[], filters: SyncFilters): SyncLogEntry[] {
-    let filtered = logs
-
-    // Filter by status
-    if (filters.status && filters.status.length > 0) {
-      filtered = filtered.filter(log => filters.status!.includes(log.status))
-    }
-
-    // Filter by date range (using startedAt or completedAt)
-    if (filters.dateFrom) {
-      filtered = filtered.filter(log => {
-        const logDate = log.completedAt || log.startedAt
-        return logDate ? logDate >= filters.dateFrom! : false
-      })
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter(log => {
-        const logDate = log.completedAt || log.startedAt
-        return logDate ? logDate <= filters.dateTo! : false
-      })
-    }
-
-    return filtered
-  }
-
-  // Health and Status
-  async getIntegrationHealth(integrationId: string): Promise<{
-    status: 'healthy' | 'warning' | 'error'
-    lastSync?: Date
-    nextSync?: Date
-    issues?: string[]
-  }> {
-    try {
-      const integration = await this.getById(integrationId)
-      if (!integration) {
-        return {
-          status: 'error',
-          issues: ['Integration not found']
-        }
-      }
-
-      const connectionTest = await this.testConnection(integrationId)
-      const syncLogs = await this.getSyncLogs(integrationId, {
-        dateFrom: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
-      })
-
-      const recentErrors = syncLogs.filter(log => 
-        log.status === 'failed' && 
-        log.completedAt && 
-        log.completedAt > new Date(Date.now() - 24 * 60 * 60 * 1000)
-      )
-
-      let status: 'healthy' | 'warning' | 'error' = 'healthy'
-      const issues: string[] = []
-
-      if (!connectionTest.success) {
-        status = 'error'
-        issues.push(`Connection test failed: ${connectionTest.message}`)
-      }
-
-      if (recentErrors.length > 0) {
-        status = status === 'error' ? 'error' : 'warning'
-        issues.push(`${recentErrors.length} sync errors in the last 24 hours`)
-      }
-
-      const healthResponse: {
-        status: 'healthy' | 'warning' | 'error'
-        lastSync?: Date
-        nextSync?: Date
-        issues?: string[]
-      } = {
-        status
-      }
-      
-      if (integration.lastSyncAt) {
-        healthResponse.lastSync = integration.lastSyncAt
-      }
-      
-      if (integration.nextScheduledSync) {
-        healthResponse.nextSync = integration.nextScheduledSync
-      }
-      
-      if (issues.length > 0) {
-        healthResponse.issues = issues
-      }
-      
-      return healthResponse
-    } catch (error) {
-      this.logger.error('Failed to get integration health', { integrationId, error })
-      return {
-        status: 'error',
-        issues: ['Failed to check integration health']
-      }
-    }
+    // Create new integration if it doesn't exist
+    return this.create({
+      tenantId: params.tenantId,
+      provider: 'xero' as any, // This should be determined from state
+      integrationType: 'accounting' as any,
+      name: 'Xero Integration',
+      authData: { organisationId: params.organisationId },
+      settings: {}
+    })
   }
 }

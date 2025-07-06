@@ -2,46 +2,65 @@
   <div class="min-h-screen bg-neutral-50 flex items-center justify-center">
     <div class="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
       <!-- Loading state -->
-      <div v-if="isProcessing" class="text-center">
-        <div class="animate-spin mx-auto h-12 w-12 border-b-2 border-blue-600 rounded-full mb-4"></div>
-        <h2 class="text-xl font-semibold text-neutral-900 mb-2">Completing connection...</h2>
-        <p class="text-neutral-600">Please wait while we finalise your integration.</p>
+      <div
+        v-if="isProcessing"
+        class="text-center"
+      >
+        <div class="animate-spin mx-auto h-12 w-12 border-b-2 border-blue-600 rounded-full mb-4" />
+        <h2 class="text-xl font-semibold text-neutral-900 mb-2">
+          Completing connection...
+        </h2>
+        <p class="text-neutral-600">
+          Please wait while we finalise your integration.
+        </p>
       </div>
 
       <!-- Success state -->
-      <div v-else-if="success" class="text-center">
+      <div
+        v-else-if="success"
+        class="text-center"
+      >
         <div class="mx-auto h-12 w-12 text-green-600 mb-4">
           <CheckCircleIcon class="w-full h-full" />
         </div>
-        <h2 class="text-xl font-semibold text-neutral-900 mb-2">Integration connected!</h2>
+        <h2 class="text-xl font-semibold text-neutral-900 mb-2">
+          Integration connected!
+        </h2>
         <p class="text-neutral-600 mb-6">
           Your {{ providerName }} integration has been successfully set up.
         </p>
         <button
-          @click="goToIntegrations"
           class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          @click="goToIntegrations"
         >
           View Integrations
         </button>
       </div>
 
       <!-- Error state -->
-      <div v-else-if="error" class="text-center">
+      <div
+        v-else-if="error"
+        class="text-center"
+      >
         <div class="mx-auto h-12 w-12 text-red-600 mb-4">
           <XCircleIcon class="w-full h-full" />
         </div>
-        <h2 class="text-xl font-semibold text-neutral-900 mb-2">Connection failed</h2>
-        <p class="text-neutral-600 mb-6">{{ errorMessage }}</p>
+        <h2 class="text-xl font-semibold text-neutral-900 mb-2">
+          Connection failed
+        </h2>
+        <p class="text-neutral-600 mb-6">
+          {{ errorMessage }}
+        </p>
         <div class="space-y-3">
           <button
-            @click="retry"
             class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            @click="retry"
           >
             Try Again
           </button>
           <button
-            @click="goToIntegrations"
             class="w-full inline-flex justify-center items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+            @click="goToIntegrations"
           >
             Back to Integrations
           </button>
@@ -49,15 +68,22 @@
       </div>
 
       <!-- Cancelled state -->
-      <div v-else class="text-center">
+      <div
+        v-else
+        class="text-center"
+      >
         <div class="mx-auto h-12 w-12 text-neutral-400 mb-4">
           <XMarkIcon class="w-full h-full" />
         </div>
-        <h2 class="text-xl font-semibold text-neutral-900 mb-2">Connection cancelled</h2>
-        <p class="text-neutral-600 mb-6">The integration setup was cancelled or interrupted.</p>
+        <h2 class="text-xl font-semibold text-neutral-900 mb-2">
+          Connection cancelled
+        </h2>
+        <p class="text-neutral-600 mb-6">
+          The integration setup was cancelled or interrupted.
+        </p>
         <button
-          @click="goToIntegrations"
           class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          @click="goToIntegrations"
         >
           Back to Integrations
         </button>

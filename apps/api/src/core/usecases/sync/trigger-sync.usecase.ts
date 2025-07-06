@@ -1,5 +1,6 @@
 import { SyncJobEntity, type SyncJobType } from '../../domain/sync-job/index'
 import { IntegrationEntity } from '../../domain/integration/index'
+import { EntityId } from '../../domain/shared/value-objects/entity-id'
 import { NotFoundError, BusinessRuleError } from '../../../shared/errors/index'
 import type { 
   IntegrationRepository, 
@@ -115,7 +116,7 @@ export class TriggerSyncUseCase {
     integrationId: string,
     tenantId: string
   ): Promise<IntegrationEntity> {
-    const integration = await this.integrationRepository.findById(integrationId)
+    const integration = await this.integrationRepository.findById(EntityId.from(integrationId))
 
     if (!integration) {
       throw new NotFoundError('Integration', integrationId)

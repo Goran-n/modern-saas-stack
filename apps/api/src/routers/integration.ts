@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { router, tenantProcedure } from '../lib/trpc'
-import { container } from '../lib/di'
+import { container, TOKENS } from '../shared/utils/container'
 import { requirePermission } from '../middleware/permissions'
-import { IntegrationNotFoundError } from '../lib/errors'
+import type { IntegrationApplicationService } from '../core/application/integration.application-service'
 
 // Input validation schemas
 const createIntegrationSchema = z.object({
@@ -27,8 +27,8 @@ export const integrationRouter = router({
   // List tenant integrations
   list: tenantProcedure
     .query(async ({ ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      return await integrationService.getByTenant(ctx.tenantContext.tenantId)
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.listIntegrations(ctx.tenantContext.tenantId)
     }),
 
   // Get integration by ID
@@ -36,15 +36,8 @@ export const integrationRouter = router({
     .input(z.object({ integrationId: z.string().uuid() }))
     .use(requirePermission('providers', 'view'))
     .query(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      const integration = await integrationService.getById(input.integrationId)
-      
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      return integration
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.getIntegration(input.integrationId, ctx.tenantContext.tenantId)
     }),
 
   // Create new integration
@@ -52,19 +45,14 @@ export const integrationRouter = router({
     .input(createIntegrationSchema)
     .use(requirePermission('providers', 'create'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      const createData: any = {
-        ...input,
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.createIntegration({
+        provider: input.provider,
+        name: input.name,
+        integrationType: input.integrationType,
         tenantId: ctx.tenantContext.tenantId,
-      }
-      
-      // Remove undefined values for exactOptionalPropertyTypes compliance
-      if (createData.settings === undefined) {
-        delete createData.settings
-      }
-      
-      return await integrationService.create(createData)
+        ...(input.settings && { settings: input.settings }),
+      })
     }),
 
   // Update integration
@@ -72,23 +60,14 @@ export const integrationRouter = router({
     .input(updateIntegrationSchema)
     .use(requirePermission('providers', 'edit'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      // Verify integration belongs to tenant
-      const integration = await integrationService.getById(input.integrationId)
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      const { integrationId, ...rawUpdateData } = input
-      
-      // Remove undefined values for exactOptionalPropertyTypes compliance
-      const updateData: any = {}
-      if (rawUpdateData.name !== undefined) updateData.name = rawUpdateData.name
-      if (rawUpdateData.status !== undefined) updateData.status = rawUpdateData.status
-      if (rawUpdateData.settings !== undefined) updateData.settings = rawUpdateData.settings
-      
-      return await integrationService.update(integrationId, updateData)
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.updateIntegration({
+        integrationId: input.integrationId,
+        tenantId: ctx.tenantContext.tenantId,
+        ...(input.name && { name: input.name }),
+        ...(input.settings && { settings: input.settings }),
+        ...(input.status && { status: input.status }),
+      })
     }),
 
   // Delete integration
@@ -96,16 +75,8 @@ export const integrationRouter = router({
     .input(z.object({ integrationId: z.string().uuid() }))
     .use(requirePermission('providers', 'delete'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      // Verify integration belongs to tenant
-      const integration = await integrationService.getById(input.integrationId)
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      await integrationService.delete(input.integrationId)
-      return { success: true }
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.deleteIntegration(input.integrationId, ctx.tenantContext.tenantId)
     }),
 
   // Test integration connection
@@ -113,15 +84,11 @@ export const integrationRouter = router({
     .input(testConnectionSchema)
     .use(requirePermission('providers', 'testConnection'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      // Verify integration belongs to tenant
-      const integration = await integrationService.getById(input.integrationId)
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      return await integrationService.testConnection(input.integrationId)
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.testConnection({
+        integrationId: input.integrationId,
+        tenantId: ctx.tenantContext.tenantId,
+      })
     }),
 
   // Get OAuth authorization URL for provider setup
@@ -132,13 +99,11 @@ export const integrationRouter = router({
     }))
     .use(requirePermission('providers', 'create'))
     .query(async ({ input, ctx }) => {
-      const oauthService = await container.resolve('OAuthService')
-      
-      return await oauthService.getAuthUrl(
-        input.provider,
-        input.redirectUri,
-        ctx.tenantContext.tenantId
-      )
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.getAuthUrl({
+        ...input,
+        tenantId: ctx.tenantContext.tenantId,
+      })
     }),
 
   // Complete OAuth authorization
@@ -149,13 +114,11 @@ export const integrationRouter = router({
       state: z.string(),
     }))
     .use(requirePermission('providers', 'create'))
-    .mutation(async ({ input, ctx: _ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      return await integrationService.completeOAuthSetup({
-        integrationId: 'temp-id', // This should be generated properly
-        code: input.code,
-        state: input.state
+    .mutation(async ({ input, ctx }) => {
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.completeAuth({
+        ...input,
+        tenantId: ctx.tenantContext.tenantId,
       })
     }),
 
@@ -168,18 +131,10 @@ export const integrationRouter = router({
     }))
     .use(requirePermission('providers', 'view'))
     .query(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      const syncService = await container.resolve('SyncManagementService')
-      
-      // Verify integration belongs to tenant
-      const integration = await integrationService.getById(input.integrationId)
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      return await syncService.getSyncLogs(input.integrationId, {
-        limit: input.limit,
-        offset: input.offset
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.getSyncLogs({
+        ...input,
+        tenantId: ctx.tenantContext.tenantId,
       })
     }),
 
@@ -191,26 +146,18 @@ export const integrationRouter = router({
     }))
     .use(requirePermission('providers', 'edit'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      const syncService = await container.resolve('SyncManagementService')
-      
-      // Verify integration belongs to tenant
-      const integration = await integrationService.getById(input.integrationId)
-      if (!integration || integration.tenantId !== ctx.tenantContext.tenantId) {
-        throw new IntegrationNotFoundError(input.integrationId)
-      }
-      
-      return await syncService.triggerSync(input.integrationId, {
-        syncType: input.syncType,
-        priority: 5
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.triggerSync({
+        ...input,
+        tenantId: ctx.tenantContext.tenantId,
       })
     }),
 
   // Get supported providers
   supportedProviders: tenantProcedure
     .query(async ({ ctx: _ctx }) => {
-      const providerService = await container.resolve('ProviderService')
-      return await providerService.getSupportedProviders()
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.getSupportedProviders()
     }),
 
   // Get available organisations for a provider after OAuth
@@ -222,13 +169,11 @@ export const integrationRouter = router({
     }))
     .use(requirePermission('providers', 'create'))
     .query(async ({ input, ctx }) => {
-      const oauthService = await container.resolve('OAuthService')
-      
-      return await oauthService.getAvailableOrganisations(
-        input.provider,
-        input.code,
-        ctx.tenantContext.tenantId
-      )
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      return await integrationAppService.getAvailableOrganisations({
+        ...input,
+        tenantId: ctx.tenantContext.tenantId,
+      })
     }),
 
   // Complete OAuth with selected organisation
@@ -250,14 +195,30 @@ export const integrationRouter = router({
     }))
     .use(requirePermission('providers', 'create'))
     .mutation(async ({ input, ctx }) => {
-      const integrationService = await container.resolve('IntegrationCrudService')
-      
-      return await integrationService.completeAuthWithOrganisation({
-        integrationId: 'temp-id', // This should be generated properly
+      const integrationAppService = container.resolve(TOKENS.INTEGRATION_APPLICATION_SERVICE) as IntegrationApplicationService
+      const command: any = {
+        provider: input.provider,
         code: input.code,
         state: input.state,
+        organisationId: input.organisationId,
+        name: input.name,
         tenantId: ctx.tenantContext.tenantId,
-        organisationId: input.organisationId
-      })
+      }
+      
+      if (input.settings) {
+        command.settings = input.settings
+      }
+      
+      if (input.tokens) {
+        command.tokens = {
+          accessToken: input.tokens.accessToken,
+          expiresAt: input.tokens.expiresAt,
+          scope: input.tokens.scope,
+          tokenType: input.tokens.tokenType,
+          ...(input.tokens.refreshToken && { refreshToken: input.tokens.refreshToken }),
+        }
+      }
+      
+      return await integrationAppService.completeAuthWithOrganisation(command)
     }),
 })

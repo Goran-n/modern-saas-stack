@@ -30,6 +30,29 @@ async function runMigrations() {
       : (result as any)?.count || 0
     log.info(`Found ${migrationCount} existing migrations`)
     
+    // Check which migrations have been applied
+    const appliedMigrations = await migrationClient`
+      SELECT id, hash, created_at 
+      FROM drizzle.__drizzle_migrations 
+      ORDER BY created_at
+    `.catch(() => [])
+    
+    log.info('Applied migrations:')
+    for (const migration of appliedMigrations as any[]) {
+      log.info(`  - ${migration.id} (hash: ${migration.hash?.substring(0, 8)}...)`)
+    }
+    
+    // Check if files table exists
+    const filesTableExists = await migrationClient`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'files'
+      )
+    `.then(res => (res as any[])[0].exists).catch(() => false)
+    
+    log.info(`Files table exists: ${filesTableExists}`)
+    
     await migrate(db, { migrationsFolder: './drizzle' })
     log.info('✅ Database migrations completed successfully')
     process.exit(0)
@@ -40,6 +63,17 @@ async function runMigrations() {
       process.exit(0)
     }
     log.error('❌ Migration failed:', error)
+    log.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint,
+      severity: error.severity
+    })
+    
+    // Log the full error object to see what we're missing
+    console.error('Full error object:', JSON.stringify(error, null, 2))
     process.exit(1)
   } finally {
     await migrationClient.end()

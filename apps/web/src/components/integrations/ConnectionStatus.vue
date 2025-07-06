@@ -3,25 +3,46 @@
     <!-- Status indicator -->
     <div :class="indicatorClasses">
       <!-- Healthy status -->
-      <CheckCircleIcon v-if="status === 'healthy'" :class="iconClasses" />
+      <CheckCircleIcon
+        v-if="status === 'healthy'"
+        :class="iconClasses"
+      />
       
       <!-- Warning status -->
-      <ExclamationTriangleIcon v-else-if="status === 'warning'" :class="iconClasses" />
+      <ExclamationTriangleIcon
+        v-else-if="status === 'warning'"
+        :class="iconClasses"
+      />
       
       <!-- Error status -->
-      <XCircleIcon v-else-if="status === 'error'" :class="iconClasses" />
+      <XCircleIcon
+        v-else-if="status === 'error'"
+        :class="iconClasses"
+      />
       
       <!-- Syncing status -->
-      <ArrowPathIcon v-else-if="status === 'syncing'" :class="[iconClasses, 'animate-spin']" />
+      <ArrowPathIcon
+        v-else-if="status === 'syncing'"
+        :class="[iconClasses, 'animate-spin']"
+      />
       
       <!-- Pending/Unknown status -->
-      <ClockIcon v-else :class="iconClasses" />
+      <ClockIcon
+        v-else
+        :class="iconClasses"
+      />
     </div>
 
     <!-- Status text -->
-    <div v-if="showText" :class="textContainerClasses">
+    <div
+      v-if="showText"
+      :class="textContainerClasses"
+    >
       <span :class="statusTextClasses">{{ statusLabel }}</span>
-      <span v-if="message && showMessage" :class="messageTextClasses">{{ message }}</span>
+      <span
+        v-if="message && showMessage"
+        :class="messageTextClasses"
+      >{{ message }}</span>
     </div>
   </div>
 </template>

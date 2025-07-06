@@ -1,6 +1,7 @@
 import { TransactionEntity } from '../../domain/transaction/index'
 import { SyncJobEntity } from '../../domain/sync-job/index'
 import { IntegrationEntity } from '../../domain/integration/index'
+import { EntityId } from '../../domain/shared/value-objects/entity-id'
 import { RequestContextManager } from '../../context/request-context'
 import { TokenManagementService } from '../../services/token-management.service'
 import { EntityLookupService, type EntityLookupMaps } from '../../services/entity-lookup.service'
@@ -208,7 +209,7 @@ export class ImportTransactionsUseCase {
     integrationId: string,
     tenantId: string
   ): Promise<IntegrationEntity> {
-    const integration = await this.integrationRepository.findById(integrationId)
+    const integration = await this.integrationRepository.findById(EntityId.from(integrationId))
     if (!integration || integration.tenantId !== tenantId) {
       throw new NotFoundError('Integration', integrationId)
     }
@@ -559,14 +560,14 @@ export class ImportTransactionsUseCase {
     // Check for existing transaction
     const existing = await this.transactionRepository.findByProviderTransactionId(
       integration.tenantId,
-      integration.id,
+      integration.id.toString(),
       providerTxn.providerTransactionId
     )
 
     if (existing) {
       if (this.shouldUpdateTransaction(existing, providerTxn)) {
         existing.updateProviderData(providerTxn.providerData)
-        existing.markAsImported(integration.id)
+        existing.markAsImported(integration.id.toString())
         await this.transactionRepository.save(existing)
         return 'updated'
       }
@@ -608,7 +609,7 @@ export class ImportTransactionsUseCase {
 
     return TransactionEntity.create({
       tenantId: integration.tenantId,
-      integrationId: integration.id,
+      integrationId: integration.id.toString(),
       providerTransactionId: providerTxn.providerTransactionId,
       providerType,
       transactionDate: providerTxn.transactionDate,
@@ -675,7 +676,7 @@ export class ImportTransactionsUseCase {
     const standardError = this.errorHandler.handle(error, {
       provider: integration.provider,
       operation: 'import_transactions',
-      integrationId: integration.id,
+      integrationId: integration.id.toString(),
       syncJobId: syncJob.id
     })
 
@@ -689,7 +690,7 @@ export class ImportTransactionsUseCase {
 
     // Track failed sync telemetry
     telemetry.trackSync({
-      integrationId: integration.id,
+      integrationId: integration.id.toString(),
       tenantId: integration.tenantId,
       provider: integration.provider,
       operation: 'import_transactions',

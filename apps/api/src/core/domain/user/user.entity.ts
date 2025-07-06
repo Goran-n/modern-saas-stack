@@ -1,4 +1,11 @@
 import { z } from 'zod'
+import { AggregateRoot } from '../shared/aggregate-root'
+import { EntityId } from '../shared/value-objects/entity-id'
+import { Email } from '../shared/value-objects/email'
+import { UserEmailChangedEvent } from './events/user-email-changed.event'
+import { UserActivatedEvent } from './events/user-activated.event'
+import { UserCreatedEvent } from './events/user-created.event'
+import type { DomainEvent } from '../shared/domain-event'
 
 export const userStatusSchema = z.enum(['active', 'suspended', 'deleted'])
 export type UserStatus = z.infer<typeof userStatusSchema>
@@ -29,7 +36,7 @@ export type UserProfile = z.infer<typeof userProfileSchema>
 export type UserPreferences = z.infer<typeof userPreferencesSchema>
 
 export interface UserEntityProps {
-  id: string
+  id: EntityId
   email: string
   phone: string | null
   profile: UserProfile
@@ -41,28 +48,50 @@ export interface UserEntityProps {
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
+  version: number
 }
 
-export class UserEntity {
-  private constructor(private props: UserEntityProps) {}
+export class UserEntity extends AggregateRoot<UserEntityProps> {
+  private constructor(props: UserEntityProps) {
+    super(props)
+  }
 
-  static create(props: Omit<UserEntityProps, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'profile' | 'preferences' | 'emailVerified' | 'phoneVerified' | 'lastLoginAt'>): UserEntity {
+  static create(
+    id: string,
+    email: string,
+    data: {
+      phone?: string
+      profile?: UserProfile
+      preferences?: UserPreferences
+    } = {}
+  ): UserEntity {
+    // Validate email format
+    const emailVO = Email.from(email)
+    
     const now = new Date()
-    return new UserEntity({
-      ...props,
-      id: crypto.randomUUID(),
-      profile: {},
-      preferences: {},
+    const userProps: UserEntityProps = {
+      id: EntityId.from(id),
+      email: emailVO.toString(),
+      phone: data.phone || null,
+      profile: data.profile || {},
+      preferences: data.preferences || {},
+      status: 'active',
       emailVerified: false,
       phoneVerified: false,
       lastLoginAt: null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-    })
+      version: 1,
+    }
+    
+    const user = new UserEntity(userProps)
+    user.addDomainEvent(new UserCreatedEvent(id, email))
+    
+    return user
   }
 
-  static fromDatabase(props: UserEntityProps): UserEntity {
+  static reconstitute(props: UserEntityProps): UserEntity {
     return new UserEntity(props)
   }
 
@@ -81,7 +110,7 @@ export class UserEntity {
     const now = new Date()
     
     return new UserEntity({
-      id: supabaseUser.id,
+      id: EntityId.from(supabaseUser.id),
       email: supabaseUser.email || '',
       phone: supabaseUser.phone || null,
       profile: {
@@ -97,10 +126,11 @@ export class UserEntity {
       createdAt: supabaseUser.created_at ? new Date(supabaseUser.created_at) : now,
       updatedAt: supabaseUser.updated_at ? new Date(supabaseUser.updated_at) : now,
       deletedAt: null,
+      version: 1,
     })
   }
 
-  get id(): string { return this.props.id }
+  get id(): EntityId { return this.props.id }
   get email(): string { return this.props.email }
   get phone(): string | null { return this.props.phone }
   get profile(): UserProfile { return this.props.profile }
@@ -112,6 +142,7 @@ export class UserEntity {
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
   get deletedAt(): Date | null { return this.props.deletedAt }
+  get version(): number { return this.props.version }
 
   get displayName(): string {
     const { firstName, lastName } = this.props.profile
@@ -153,6 +184,19 @@ export class UserEntity {
     return this.isActive() && this.props.emailVerified
   }
 
+  // Business rules and invariants
+  mustBeActive(operation: string): void {
+    if (!this.isActive()) {
+      throw new Error(`Cannot ${operation} - user is not active`)
+    }
+  }
+
+  mustBeVerified(operation: string): void {
+    if (!this.props.emailVerified) {
+      throw new Error(`Cannot ${operation} - user email is not verified`)
+    }
+  }
+
   updateProfile(profile: Partial<UserProfile>): void {
     this.props.profile = { ...this.props.profile, ...profile }
     this.touch()
@@ -163,10 +207,28 @@ export class UserEntity {
     this.touch()
   }
 
-  updateEmail(email: string): void {
-    this.props.email = email
+  changeEmail(email: string): ReadonlyArray<DomainEvent> {
+    // Validate email format
+    const emailVO = Email.from(email)
+    const newEmail = emailVO.toString()
+    
+    if (this.props.email === newEmail) {
+      return []
+    }
+    
+    // Business rule: Only active users can change email
+    if (!this.isActive()) {
+      throw new Error('Only active users can change their email address')
+    }
+    
+    const oldEmail = this.props.email
+    this.props.email = newEmail
     this.props.emailVerified = false
     this.touch()
+    
+    this.addDomainEvent(new UserEmailChangedEvent(this.props.id.toString(), oldEmail, newEmail, this.props.version))
+    
+    return this.getUncommittedEvents()
   }
 
   updatePhone(phone: string | null): void {
@@ -198,13 +260,22 @@ export class UserEntity {
     this.touch()
   }
 
-  activate(): void {
+  activate(): ReadonlyArray<DomainEvent> {
     if (this.props.status === 'deleted') {
       throw new Error('Cannot activate deleted user')
     }
+    
+    if (this.props.status === 'active') {
+      return []
+    }
+    
     this.props.status = 'active'
     this.props.deletedAt = null
     this.touch()
+    
+    this.addDomainEvent(new UserActivatedEvent(this.props.id.toString(), this.props.version))
+    
+    return this.getUncommittedEvents()
   }
 
   softDelete(): void {
@@ -222,16 +293,7 @@ export class UserEntity {
     this.touch()
   }
 
-  private touch(): void {
-    this.props.updatedAt = new Date()
-  }
 
-  toDatabase(): UserEntityProps {
-    return { ...this.props }
-  }
-
-  toPublic(): Omit<UserEntityProps, 'phone' | 'preferences' | 'emailVerified' | 'phoneVerified' | 'lastLoginAt'> {
-    const { phone, preferences, emailVerified, phoneVerified, lastLoginAt, ...publicProps } = this.props
-    return publicProps
-  }
+  // Domain entities should not know about persistence or presentation concerns
+  // Mappers in infrastructure layer will handle these transformations
 }

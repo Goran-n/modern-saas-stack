@@ -13,11 +13,17 @@
     @keydown="handleKeydown"
   >
     <!-- Pass through slots -->
-    <template v-if="$slots.trailing" #trailing>
+    <template
+      v-if="$slots.trailing"
+      #trailing
+    >
       <slot name="trailing" />
     </template>
     
-    <template v-if="$slots.help" #help>
+    <template
+      v-if="$slots.help"
+      #help
+    >
       <slot name="help" />
     </template>
   </BaseInput>
@@ -27,13 +33,12 @@
 import { ref, computed, watch } from 'vue'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import BaseInput from './BaseInput.vue'
-import type { Size } from '../design-system/tokens'
 
 // Component props
 interface Props {
   modelValue?: string
   placeholder?: string
-  size?: Size
+  size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   clearable?: boolean
   debounceMs?: number

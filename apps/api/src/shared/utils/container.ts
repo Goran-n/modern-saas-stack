@@ -79,6 +79,7 @@ export const container = Container.getInstance()
 export const TOKENS = {
   // Database
   DATABASE: Symbol('Database'),
+  QUERY_EXECUTOR: Symbol('QueryExecutor'),
   
   // Repositories
   TENANT_REPOSITORY: Symbol('TenantRepository'),
@@ -88,18 +89,28 @@ export const TOKENS = {
   TRANSACTION_REPOSITORY: Symbol('TransactionRepository'),
   SYNC_JOB_REPOSITORY: Symbol('SyncJobRepository'),
   FILE_REPOSITORY: Symbol('FileRepository'),
+  USER_CHANNEL_REPOSITORY: Symbol('UserChannelRepository'),
+  CONVERSATION_REPOSITORY: Symbol('ConversationRepository'),
+  CONVERSATION_MESSAGE_REPOSITORY: Symbol('ConversationMessageRepository'),
+  ORCHESTRATION_CONTEXT_REPOSITORY: Symbol('OrchestrationContextRepository'),
+  AI_DECISION_REPOSITORY: Symbol('AIDecisionRepository'),
   
-  // Services
-  TENANT_SERVICE: Symbol('TenantService'),
-  TENANT_MEMBER_SERVICE: Symbol('TenantMemberService'),
-  USER_SERVICE: Symbol('UserService'),
-  INTEGRATION_SERVICE: Symbol('IntegrationService'),
-  SYNC_SERVICE: Symbol('SyncService'),
+  // Application Services (CQRS-based)
+  COMMAND_BUS: Symbol('CommandBus'),
+  QUERY_BUS: Symbol('QueryBus'),
   TOKEN_MANAGEMENT_SERVICE: Symbol('TokenManagementService'),
   ENTITY_LOOKUP_SERVICE: Symbol('EntityLookupService'),
   ERROR_HANDLER: Symbol('ErrorHandler'),
   FILE_SERVICE: Symbol('FileService'),
   FILE_STORAGE: Symbol('FileStorage'),
+  USER_CHANNEL_SERVICE: Symbol('UserChannelService'),
+  CONVERSATION_SERVICE: Symbol('ConversationService'),
+  MESSAGING_SERVICE: Symbol('MessagingService'),
+  ORCHESTRATION_SERVICE: Symbol('OrchestrationService'),
+  AI_SERVICE: Symbol('AIService'),
+  SYNC_APPLICATION_SERVICE: Symbol('SyncApplicationService'),
+  INTEGRATION_APPLICATION_SERVICE: Symbol('IntegrationApplicationService'),
+  TENANT_APPLICATION_SERVICE: Symbol('TenantApplicationService'),
   
   // Providers
   XERO_PROVIDER: Symbol('XeroProvider'),
@@ -114,3 +125,9 @@ export const TOKENS = {
 } as const
 
 export type ServiceToken = typeof TOKENS[keyof typeof TOKENS]
+
+// Helper function to set up the container
+export async function setupContainer(): Promise<void> {
+  const { bootstrapDependencies } = await import('../../infrastructure/bootstrap')
+  bootstrapDependencies()
+}

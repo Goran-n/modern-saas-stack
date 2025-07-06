@@ -303,7 +303,7 @@ export class ImportBankStatementsUseCase {
     dryRun: boolean
   ): Promise<{ created: number; updated: number; skipped: number; errors: number; errorDetails: string[] }> {
     let created = 0
-    let updated = 0
+    const updated = 0
     let skipped = 0
     let errors = 0
     const errorDetails: string[] = []

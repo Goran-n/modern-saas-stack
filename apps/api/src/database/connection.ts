@@ -34,7 +34,9 @@ export async function connectDatabase(): Promise<void> {
     if (client) {
       try {
         await client.end()
-      } catch {}
+      } catch {
+        // Ignore error when closing failed connection
+      }
       client = null
     }
     db = null

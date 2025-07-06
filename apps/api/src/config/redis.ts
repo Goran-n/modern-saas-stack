@@ -20,7 +20,7 @@ export function getRedisConnection(): Redis {
       port: config.port,
       connectTimeout: 10000,
       lazyConnect: true,
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: null, // Required for BullMQ workers
     }
     
     // Only add optional properties if they exist

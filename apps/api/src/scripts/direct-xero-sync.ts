@@ -8,6 +8,7 @@ import { integrations } from '../database/schema'
 import { eq, and } from 'drizzle-orm'
 import { IntegrationEntity } from '../core/domain/integration/index'
 import type { IntegrationEntityProps, IntegrationProvider, IntegrationType, IntegrationStatus } from '../core/domain/integration/index'
+import { EntityId } from '../core/domain/shared/value-objects/entity-id'
 import { integrationSettingsSchema } from '../core/domain/integration/index'
 import { RequestContextManager } from '../core/context/request-context'
 
@@ -47,7 +48,7 @@ async function directXeroSync() {
     
     const dbRow = integrationData[0]
     const integrationProps: IntegrationEntityProps = {
-      id: dbRow.id,
+      id: EntityId.from(dbRow.id),
       tenantId: dbRow.tenantId,
       provider: dbRow.provider as IntegrationProvider,
       integrationType: dbRow.integrationType as IntegrationType,

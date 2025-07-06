@@ -1,7 +1,6 @@
 import { bootstrapDependencies } from './src/infrastructure/bootstrap.js'
 import { container, TOKENS } from './src/shared/utils/container.js'
 import { connectDatabase } from './src/database/connection.js'
-import log from './src/config/logger.js'
 
 const integrationId = '93d0753d-7c2f-49c1-9e14-c1149b68d355'
 const tenantId = '02c24a6e-7e7a-4c1e-812d-0febd140efa2'

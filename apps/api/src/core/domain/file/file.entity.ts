@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { BaseEntity } from '../base.entity'
+import { EntityId } from '../shared/value-objects/entity-id'
 
 export const fileSourceSchema = z.enum(['dropbox', 'google_drive', 'onedrive', 'office365', 'whatsapp', 'manual'])
 export type FileSource = z.infer<typeof fileSourceSchema>
@@ -10,7 +12,7 @@ export const reviewStatusSchema = z.enum(['not_reviewed', 'ignored', 'reviewed',
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>
 
 export interface FileEntityProps {
-  id: string
+  id: EntityId
   tenantId: string
   integrationId: string | null
   
@@ -56,14 +58,16 @@ export interface FileEntityProps {
   version: number
 }
 
-export class FileEntity {
-  private constructor(private props: FileEntityProps) {}
+export class FileEntity extends BaseEntity<FileEntityProps> {
+  private constructor(props: FileEntityProps) {
+    super(props)
+  }
 
   static create(props: Omit<FileEntityProps, 'id' | 'status' | 'reviewStatus' | 'isDuplicate' | 'duplicateOf' | 'virusScanned' | 'virusScanResult' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'version'>): FileEntity {
     const now = new Date()
     return new FileEntity({
       ...props,
-      id: crypto.randomUUID(),
+      id: EntityId.generate(),
       status: 'uploaded',
       reviewStatus: 'not_reviewed',
       isDuplicate: false,
@@ -81,7 +85,7 @@ export class FileEntity {
     return new FileEntity(props)
   }
 
-  get id(): string { return this.props.id }
+  get id(): EntityId { return this.props.id }
   get tenantId(): string { return this.props.tenantId }
   get integrationId(): string | null { return this.props.integrationId }
   get filename(): string { return this.props.filename }
@@ -198,17 +202,13 @@ export class FileEntity {
     this.touch()
   }
 
-  private touch(): void {
-    this.props.updatedAt = new Date()
-    this.props.version += 1
-  }
 
   toDatabase(): FileEntityProps {
     return { ...this.props }
   }
 
   toPublic(): Omit<FileEntityProps, 'tenantId' | 'storageKey' | 'virusScanResult'> {
-    const { tenantId, storageKey, virusScanResult, ...publicProps } = this.props
+    const { tenantId: _tenantId, storageKey: _storageKey, virusScanResult: _virusScanResult, ...publicProps } = this.props
     return publicProps
   }
 }

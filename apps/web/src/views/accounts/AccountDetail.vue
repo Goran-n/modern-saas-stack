@@ -156,17 +156,32 @@ const navigateBack = () => {
     <div class="mb-8">
       <div class="flex items-center mb-4">
         <button
-          @click="navigateBack"
           class="mr-4 text-gray-500 hover:text-gray-700 transition-colors"
+          @click="navigateBack"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
-        <h1 class="text-3xl font-bold text-gray-900">{{ account?.name || 'Loading...' }}</h1>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ account?.name || 'Loading...' }}
+        </h1>
       </div>
       
-      <div v-if="account" class="flex items-center gap-6 text-sm text-gray-600">
+      <div
+        v-if="account"
+        class="flex items-center gap-6 text-sm text-gray-600"
+      >
         <div>
           <span class="font-medium">Code:</span>
           <span class="ml-1">{{ account.code }}</span>
@@ -193,30 +208,40 @@ const navigateBack = () => {
     </div>
 
     <!-- Error state -->
-    <ErrorAlert v-if="error" :error="error" class="mb-6" />
+    <ErrorAlert
+      v-if="error"
+      :error="error"
+      class="mb-6"
+    />
 
     <!-- Tabs (only for bank accounts) -->
-    <div v-if="account?.isBankAccount" class="mb-6">
+    <div
+      v-if="account?.isBankAccount"
+      class="mb-6"
+    >
       <div class="border-b border-gray-200">
         <nav class="-mb-px flex space-x-8">
           <button
-            @click="activeTab = 'bankFeed'"
             class="py-2 px-1 border-b-2 font-medium text-sm transition-colors"
             :class="activeTab === 'bankFeed' 
               ? 'border-primary-500 text-primary-600' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            @click="activeTab = 'bankFeed'"
           >
             Bank Feed
-            <span v-if="unreconciledCount > 0" class="ml-2 bg-red-100 text-red-800 py-0.5 px-2 rounded-full text-xs">
+            <span
+              v-if="unreconciledCount > 0"
+              class="ml-2 bg-red-100 text-red-800 py-0.5 px-2 rounded-full text-xs"
+            >
               {{ unreconciledCount }}
             </span>
           </button>
           <button
-            @click="activeTab = 'transactions'"
             class="py-2 px-1 border-b-2 font-medium text-sm transition-colors"
             :class="activeTab === 'transactions' 
               ? 'border-primary-500 text-primary-600' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            @click="activeTab = 'transactions'"
           >
             Transactions
           </button>
@@ -225,18 +250,30 @@ const navigateBack = () => {
     </div>
 
     <!-- Loading state -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    <div
+      v-if="isLoading"
+      class="flex justify-center py-12"
+    >
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
     </div>
 
     <!-- Content -->
     <div v-else>
       <!-- Bank Feed Tab -->
-      <div v-if="account?.isBankAccount && activeTab === 'bankFeed'" class="bg-white rounded-lg shadow overflow-hidden">
-        <div v-if="bankStatements.length === 0" class="p-8 text-center text-gray-500">
+      <div
+        v-if="account?.isBankAccount && activeTab === 'bankFeed'"
+        class="bg-white rounded-lg shadow overflow-hidden"
+      >
+        <div
+          v-if="bankStatements.length === 0"
+          class="p-8 text-center text-gray-500"
+        >
           No bank statements found for this account.
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200">
+        <table
+          v-else
+          class="min-w-full divide-y divide-gray-200"
+        >
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -254,18 +291,26 @@ const navigateBack = () => {
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="statement in bankStatements" :key="statement.id">
+            <tr
+              v-for="statement in bankStatements"
+              :key="statement.id"
+            >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ formatDate(statement.transactionDate) }}
               </td>
               <td class="px-6 py-4 text-sm text-gray-900">
                 <div>{{ statement.description }}</div>
-                <div v-if="statement.merchantName" class="text-xs text-gray-500 mt-1">
+                <div
+                  v-if="statement.merchantName"
+                  class="text-xs text-gray-500 mt-1"
+                >
                   {{ statement.merchantName }}
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
-                  :class="parseFloat(statement.amount) < 0 ? 'text-red-600' : 'text-green-600'">
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
+                :class="parseFloat(statement.amount) < 0 ? 'text-red-600' : 'text-green-600'"
+              >
                 {{ formatCurrency(statement.amount) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -284,11 +329,20 @@ const navigateBack = () => {
       </div>
 
       <!-- Transactions Tab -->
-      <div v-if="!account?.isBankAccount || activeTab === 'transactions'" class="bg-white rounded-lg shadow overflow-hidden">
-        <div v-if="transactions.length === 0" class="p-8 text-center text-gray-500">
+      <div
+        v-if="!account?.isBankAccount || activeTab === 'transactions'"
+        class="bg-white rounded-lg shadow overflow-hidden"
+      >
+        <div
+          v-if="transactions.length === 0"
+          class="p-8 text-center text-gray-500"
+        >
           No transactions found for this account.
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200">
+        <table
+          v-else
+          class="min-w-full divide-y divide-gray-200"
+        >
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -309,21 +363,29 @@ const navigateBack = () => {
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="transaction in transactions" :key="transaction.id">
+            <tr
+              v-for="transaction in transactions"
+              :key="transaction.id"
+            >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ formatDate(transaction.transactionDate) }}
               </td>
               <td class="px-6 py-4 text-sm text-gray-900">
                 <div>{{ transaction.rawDescription || transaction.enrichedDescription || '-' }}</div>
-                <div v-if="transaction.supplierName" class="text-xs text-gray-500 mt-1">
+                <div
+                  v-if="transaction.supplierName"
+                  class="text-xs text-gray-500 mt-1"
+                >
                   {{ transaction.supplierName }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ transaction.transactionReference || '-' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
-                  :class="parseFloat(transaction.amount) < 0 ? 'text-red-600' : 'text-green-600'">
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium"
+                :class="parseFloat(transaction.amount) < 0 ? 'text-red-600' : 'text-green-600'"
+              >
                 {{ formatCurrency(transaction.amount) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-center">

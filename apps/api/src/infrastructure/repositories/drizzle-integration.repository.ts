@@ -1,6 +1,7 @@
 import { eq, desc, count, and } from 'drizzle-orm'
 import { IntegrationEntity } from '../../core/domain/integration/index'
 import type { IntegrationRepository } from '../../core/ports/integration.repository'
+import { EntityId } from '../../core/domain/shared/value-objects/entity-id'
 import { integrations, type Integration, type NewIntegration } from '../../database/schema/integrations'
 import { BaseRepository, type Database } from '../database/types'
 
@@ -13,10 +14,10 @@ export class DrizzleIntegrationRepository extends BaseRepository implements Inte
     return this.save(integration)
   }
 
-  async update(id: string, data: Partial<IntegrationEntity>): Promise<IntegrationEntity> {
+  async update(id: EntityId, data: Partial<IntegrationEntity>): Promise<IntegrationEntity> {
     const existing = await this.findById(id)
     if (!existing) {
-      throw new Error(`Integration not found: ${id}`)
+      throw new Error(`Integration not found: ${id.toString()}`)
     }
     
     // Update the entity with new data
@@ -35,7 +36,7 @@ export class DrizzleIntegrationRepository extends BaseRepository implements Inte
     
     // Convert IntegrationEntityProps to database format
     const dbData: NewIntegration = {
-      id: data.id,
+      id: data.id.toString(),
       tenantId: data.tenantId,
       integrationType: data.integrationType,
       provider: data.provider,
@@ -66,11 +67,11 @@ export class DrizzleIntegrationRepository extends BaseRepository implements Inte
     return this.mapToEntity(result)
   }
 
-  async findById(id: string): Promise<IntegrationEntity | null> {
+  async findById(id: EntityId): Promise<IntegrationEntity | null> {
     const [result] = await (this.db as any)
       .select()
       .from(integrations)
-      .where(eq(integrations.id, id))
+      .where(eq(integrations.id, id.toString()))
 
     return result ? this.mapToEntity(result) : null
   }
@@ -241,7 +242,7 @@ export class DrizzleIntegrationRepository extends BaseRepository implements Inte
 
   private mapToEntity(dbIntegration: Integration): IntegrationEntity {
     return IntegrationEntity.fromDatabase({
-      id: dbIntegration.id,
+      id: EntityId.from(dbIntegration.id),
       tenantId: dbIntegration.tenantId,
       provider: dbIntegration.provider as any, // Type assertion needed for enum conversion
       integrationType: dbIntegration.integrationType,

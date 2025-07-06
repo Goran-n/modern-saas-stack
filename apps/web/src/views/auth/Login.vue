@@ -11,42 +11,48 @@
         @submit.prevent="handleSubmit"
       >
         <div class="space-y-4">
-          <FormField
-            label="Email address"
-            required
-            :error-message="error && error.includes('email') ? error : undefined"
-          >
+          <div>
+            <label
+              for="email"
+              class="block text-sm font-medium text-gray-700"
+            >
+              Email address
+            </label>
             <BaseInput
-              v-model="email"
+              id="email"
+              v-model="formData.email"
               type="email"
               placeholder="Enter your email"
               autocomplete="email"
-              required
-              :error-message="error && error.includes('email') ? error : undefined"
+              :error="validationErrors.email"
+              @blur="validateField('email')"
             />
-          </FormField>
+          </div>
 
-          <FormField
-            label="Password"
-            required
-            :error-message="error && error.includes('password') ? error : undefined"
-          >
+          <div>
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
             <BaseInput
-              v-model="password"
+              id="password"
+              v-model="formData.password"
               type="password"
               placeholder="Enter your password"
               autocomplete="current-password"
-              required
-              :error-message="error && error.includes('password') ? error : undefined"
+              :error="validationErrors.password"
+              @blur="validateField('password')"
             />
-          </FormField>
+          </div>
         </div>
 
         <div
-          v-if="error && !error.includes('email') && !error.includes('password')"
-          class="text-error-600 text-sm p-3 bg-error-50 border border-error-200 rounded-md"
+          v-if="authError"
+          class="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-md"
         >
-          {{ error }}
+          {{ authError }}
         </div>
 
         <div>
@@ -54,11 +60,11 @@
             type="submit"
             variant="primary"
             size="lg"
-            :disabled="loading"
+            :disabled="loading || !isFormValid"
             :loading="loading"
             class="w-full"
           >
-            {{ loading ? 'Signing in...' : 'Sign in' }}
+            Sign in
           </BaseButton>
         </div>
 
@@ -76,32 +82,77 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../../stores/auth'
-import BaseInput from '../../components/ui/BaseInput.vue'
-import BaseButton from '../../components/ui/BaseButton.vue'
-import FormField from '../../components/form/FormField.vue'
+import { useAuthStore } from '@/stores/auth'
+import { createValidator, required, email, minLength } from '@/utils/validation'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
-const error = ref<string | null>(null)
-const loading = ref(false)
+const formData = reactive({
+  email: '',
+  password: ''
+})
 
-const handleSubmit = async () => {
-  if (!email.value || !password.value) return
+const validationErrors = reactive({
+  email: '',
+  password: ''
+})
+
+const loading = ref(false)
+const authError = ref('')
+
+const validators = {
+  email: createValidator([
+    required('Email is required'),
+    email('Please enter a valid email address')
+  ]),
+  password: createValidator([
+    required('Password is required'),
+    minLength(6, 'Password must be at least 6 characters')
+  ])
+}
+
+const isFormValid = computed(() => {
+  return formData.email && formData.password && 
+         !validationErrors.email && !validationErrors.password
+})
+
+function validateField(field: keyof typeof formData) {
+  const result = validators[field](formData[field])
+  validationErrors[field] = result.errors[0] || ''
+}
+
+function validateForm(): boolean {
+  let isValid = true
+  
+  for (const field of Object.keys(validators) as Array<keyof typeof validators>) {
+    validateField(field)
+    if (validationErrors[field]) {
+      isValid = false
+    }
+  }
+  
+  return isValid
+}
+
+async function handleSubmit() {
+  authError.value = ''
+  
+  if (!validateForm()) {
+    return
+  }
 
   loading.value = true
-  error.value = null
 
   try {
-    await authStore.signIn(email.value, password.value)
+    await authStore.signIn(formData.email, formData.password)
     router.push('/')
   } catch (err) {
-    error.value = (err as Error).message
+    authError.value = (err as Error).message
   } finally {
     loading.value = false
   }

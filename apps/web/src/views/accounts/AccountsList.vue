@@ -1,40 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { trpc } from '@/lib/trpc'
+import { useAccounts } from '@/composables/useAccounts'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import SearchInput from '@/components/ui/SearchInput.vue'
 import ErrorAlert from '@/components/ui/ErrorAlert.vue'
 
 const router = useRouter()
 
-// State
-const isLoading = ref(true)
-const error = ref<Error | null>(null)
-const accountsData = ref<{ accounts: any[], count: number } | null>(null)
-
-// Fetch accounts
-const fetchAccounts = async () => {
-  try {
-    isLoading.value = true
-    error.value = null
-    const result = await trpc.account.list.query()
-    accountsData.value = result
-  } catch (err) {
-    error.value = err as Error
-    console.error('Failed to fetch accounts:', err)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Computed properties
-const accounts = computed(() => accountsData.value?.accounts || [])
-const bankAccounts = computed(() => accounts.value.filter(acc => acc.isBankAccount))
-const glAccounts = computed(() => accounts.value.filter(acc => !acc.isBankAccount))
-
 // Search functionality
 const searchQuery = ref('')
+
+// Use accounts composable with search
+const {
+  loading: isLoading,
+  error,
+  bankAccounts,
+  glAccounts,
+  loadAccounts,
+  formatCurrency
+} = useAccounts({ searchQuery })
+
+// Filter accounts based on search
 const filteredBankAccounts = computed(() => {
   if (!searchQuery.value) return bankAccounts.value
   const query = searchQuery.value.toLowerCase()
@@ -58,33 +45,26 @@ const filteredGLAccounts = computed(() => {
 const navigateToAccount = (accountId: string) => {
   router.push(`/accounts/${accountId}`)
 }
-
-// Format currency
-const formatCurrency = (amount: number | string | null) => {
-  if (!amount) return '£0.00'
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('en-GB', { 
-    style: 'currency', 
-    currency: 'GBP' 
-  }).format(num)
-}
-
-// Fetch data on mount
-onMounted(() => {
-  fetchAccounts()
-})
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Accounts</h1>
-      <p class="text-gray-600">View all your bank and general ledger accounts</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        Accounts
+      </h1>
+      <p class="text-gray-600">
+        View all your bank and general ledger accounts
+      </p>
     </div>
 
     <!-- Error state -->
-    <ErrorAlert v-if="error" :error="error" class="mb-6" />
+    <ErrorAlert
+      v-if="error"
+      :error="error"
+      class="mb-6"
+    />
 
     <!-- Search -->
     <div class="mb-6">
@@ -96,15 +76,23 @@ onMounted(() => {
     </div>
 
     <!-- Loading state -->
-    <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    <div
+      v-if="isLoading"
+      class="flex justify-center py-12"
+    >
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
     </div>
 
     <!-- Content -->
-    <div v-else class="space-y-8">
+    <div
+      v-else
+      class="space-y-8"
+    >
       <!-- Bank Accounts Section -->
       <section v-if="bankAccounts.length > 0">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Bank Accounts</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Bank Accounts
+        </h2>
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -135,8 +123,12 @@ onMounted(() => {
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div class="text-sm font-medium text-gray-900">{{ account.name }}</div>
-                    <div class="text-sm text-gray-500">{{ account.code }}</div>
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ account.name }}
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      {{ account.code }}
+                    </div>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -146,7 +138,7 @@ onMounted(() => {
                   {{ account.bankAccountType || 'Bank' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
-                  {{ formatCurrency(account.balance) }}
+                  {{ formatCurrency(account.balance || 0) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <span
@@ -166,7 +158,9 @@ onMounted(() => {
 
       <!-- GL Accounts Section -->
       <section v-if="glAccounts.length > 0">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">General Ledger Accounts</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          General Ledger Accounts
+        </h2>
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -193,12 +187,16 @@ onMounted(() => {
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div class="text-sm font-medium text-gray-900">{{ account.name }}</div>
-                    <div class="text-sm text-gray-500">{{ account.code }}</div>
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ account.name }}
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      {{ account.code }}
+                    </div>
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ account.type }}
+                  {{ account.type || account.accountType }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ account._class || '-' }}
@@ -220,8 +218,13 @@ onMounted(() => {
       </section>
 
       <!-- Empty state -->
-      <div v-if="accounts.length === 0" class="text-center py-12">
-        <p class="text-gray-500">No accounts found. Please sync your data from your accounting provider.</p>
+      <div
+        v-if="bankAccounts.length === 0 && glAccounts.length === 0"
+        class="text-center py-12"
+      >
+        <p class="text-gray-500">
+          No accounts found. Please sync your data from your accounting provider.
+        </p>
       </div>
     </div>
   </div>

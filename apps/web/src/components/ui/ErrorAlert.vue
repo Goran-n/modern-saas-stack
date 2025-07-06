@@ -48,39 +48,48 @@
               <p>{{ formattedError }}</p>
             </slot>
           </div>
-          <div v-if="actions.length > 0" class="mt-4">
+          <div
+            v-if="actions.length > 0"
+            class="mt-4"
+          >
             <div class="-mx-2 -my-1.5 flex">
               <button
                 v-for="action in actions"
                 :key="action.label"
                 type="button"
-                @click="action.handler"
                 :class="[
                   'rounded-md px-2 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2',
                   variantClasses[variant].button,
                   variantClasses[variant].buttonHover,
                   variantClasses[variant].buttonFocus
                 ]"
+                @click="action.handler"
               >
                 {{ action.label }}
               </button>
             </div>
           </div>
         </div>
-        <div v-if="dismissible" class="ml-auto pl-3">
+        <div
+          v-if="dismissible"
+          class="ml-auto pl-3"
+        >
           <div class="-mx-1.5 -my-1.5">
             <button
               type="button"
-              @click="handleDismiss"
               :class="[
                 'inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2',
                 variantClasses[variant].closeButton,
                 variantClasses[variant].closeButtonHover,
                 variantClasses[variant].closeButtonFocus
               ]"
+              @click="handleDismiss"
             >
               <span class="sr-only">Dismiss</span>
-              <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+              <XMarkIcon
+                class="h-5 w-5"
+                aria-hidden="true"
+              />
             </button>
           </div>
         </div>

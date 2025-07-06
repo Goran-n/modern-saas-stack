@@ -2,11 +2,15 @@ import { middleware } from '../lib/trpc'
 import { TenantMemberService } from '../services/tenant-member.service'
 import type { MemberPermissions } from '../database/schema/tenant-members'
 import { AuthenticationError, InsufficientPermissionsError } from '../lib/errors'
+import { container, TOKENS } from '../shared/utils/container'
+import type { TenantMemberRepository } from '../core/ports/tenant-member.repository'
 
 type PermissionResource = keyof MemberPermissions
 type PermissionAction = 'view' | 'edit' | 'create' | 'delete' | 'update' | 'testConnection' | 'manageCredentials'
 
-const memberService = new TenantMemberService()
+const memberService = new TenantMemberService(
+  container.resolve<TenantMemberRepository>(TOKENS.TENANT_MEMBER_REPOSITORY)
+)
 
 export const requirePermission = (
   resource: PermissionResource,
@@ -21,7 +25,7 @@ export const requirePermission = (
       throw new AuthenticationError('No membership context available')
     }
 
-    const hasPermission = memberService.hasPermission(
+    const hasPermission = await memberService.hasPermission(
       ctx.tenantContext.membership!,
       resource,
       action
@@ -43,13 +47,15 @@ export const requireAnyPermission = (
       throw new AuthenticationError('No tenant/membership context available')
     }
 
-    const hasAnyPermission = permissions.some(({ resource, action }) =>
-      memberService.hasPermission(
-        ctx.tenantContext!.membership,
-        resource,
-        action
+    const hasAnyPermission = await Promise.all(
+      permissions.map(({ resource, action }) =>
+        memberService.hasPermission(
+          ctx.tenantContext!.membership,
+          resource,
+          action
+        )
       )
-    )
+    ).then(results => results.some(result => result))
 
     if (!hasAnyPermission) {
       const permissionList = permissions.map(p => `${p.action} ${String(p.resource)}`).join(', ')

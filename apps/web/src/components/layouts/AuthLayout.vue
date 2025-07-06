@@ -4,12 +4,20 @@
       <!-- Logo/Brand -->
       <div class="text-center">
         <slot name="logo">
-          <h1 class="text-4xl font-bold text-primary-600">Kibly</h1>
+          <h1 class="text-4xl font-bold text-primary-600">
+            Kibly
+          </h1>
         </slot>
-        <h2 v-if="title" class="mt-6 text-3xl font-extrabold text-neutral-900">
+        <h2
+          v-if="title"
+          class="mt-6 text-3xl font-extrabold text-neutral-900"
+        >
           {{ title }}
         </h2>
-        <p v-if="subtitle" class="mt-2 text-sm text-neutral-600">
+        <p
+          v-if="subtitle"
+          class="mt-2 text-sm text-neutral-600"
+        >
           {{ subtitle }}
           <slot name="subtitle-action" />
         </p>
@@ -21,7 +29,10 @@
       </div>
 
       <!-- Footer -->
-      <div v-if="$slots.footer" class="mt-6">
+      <div
+        v-if="$slots.footer"
+        class="mt-6"
+      >
         <slot name="footer" />
       </div>
     </div>

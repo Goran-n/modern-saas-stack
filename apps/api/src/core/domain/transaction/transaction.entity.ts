@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { BaseEntity } from '../base.entity'
+import { EntityId } from '../shared/value-objects/entity-id'
 
 export const providerTypeSchema = z.enum(['xero', 'quickbooks', 'bank_direct', 'manual', 'csv_import'])
 export type ProviderType = z.infer<typeof providerTypeSchema>
@@ -10,7 +12,7 @@ export const enrichmentStatusSchema = z.enum(['pending', 'processing', 'complete
 export type EnrichmentStatus = z.infer<typeof enrichmentStatusSchema>
 
 export interface TransactionEntityProps {
-  id: string
+  id: EntityId
   tenantId: string
   integrationId: string | null
   providerTransactionId: string | null
@@ -67,14 +69,16 @@ export interface TransactionEntityProps {
   version: number
 }
 
-export class TransactionEntity {
-  private constructor(private props: TransactionEntityProps) {}
+export class TransactionEntity extends BaseEntity<TransactionEntityProps> {
+  private constructor(props: TransactionEntityProps) {
+    super(props)
+  }
 
   static create(props: Omit<TransactionEntityProps, 'id' | 'isReconciled' | 'reconciledAt' | 'reconciledBy' | 'status' | 'enrichmentStatus' | 'aiTags' | 'createdAt' | 'updatedAt' | 'syncedAt' | 'version'>): TransactionEntity {
     const now = new Date()
     return new TransactionEntity({
       ...props,
-      id: crypto.randomUUID(),
+      id: EntityId.generate(),
       isReconciled: false,
       reconciledAt: null,
       reconciledBy: null,
@@ -92,7 +96,7 @@ export class TransactionEntity {
     return new TransactionEntity(props)
   }
 
-  get id(): string { return this.props.id }
+  get id(): EntityId { return this.props.id }
   get tenantId(): string { return this.props.tenantId }
   get integrationId(): string | null { return this.props.integrationId }
   get providerTransactionId(): string | null { return this.props.providerTransactionId }
@@ -269,17 +273,13 @@ export class TransactionEntity {
     this.touch()
   }
 
-  private touch(): void {
-    this.props.updatedAt = new Date()
-    this.props.version += 1
-  }
 
   toDatabase(): TransactionEntityProps {
     return { ...this.props }
   }
 
   toPublic(): Omit<TransactionEntityProps, 'tenantId' | 'providerData'> {
-    const { tenantId, providerData, ...publicProps } = this.props
+    const { tenantId: _tenantId, providerData: _providerData, ...publicProps } = this.props
     return publicProps
   }
 }

@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { BaseEntity } from '../base.entity'
+import { EntityId } from '../shared/value-objects/entity-id'
 
 export const tenantStatusSchema = z.enum(['active', 'suspended', 'deleted'])
 export type TenantStatus = z.infer<typeof tenantStatusSchema>
@@ -43,7 +45,7 @@ export type TenantSubscription = z.infer<typeof tenantSubscriptionSchema>
 export type TenantMetadata = z.infer<typeof tenantMetadataSchema>
 
 export interface TenantEntityProps {
-  id: string
+  id: EntityId
   name: string
   slug: string
   email: string
@@ -56,14 +58,16 @@ export interface TenantEntityProps {
   deletedAt: Date | null
 }
 
-export class TenantEntity {
-  private constructor(private props: TenantEntityProps) {}
+export class TenantEntity extends BaseEntity<TenantEntityProps> {
+  private constructor(props: TenantEntityProps) {
+    super(props)
+  }
 
   static create(props: Omit<TenantEntityProps, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>): TenantEntity {
     const now = new Date()
     return new TenantEntity({
       ...props,
-      id: crypto.randomUUID(),
+      id: EntityId.generate(),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -74,7 +78,7 @@ export class TenantEntity {
     return new TenantEntity(props)
   }
 
-  get id(): string { return this.props.id }
+  get id(): EntityId { return this.props.id }
   get name(): string { return this.props.name }
   get slug(): string { return this.props.slug }
   get email(): string { return this.props.email }
@@ -168,9 +172,6 @@ export class TenantEntity {
     this.touch()
   }
 
-  private touch(): void {
-    this.props.updatedAt = new Date()
-  }
 
   toDatabase(): TenantEntityProps {
     return { ...this.props }

@@ -1,313 +1,315 @@
-import { eq, and } from 'drizzle-orm'
-import { getDatabase } from '../database/connection'
-import { 
-  tenantMembers, 
-  type TenantMember, 
-  type MemberPermissions,
-  type RoleType,
-  DEFAULT_ROLE_PERMISSIONS,
-  ROLE_HIERARCHY
-} from '../database/schema'
-import { generateInvitationToken } from '../utils/crypto'
-import log from '../config/logger'
+import type { TenantMemberRepository } from '../core/ports/tenant-member.repository'
+import type { TenantMemberEntity, Role, MemberPermissions, MemberStatus } from '../core/domain/tenant'
+import { TenantMemberEntity as TenantMemberEntityClass } from '../core/domain/tenant'
+import { container, TOKENS } from '../shared/utils/container'
+
+export interface CreateMemberData {
+  tenantId: string
+  userId: string
+  role: Role
+  status?: MemberStatus
+  invitationExpiryHours?: number
+}
+
+export interface UpdateMemberData {
+  role?: Role
+  permissions?: Partial<MemberPermissions>
+  status?: MemberStatus
+}
 
 export class TenantMemberService {
-  private db = getDatabase()
+  constructor(
+    private readonly tenantMemberRepository: TenantMemberRepository
+  ) {}
+
+  async findById(id: string): Promise<TenantMemberEntity | null> {
+    return this.tenantMemberRepository.findById(id)
+  }
+
+  async findByTenantAndUser(tenantId: string, userId: string): Promise<TenantMemberEntity | null> {
+    return this.tenantMemberRepository.findByUserAndTenant(userId, tenantId)
+  }
+
+  async findByTenant(tenantId: string): Promise<TenantMemberEntity[]> {
+    return this.tenantMemberRepository.findByTenant(tenantId)
+  }
+
+  async findByUser(userId: string): Promise<TenantMemberEntity[]> {
+    return this.tenantMemberRepository.findByUser(userId)
+  }
+
+  async findByInvitationToken(token: string): Promise<TenantMemberEntity | null> {
+    return this.tenantMemberRepository.findByInvitationToken(token)
+  }
+
+  async create(data: CreateMemberData): Promise<TenantMemberEntity> {
+    // Check if member already exists
+    const existing = await this.tenantMemberRepository.exists(data.userId, data.tenantId)
+    if (existing) {
+      throw new Error('User is already a member of this tenant')
+    }
+
+    // Create member entity
+    const member = TenantMemberEntityClass.create({
+      tenantId: data.tenantId,
+      userId: data.userId,
+      role: data.role,
+      status: data.status || 'pending',
+      invitationToken: null,
+      invitationExpiresAt: null,
+      joinedAt: data.status === 'active' ? new Date() : null,
+      lastAccessAt: null
+    })
+
+    // Generate invitation if status is pending
+    if (member.isPending() && data.invitationExpiryHours !== 0) {
+      member.generateInvitation(data.invitationExpiryHours || 72)
+    }
+
+    return this.tenantMemberRepository.save(member)
+  }
+
+  async update(id: string, data: UpdateMemberData): Promise<TenantMemberEntity> {
+    const member = await this.tenantMemberRepository.findById(id)
+    if (!member) {
+      throw new Error(`Member with id ${id} not found`)
+    }
+
+    // Update role
+    if (data.role) {
+      member.changeRole(data.role)
+    }
+
+    // Update permissions
+    if (data.permissions) {
+      member.updatePermissions(data.permissions)
+    }
+
+    // Update status
+    if (data.status) {
+      switch (data.status) {
+        case 'active':
+          member.activate()
+          break
+        case 'suspended':
+          member.suspend()
+          break
+        case 'removed':
+          member.remove()
+          break
+        case 'pending':
+          // Can't change to pending after creation
+          break
+      }
+    }
+
+    return this.tenantMemberRepository.save(member)
+  }
+
+  async save(member: TenantMemberEntity): Promise<TenantMemberEntity> {
+    return this.tenantMemberRepository.save(member)
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.tenantMemberRepository.delete(id)
+  }
+
+  async acceptInvitation(token: string): Promise<TenantMemberEntity> {
+    const member = await this.tenantMemberRepository.findByInvitationToken(token)
+    if (!member) {
+      throw new Error('Invalid invitation token')
+    }
+
+    if (!member.isInvitationValid()) {
+      throw new Error('Invitation has expired')
+    }
+
+    member.acceptInvitation()
+    return this.tenantMemberRepository.save(member)
+  }
+
+  async regenerateInvitation(memberId: string, expiryHours?: number): Promise<TenantMemberEntity> {
+    const member = await this.tenantMemberRepository.findById(memberId)
+    if (!member) {
+      throw new Error(`Member with id ${memberId} not found`)
+    }
+
+    if (!member.isPending()) {
+      throw new Error('Can only regenerate invitation for pending members')
+    }
+
+    member.generateInvitation(expiryHours || 72)
+    return this.tenantMemberRepository.save(member)
+  }
+
+  async updateLastAccess(userId: string, tenantId: string): Promise<void> {
+    const member = await this.tenantMemberRepository.findByUserAndTenant(userId, tenantId)
+    if (!member) {
+      return // Silently return if member not found
+    }
+
+    member.updateLastAccess()
+    await this.tenantMemberRepository.save(member)
+  }
+
+  async countMembers(tenantId: string): Promise<number> {
+    return this.tenantMemberRepository.countByTenant(tenantId)
+  }
+
+  async countByRole(tenantId: string, role: Role): Promise<number> {
+    return this.tenantMemberRepository.countByRole(tenantId, role)
+  }
+
+  async getPendingInvitations(tenantId: string): Promise<TenantMemberEntity[]> {
+    return this.tenantMemberRepository.findPendingInvitations(tenantId)
+  }
+
+  async cleanupExpiredInvitations(): Promise<void> {
+    const repository = container.resolve<TenantMemberRepository>(TOKENS.TENANT_MEMBER_REPOSITORY)
+    
+    const expiredInvitations = await repository.findExpiredInvitations()
+    for (const member of expiredInvitations) {
+      await repository.delete(member.id)
+    }
+  }
+
+  // Permission checking methods
+  async hasPermission(
+    membership: TenantMemberEntity | { tenantId: string; userId: string } | null,
+    module: keyof MemberPermissions,
+    permission: string
+  ): Promise<boolean> {
+    if (!membership) {
+      return false
+    }
+
+    // If we only have tenantId and userId, fetch the full member entity
+    let member: TenantMemberEntity | null
+    if ('hasPermission' in membership) {
+      member = membership
+    } else {
+      const repository = container.resolve<TenantMemberRepository>(TOKENS.TENANT_MEMBER_REPOSITORY)
+      member = await repository.findByUserAndTenant(membership.userId, membership.tenantId)
+    }
+
+    if (!member || !member.isActive()) {
+      return false
+    }
+
+    return member.hasPermission(module, permission)
+  }
+
+  async canManageMember(
+    actorMembership: TenantMemberEntity | null,
+    targetMemberId: string
+  ): Promise<boolean> {
+    if (!actorMembership || !actorMembership.isActive()) {
+      return false
+    }
+
+    // Owners can manage anyone
+    if (actorMembership.hasRole('owner')) {
+      return true
+    }
+
+    // Admins can manage members and viewers
+    if (actorMembership.hasRole('admin')) {
+      const targetMember = await this.findById(targetMemberId)
+      if (!targetMember) {
+        return false
+      }
+      return actorMembership.canChangeRole(targetMember.role)
+    }
+
+    return false
+  }
+
+  async canChangeRole(
+    actorMembership: TenantMemberEntity | null,
+    targetRole: Role
+  ): Promise<boolean> {
+    if (!actorMembership || !actorMembership.isActive()) {
+      return false
+    }
+
+    // Check if actor has permission to change roles
+    if (!actorMembership.hasPermission('team', 'changeRoles')) {
+      return false
+    }
+
+    // Check if actor's role is high enough to assign the target role
+    return actorMembership.canChangeRole(targetRole)
+  }
+
+  async isOwner(userId: string, tenantId: string): Promise<boolean> {
+    const member = await this.findByTenantAndUser(tenantId, userId)
+    return member?.hasRole('owner') && member.isActive() || false
+  }
+
+  async isAdmin(userId: string, tenantId: string): Promise<boolean> {
+    const member = await this.findByTenantAndUser(tenantId, userId)
+    return member?.hasRoleOrHigher('admin') && member.isActive() || false
+  }
+
+  async isMember(userId: string, tenantId: string): Promise<boolean> {
+    const member = await this.findByTenantAndUser(tenantId, userId)
+    return member?.isActive() || false
+  }
+
+  async getMembersByTenant(tenantId: string): Promise<TenantMemberEntity[]> {
+    return this.findByTenant(tenantId)
+  }
 
   async inviteMember(data: {
     tenantId: string
     invitedEmail: string
     invitedBy: string
-    role: RoleType
-    customPermissions?: MemberPermissions
-  }): Promise<TenantMember> {
-    if (!this.db) {
-      throw new Error('Database not available')
-    }
-
-    // Generate invitation token
-    const invitationToken = generateInvitationToken()
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
-
-    const [member] = await this.db.insert(tenantMembers).values({
+    role: Role
+    customPermissions?: Partial<MemberPermissions>
+  }): Promise<TenantMemberEntity> {
+    // Create a pending member with invitation
+    const member = await this.create({
       tenantId: data.tenantId,
-      userId: '', // Will be set when invitation is accepted
-      invitedEmail: data.invitedEmail,
-      invitedBy: data.invitedBy,
+      userId: data.invitedEmail, // Temporary - will be replaced when accepted
       role: data.role,
-      permissions: data.customPermissions || {},
       status: 'pending',
-      invitationToken,
-      invitationExpiresAt: expiresAt,
-      invitedAt: new Date(),
-    }).returning()
-
-    log.info(`Member invited: ${data.invitedEmail} to tenant ${data.tenantId}`)
+      invitationExpiryHours: 72
+    })
+    
+    // Apply custom permissions if provided
+    if (data.customPermissions) {
+      member.updatePermissions(data.customPermissions)
+      await this.save(member)
+    }
+    
+    // TODO: Send invitation email
+    
     return member
   }
 
-  async acceptInvitation(token: string, userId: string): Promise<TenantMember> {
-    if (!this.db) {
-      throw new Error('Database not available')
-    }
-
-    const [member] = await this.db
-      .select()
-      .from(tenantMembers)
-      .where(
-        and(
-          eq(tenantMembers.invitationToken, token),
-          eq(tenantMembers.status, 'pending')
-        )
-      )
-
-    if (!member) {
-      throw new Error('Invalid or expired invitation')
-    }
-
-    if (member.invitationExpiresAt && member.invitationExpiresAt < new Date()) {
-      throw new Error('Invitation has expired')
-    }
-
-    const [updated] = await this.db
-      .update(tenantMembers)
-      .set({
-        userId,
-        status: 'active',
-        invitationToken: null,
-        invitationExpiresAt: null,
-        joinedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(tenantMembers.id, member.id))
-      .returning()
-
-    log.info(`Invitation accepted: ${userId} joined tenant ${member.tenantId}`)
-    return updated
-  }
-
-  async getMembersByTenant(tenantId: string): Promise<TenantMember[]> {
-    if (!this.db) return []
-
-    return await this.db
-      .select()
-      .from(tenantMembers)
-      .where(
-        eq(tenantMembers.tenantId, tenantId)
-      )
-  }
-
-  async getMemberByUserAndTenant(userId: string, tenantId: string): Promise<TenantMember | null> {
-    if (!this.db) return null
-
-    const [member] = await this.db
-      .select()
-      .from(tenantMembers)
-      .where(
-        and(
-          eq(tenantMembers.userId, userId),
-          eq(tenantMembers.tenantId, tenantId),
-          eq(tenantMembers.status, 'active')
-        )
-      )
-
-    return member || null
-  }
-
-  async updateMemberRole(
-    memberId: string,
-    newRole: RoleType,
-    updatedBy: string
-  ): Promise<TenantMember> {
-    if (!this.db) {
-      throw new Error('Database not available')
-    }
-
-    // Get current member details
-    const [currentMember] = await this.db
-      .select()
-      .from(tenantMembers)
-      .where(eq(tenantMembers.id, memberId))
-
-    if (!currentMember) {
-      throw new Error('Member not found')
-    }
-
-    // Validate role hierarchy - only higher or equal roles can change roles
-    const updaterMember = await this.getMemberByUserAndTenant(updatedBy, currentMember.tenantId)
-    if (!updaterMember) {
-      throw new Error('Updater not found in tenant')
-    }
-
-    if (ROLE_HIERARCHY[updaterMember.role] > ROLE_HIERARCHY[newRole]) {
-      throw new Error('Insufficient permissions to assign this role')
-    }
-
-    // Prevent removing the last owner
-    if (currentMember.role === 'owner' && newRole !== 'owner') {
-      const ownerCount = await this.countMembersByRole(currentMember.tenantId, 'owner')
-      if (ownerCount <= 1) {
-        throw new Error('Cannot remove the last owner')
-      }
-    }
-
-    const [updated] = await this.db
-      .update(tenantMembers)
-      .set({
-        role: newRole,
-        updatedAt: new Date(),
-      })
-      .where(eq(tenantMembers.id, memberId))
-      .returning()
-
-    log.info(`Member role updated: ${memberId} to ${newRole}`)
-    return updated
-  }
-
-  async updateMemberPermissions(
-    memberId: string,
-    permissions: MemberPermissions,
-    _updatedBy: string
-  ): Promise<TenantMember> {
-    if (!this.db) {
-      throw new Error('Database not available')
-    }
-
-    const [updated] = await this.db
-      .update(tenantMembers)
-      .set({
-        permissions,
-        updatedAt: new Date(),
-      })
-      .where(eq(tenantMembers.id, memberId))
-      .returning()
-
-    log.info(`Member permissions updated: ${memberId}`)
-    return updated
+  async updateMemberRole(memberId: string, role: Role, _updatedBy: string): Promise<TenantMemberEntity> {
+    return this.update(memberId, { role })
   }
 
   async removeMember(memberId: string, _removedBy: string): Promise<void> {
-    if (!this.db) {
-      throw new Error('Database not available')
-    }
-
-    // Get member details
-    const [member] = await this.db
-      .select()
-      .from(tenantMembers)
-      .where(eq(tenantMembers.id, memberId))
-
+    const member = await this.findById(memberId)
     if (!member) {
-      throw new Error('Member not found')
-    }
-
-    // Prevent removing the last owner
-    if (member.role === 'owner') {
-      const ownerCount = await this.countMembersByRole(member.tenantId, 'owner')
-      if (ownerCount <= 1) {
-        throw new Error('Cannot remove the last owner')
-      }
-    }
-
-    await this.db
-      .update(tenantMembers)
-      .set({
-        status: 'removed',
-        updatedAt: new Date(),
-      })
-      .where(eq(tenantMembers.id, memberId))
-
-    log.info(`Member removed: ${memberId} from tenant ${member.tenantId}`)
-  }
-
-  async updateLastAccess(userId: string, tenantId: string): Promise<void> {
-    if (!this.db) return
-
-    await this.db
-      .update(tenantMembers)
-      .set({
-        lastAccessAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(tenantMembers.userId, userId),
-          eq(tenantMembers.tenantId, tenantId)
-        )
-      )
-  }
-
-  /**
-   * Get effective permissions for a member (role defaults + custom permissions)
-   */
-  getMemberPermissions(member: TenantMember): MemberPermissions {
-    const rolePermissions = DEFAULT_ROLE_PERMISSIONS[member.role] || {}
-    const customPermissions = (member.permissions as MemberPermissions) || {}
-    
-    // Merge permissions (custom permissions override role defaults)
-    return this.mergePermissions(rolePermissions, customPermissions)
-  }
-
-  /**
-   * Check if a member has a specific permission
-   */
-  hasPermission(
-    member: TenantMember, 
-    category: keyof MemberPermissions, 
-    permission: string
-  ): boolean {
-    const permissions = this.getMemberPermissions(member)
-    const categoryPermissions = permissions[category] as Record<string, boolean> || {}
-    return categoryPermissions[permission] === true
-  }
-
-  /**
-   * Check if a member can perform an action based on role hierarchy
-   */
-  canPerformAction(actorRole: RoleType, targetRole: RoleType): boolean {
-    return ROLE_HIERARCHY[actorRole] <= ROLE_HIERARCHY[targetRole]
-  }
-
-  private async countMembersByRole(tenantId: string, role: RoleType): Promise<number> {
-    if (!this.db) return 0
-
-    const members = await this.db
-      .select()
-      .from(tenantMembers)
-      .where(
-        and(
-          eq(tenantMembers.tenantId, tenantId),
-          eq(tenantMembers.role, role),
-          eq(tenantMembers.status, 'active')
-        )
-      )
-
-    return members.length
-  }
-
-  private mergePermissions(
-    base: MemberPermissions, 
-    override: MemberPermissions
-  ): MemberPermissions {
-    const result: MemberPermissions = {}
-    
-    // Get all categories from both objects
-    const categories = new Set([
-      ...Object.keys(base),
-      ...Object.keys(override)
-    ]) as Set<keyof MemberPermissions>
-    
-    for (const category of categories) {
-      const baseCategory = base[category] || {}
-      const overrideCategory = override[category] || {}
-      
-      result[category] = {
-        ...baseCategory,
-        ...overrideCategory
-      }
+      throw new Error(`Member with id ${memberId} not found`)
     }
     
-    return result
+    member.remove()
+    await this.save(member)
+  }
+
+  async getMemberPermissions(membership: TenantMemberEntity | null): Promise<MemberPermissions | null> {
+    if (!membership || !membership.isActive()) {
+      return null
+    }
+    
+    return membership.permissions
+  }
+
+  async getMemberByUserAndTenant(userId: string, tenantId: string): Promise<TenantMemberEntity | null> {
+    return this.findByTenantAndUser(tenantId, userId)
   }
 }

@@ -8,7 +8,12 @@
     :title="providerName"
   >
     <!-- Xero -->
-    <svg v-if="provider === 'xero'" :class="svgClasses" viewBox="0 0 24 24" fill="none">
+    <svg
+      v-if="provider === 'xero'"
+      :class="svgClasses"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
       <path 
         d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.5 16L12 14l-3.5 4H6l5-6-5-6h2.5L12 10l3.5-4H18l-5 6 5 6h-2.5z" 
         fill="#13B5EA"
@@ -17,7 +22,12 @@
 
 
     <!-- Generic/Unknown provider -->
-    <svg v-else :class="svgClasses" viewBox="0 0 24 24" fill="none">
+    <svg
+      v-else
+      :class="svgClasses"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
       <path 
         d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm1-6h-2V7h2v3z" 
         fill="#6B7280"

@@ -45,7 +45,7 @@ export class CreateTenantUseCase {
 
     // Create owner membership
     const ownerMembership = TenantMemberEntity.create({
-      tenantId: tenant.id,
+      tenantId: tenant.id.toString(),
       userId: input.ownerId,
       role: 'owner',
       status: 'active',

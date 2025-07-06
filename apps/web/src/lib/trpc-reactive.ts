@@ -1,6 +1,7 @@
 import { createTRPCClient, httpBatchLink, TRPCClientError } from '@trpc/client'
 import type { AppRouter } from '@kibly/api'
 import { supabase } from './supabase'
+import { createTransformedTRPC, transformValue } from './trpc-transforms'
 
 // Get base API URL from environment
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
@@ -72,9 +73,9 @@ export const resetTRPCContext = () => {
 }
 
 /**
- * Enhanced tRPC client with reactive state and better error handling
+ * Base tRPC client with reactive state and better error handling
  */
-export const trpc = createTRPCClient<AppRouter>({
+const baseTrpc = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: `${apiBaseUrl}/trpc`,
@@ -185,6 +186,11 @@ export const trpc = createTRPCClient<AppRouter>({
 })
 
 /**
+ * Enhanced tRPC client with automatic transformations
+ */
+export const trpc = createTransformedTRPC(baseTrpc)
+
+/**
  * Enhanced tRPC error handler that provides better error context
  */
 export const handleTRPCError = (error: unknown, context?: string): never => {
@@ -237,13 +243,24 @@ export const handleTRPCError = (error: unknown, context?: string): never => {
 
 /**
  * Wrapper for tRPC queries with enhanced error handling
+ * Note: Transformations are automatically applied by the proxy
  */
 export const safeTRPCQuery = async <T>(
   queryFn: () => Promise<T>,
   context?: string
 ): Promise<T> => {
   try {
-    return await queryFn()
+    const result = await queryFn()
+    
+    // Handle potential batched response
+    // This shouldn't be necessary with proper tRPC setup, but adding as safety
+    if (Array.isArray(result) && (result as any).length === 1 && (result as any)[0]?.result?.data !== undefined) {
+      console.warn('Detected raw batched response in safeTRPCQuery - this suggests tRPC client issue')
+      return (result as any)[0].result.data as T
+    }
+    
+    // Proxy handles transformations automatically
+    return result
   } catch (error) {
     return handleTRPCError(error, context)
   }

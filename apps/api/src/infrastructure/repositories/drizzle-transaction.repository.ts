@@ -1,6 +1,7 @@
 import { eq, and, desc, count, inArray, like, gte, lte } from 'drizzle-orm'
 import { TransactionEntity } from '../../core/domain/transaction/index'
 import type { TransactionRepository, TransactionSearchFilters } from '../../core/ports/transaction.repository'
+import { EntityId } from '../../core/domain/shared/value-objects/entity-id'
 import { transactions, type Transaction, type NewTransaction } from '../../database/schema/transactions'
 import { BaseRepository, type Database } from '../database/types'
 
@@ -14,7 +15,7 @@ export class DrizzleTransactionRepository extends BaseRepository implements Tran
     
     // Convert TransactionEntityProps to database format
     const dbData: NewTransaction = {
-      id: data.id,
+      id: data.id.toString(),
       tenantId: data.tenantId,
       integrationId: data.integrationId,
       providerTransactionId: data.providerTransactionId,
@@ -65,7 +66,7 @@ export class DrizzleTransactionRepository extends BaseRepository implements Tran
     const dbData = transactionEntities.map(transaction => {
       const data = transaction.toDatabase()
       return {
-        id: data.id,
+        id: data.id.toString(),
         tenantId: data.tenantId,
         integrationId: data.integrationId,
         providerTransactionId: data.providerTransactionId,
@@ -110,11 +111,11 @@ export class DrizzleTransactionRepository extends BaseRepository implements Tran
     return results.map((result: any) => this.mapToEntity(result))
   }
 
-  async findById(id: string): Promise<TransactionEntity | null> {
+  async findById(id: EntityId): Promise<TransactionEntity | null> {
     const [result] = await (this.db as any)
       .select()
       .from(transactions)
-      .where(eq(transactions.id, id))
+      .where(eq(transactions.id, id.toString()))
 
     return result ? this.mapToEntity(result) : null
   }
@@ -384,7 +385,7 @@ export class DrizzleTransactionRepository extends BaseRepository implements Tran
 
   private mapToEntity(dbTransaction: Transaction): TransactionEntity {
     return TransactionEntity.fromDatabase({
-      id: dbTransaction.id,
+      id: EntityId.from(dbTransaction.id),
       tenantId: dbTransaction.tenantId,
       integrationId: dbTransaction.integrationId,
       providerTransactionId: dbTransaction.providerTransactionId,

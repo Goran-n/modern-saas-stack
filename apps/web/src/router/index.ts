@@ -70,6 +70,24 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresTenant: true },
   },
   {
+    path: '/conversations',
+    name: 'conversations',
+    component: () => import('../views/conversations/ConversationsIndex.vue'),
+    meta: { requiresAuth: true, requiresTenant: true },
+  },
+  {
+    path: '/conversations/:id',
+    name: 'conversation-detail',
+    component: () => import('../views/conversations/ConversationsIndex.vue'),
+    meta: { requiresAuth: true, requiresTenant: true },
+  },
+  {
+    path: '/settings/communications',
+    name: 'communications-settings',
+    component: () => import('../views/settings/Communications.vue'),
+    meta: { requiresAuth: true, requiresTenant: true },
+  },
+  {
     path: '/error',
     name: 'Error',
     component: Error,

@@ -1,7 +1,8 @@
 import type { TenantEntity, TenantMemberEntity } from '../domain/tenant'
+import { EntityId } from '../domain/shared/value-objects/entity-id'
 
 export interface TenantRepository {
-  findById(id: string): Promise<TenantEntity | null>
+  findById(id: EntityId): Promise<TenantEntity | null>
   findBySlug(slug: string): Promise<TenantEntity | null>
   findByEmail(email: string): Promise<TenantEntity | null>
   findByUserId(userId: string): Promise<Array<TenantEntity & { membership: TenantMemberEntity }>>

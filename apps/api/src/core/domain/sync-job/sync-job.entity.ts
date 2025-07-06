@@ -203,7 +203,7 @@ export class SyncJobEntity {
   }
 
   toPublic(): Omit<SyncJobEntityProps, 'tenantId'> {
-    const { tenantId, ...publicProps } = this.props
+    const { tenantId: _tenantId, ...publicProps } = this.props
     return {
       ...publicProps,
       duration: this.getDuration(),

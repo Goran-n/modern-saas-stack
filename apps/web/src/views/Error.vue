@@ -16,9 +16,9 @@
         
         <div class="mt-6 space-y-3">
           <button
-            @click="retry"
             v-if="showRetry"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            @click="retry"
           >
             Try again
           </button>
@@ -32,8 +32,8 @@
           
           <div class="text-sm">
             <button
-              @click="goBack"
               class="text-primary-600 hover:text-primary-500"
+              @click="goBack"
             >
               <span aria-hidden="true">&larr;</span>
               Go back
@@ -42,7 +42,10 @@
         </div>
         
         <!-- Error details for development -->
-        <div v-if="isDevelopment && errorDetails" class="mt-8">
+        <div
+          v-if="isDevelopment && errorDetails"
+          class="mt-8"
+        >
           <details class="text-left bg-neutral-100 rounded-lg p-4">
             <summary class="cursor-pointer text-sm font-medium text-neutral-900">
               Error details

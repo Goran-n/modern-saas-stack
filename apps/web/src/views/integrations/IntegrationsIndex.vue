@@ -5,7 +5,9 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-6">
           <div>
-            <h1 class="text-2xl font-bold text-neutral-900">Integrations</h1>
+            <h1 class="text-2xl font-bold text-neutral-900">
+              Integrations
+            </h1>
             <p class="mt-1 text-sm text-neutral-500">
               Connect your accounting and business tools to sync data automatically
             </p>
@@ -38,23 +40,31 @@
     <!-- Main content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Loading state -->
-      <div v-if="loading && !hasIntegrations" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div
+        v-if="loading && !hasIntegrations"
+        class="flex justify-center py-12"
+      >
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
 
       <!-- Error state -->
-      <div v-else-if="error" class="rounded-md bg-red-50 p-4 mb-6">
+      <div
+        v-else-if="error"
+        class="rounded-md bg-red-50 p-4 mb-6"
+      >
         <div class="flex">
           <XCircleIcon class="h-5 w-5 text-red-400" />
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Error loading integrations</h3>
+            <h3 class="text-sm font-medium text-red-800">
+              Error loading integrations
+            </h3>
             <div class="mt-2 text-sm text-red-700">
               <p>{{ error }}</p>
             </div>
             <div class="mt-3">
               <button
-                @click="refresh"
                 class="text-sm font-medium text-red-800 hover:text-red-700"
+                @click="refresh"
               >
                 Try again
               </button>
@@ -64,13 +74,27 @@
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="!hasIntegrations && !loading" class="text-center py-12">
+      <div
+        v-else-if="!hasIntegrations && !loading"
+        class="text-center py-12"
+      >
         <div class="mx-auto h-24 w-24 text-neutral-400 mb-4">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m0 0l1.102-1.102a4 4 0 015.656-5.656l-4-4z" />
+          <svg
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m0 0l1.102-1.102a4 4 0 015.656-5.656l-4-4z"
+            />
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-neutral-900 mb-2">No integrations yet</h3>
+        <h3 class="text-lg font-medium text-neutral-900 mb-2">
+          No integrations yet
+        </h3>
         <p class="text-neutral-500 mb-6 max-w-md mx-auto">
           Get started by connecting your first accounting or business tool to automatically sync your data.
         </p>
@@ -93,13 +117,13 @@
             <button
               v-for="tab in statusTabs"
               :key="tab.key"
-              @click="selectedStatus = tab.key"
               :class="[
                 'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors',
                 selectedStatus === tab.key
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
               ]"
+              @click="selectedStatus = tab.key"
             >
               {{ tab.label }}
               <span
@@ -121,8 +145,8 @@
         <div class="space-y-4 mb-6">
           <div
             v-for="integration in filteredIntegrations"
-            :key="`message-${integration.id}`"
             v-show="actionMessages[integration.id]"
+            :key="`message-${integration.id}`"
             :class="[
               'rounded-md p-4 transition-all duration-300',
               actionMessages[integration.id]?.type === 'success' 
@@ -138,7 +162,11 @@
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
                 <svg
                   v-else
@@ -146,34 +174,50 @@
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
               </div>
               <div class="ml-3 flex-1">
-                <p :class="[
-                  'text-sm font-medium',
-                  actionMessages[integration.id]?.type === 'success' ? 'text-green-800' : 'text-red-800'
-                ]">
+                <p
+                  :class="[
+                    'text-sm font-medium',
+                    actionMessages[integration.id]?.type === 'success' ? 'text-green-800' : 'text-red-800'
+                  ]"
+                >
                   {{ integration.name }}
                 </p>
-                <p :class="[
-                  'mt-1 text-sm',
-                  actionMessages[integration.id]?.type === 'success' ? 'text-green-700' : 'text-red-700'
-                ]">
+                <p
+                  :class="[
+                    'mt-1 text-sm',
+                    actionMessages[integration.id]?.type === 'success' ? 'text-green-700' : 'text-red-700'
+                  ]"
+                >
                   {{ actionMessages[integration.id]?.message }}
                 </p>
               </div>
               <button
-                @click="actionMessages[integration.id] = null"
                 :class="[
                   'ml-3 inline-flex rounded-md p-1.5 transition-colors',
                   actionMessages[integration.id]?.type === 'success' 
                     ? 'text-green-500 hover:bg-green-100' 
                     : 'text-red-500 hover:bg-red-100'
                 ]"
+                @click="actionMessages[integration.id] = null"
               >
-                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                <svg
+                  class="h-4 w-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -198,11 +242,14 @@
         </div>
 
         <!-- Load more button -->
-        <div v-if="hasMoreIntegrations" class="text-center mt-8">
+        <div
+          v-if="hasMoreIntegrations"
+          class="text-center mt-8"
+        >
           <button
-            @click="loadMore"
             :disabled="loading"
             class="inline-flex items-center px-6 py-3 border border-neutral-300 shadow-sm text-base font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            @click="loadMore"
           >
             <span v-if="loading">Loading...</span>
             <span v-else>Load More</span>

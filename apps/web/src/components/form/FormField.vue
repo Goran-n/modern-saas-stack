@@ -9,7 +9,10 @@
     >
       <slot name="label">
         {{ label }}
-        <span v-if="required" class="text-error-500 ml-1">*</span>
+        <span
+          v-if="required"
+          class="text-error-500 ml-1"
+        >*</span>
       </slot>
     </label>
 
