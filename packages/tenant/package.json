@@ -1,0 +1,31 @@
+{
+  "name": "@kibly/tenant",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@kibly/shared-db": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "nanoid": "^5.0.9",
+    "jsonwebtoken": "^9.0.2",
+    "date-fns": "^3.6.0",
+    "drizzle-orm": "^0.38.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts"
+  }
+}

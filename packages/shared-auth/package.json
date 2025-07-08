@@ -1,0 +1,22 @@
+{
+  "name": "@kibly/shared-auth",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.2",
+    "jsonwebtoken": "^9.0.2",
+    "@kibly/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
+  }
+}

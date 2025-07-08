@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "@nuxt/ui-pro";
+
+/* Apple-inspired clean theme */
+:root {
+  /* Typography - Apple font stack */
+  --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Subtle Apple-style shadows */
+  --shadow-apple: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Use Apple's system blue as primary */
+:root {
+  --ui-primary-50: 239 246 255;
+  --ui-primary-100: 219 234 254;
+  --ui-primary-200: 191 219 254;
+  --ui-primary-300: 147 197 253;
+  --ui-primary-400: 96 165 250;
+  --ui-primary-500: 59 130 246;
+  --ui-primary-600: 37 99 235;
+  --ui-primary-700: 29 78 216;
+  --ui-primary-800: 30 64 175;
+  --ui-primary-900: 30 58 138;
+  --ui-primary-950: 23 37 84;
+}

@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build", "typecheck"],
-      "outputs": ["dist/**", "build/**", ".next/**"],
+      "outputs": ["dist/**", "build/**", ".next/**", ".nuxt/**", ".output/**"],
       "env": ["NODE_ENV"]
     },
     "dev": {

@@ -6,7 +6,7 @@ A modern, multi-tenant SaaS platform for integrating with accounting providers, 
 
 Kibly is built as a monorepo using Turborepo, featuring:
 - **Backend**: Node.js API with tRPC, PostgreSQL, and Redis
-- **Frontend**: Vue.js 3 SPA with Pinia state management
+- **Frontend**: Nuxt 3 with Nuxt UI Pro components and Pinia state management
 - **Clean Architecture**: Domain-driven design with clear separation of concerns
 - **Multi-tenancy**: Built-in workspace isolation and permissions
 - **Type Safety**: End-to-end TypeScript with tRPC
@@ -17,7 +17,7 @@ Kibly is built as a monorepo using Turborepo, featuring:
 kibly/
 ├── apps/
 │   ├── api/              # Backend tRPC API server
-│   └── web/              # Vue.js frontend application
+│   └── web/              # Nuxt 3 frontend application
 ├── packages/
 │   ├── shared-config/    # Shared ESLint and Prettier configs
 │   ├── shared-types/     # Common TypeScript types

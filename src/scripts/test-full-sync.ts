@@ -6,7 +6,9 @@ import { DrizzleSyncJobRepository } from '../repositories/drizzle/sync-job.repos
 import { DrizzleTenantMemberRepository } from '../repositories/drizzle/tenant-member.repository'
 import { drizzleClient, pgClient } from '../infrastructure/database/connection'
 import { addSyncIntegrationJob } from '../jobs/queue.config'
-import logger from '@vepler/logger'
+import { createLogger } from '@kibly/utils/logger'
+
+const logger = createLogger('test-full-sync')
 
 async function main() {
   try {

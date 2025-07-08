@@ -1,7 +1,0 @@
-export * from './tenant.repository'
-export * from './tenant-member.repository'
-export * from './user.repository'
-export * from './integration.repository'
-export * from './sync-job.repository'
-export * from './transaction.repository'
-export * from './file.repository'

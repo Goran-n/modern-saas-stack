@@ -1,0 +1,68 @@
+import jwt from 'jsonwebtoken'
+import { createClient } from '@supabase/supabase-js'
+import { createLogger } from '@kibly/utils/logger'
+
+const logger = createLogger('auth')
+
+export interface AuthConfig {
+  supabase: {
+    url: string
+    anonKey: string
+    jwtSecret: string
+  }
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  tenantId?: string
+  role?: string
+}
+
+export class AuthService {
+  private supabase: ReturnType<typeof createClient>
+
+  constructor(private config: AuthConfig) {
+    this.supabase = createClient(config.supabase.url, config.supabase.anonKey)
+  }
+
+  async verifyToken(token: string): Promise<AuthUser | null> {
+    try {
+      const decoded = jwt.verify(token, this.config.supabase.jwtSecret) as any
+      
+      return {
+        id: decoded.sub,
+        email: decoded.email,
+        tenantId: decoded.user_metadata?.tenant_id,
+        role: decoded.role
+      }
+    } catch (error) {
+      logger.error('Failed to verify token', String(error))
+      return null
+    }
+  }
+
+  async getUser(userId: string): Promise<AuthUser | null> {
+    try {
+      const { data, error } = await this.supabase.auth.admin.getUserById(userId)
+      
+      if (error || !data.user) {
+        return null
+      }
+
+      return {
+        id: data.user.id,
+        email: data.user.email!,
+        tenantId: data.user.user_metadata?.tenant_id,
+        role: data.user.role
+      }
+    } catch (error) {
+      logger.error('Failed to get user', String(error))
+      return null
+    }
+  }
+}
+
+export function createAuthService(config: AuthConfig): AuthService {
+  return new AuthService(config)
+}

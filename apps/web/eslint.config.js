@@ -1,56 +1,15 @@
-import js from '@eslint/js'
-import typescript from '@typescript-eslint/eslint-plugin'
-import typescriptParser from '@typescript-eslint/parser'
-import vue from 'eslint-plugin-vue'
+import withNuxt from './.nuxt/eslint.config.mjs'
 
-export default [
-  js.configs.recommended,
-  ...vue.configs['flat/recommended'],
-  {
-    files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: {
-      parser: typescriptParser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': typescript,
-    },
-    rules: {
-      ...typescript.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'prefer-const': 'error',
-      'no-var': 'error',
-      'no-undef': 'off', // TypeScript handles this
-      'no-unused-vars': 'off', // Use @typescript-eslint/no-unused-vars instead
-    },
-  },
-  {
-    files: ['**/*.vue'],
-    languageOptions: {
-      parser: vue.parser,
-      parserOptions: {
-        parser: typescriptParser,
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-    plugins: {
-      vue,
-      '@typescript-eslint': typescript,
-    },
-    rules: {
-      ...vue.configs.recommended.rules,
-      'prefer-const': 'error',
-      'no-var': 'error',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'vue/multi-word-component-names': 'off',
-    },
-  },
-  {
-    ignores: ['dist/**', 'node_modules/**'],
-  },
-]
+export default withNuxt({
+  rules: {
+    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'vue/multi-word-component-names': 'off',
+    'vue/no-multiple-template-root': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', { 
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }],
+    '@typescript-eslint/no-explicit-any': 'warn'
+  }
+})
