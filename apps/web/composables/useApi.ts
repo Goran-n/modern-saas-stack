@@ -3,12 +3,16 @@ import type { FetchOptions } from 'ofetch'
 export const useApi = () => {
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
+  const { auth } = useNotifications()
   
   const apiFetch = $fetch.create({
     baseURL: config.public.apiUrl,
-    onRequest({ options }) {
-      // Add auth token if available
-      const token = authStore.user?.id // TODO: Get actual token
+    async onRequest({ options }) {
+      // Get actual JWT token from Supabase session
+      const supabaseClient = useSupabaseClient()
+      const { data: { session } } = await supabaseClient.auth.getSession()
+      const token = session?.access_token
+      
       if (token) {
         options.headers = new Headers({
           ...options.headers,
@@ -16,11 +20,16 @@ export const useApi = () => {
         })
       }
     },
-    onResponseError({ response }) {
+    async onResponseError({ response }) {
       if (response.status === 401) {
-        // Handle unauthorized
-        authStore.signOut()
-        navigateTo('/auth/login')
+        // Token expired or invalid - sign out user
+        try {
+          await authStore.signOut()
+          auth.signOutSuccess()
+        } catch (error) {
+          console.error('Error during automatic logout:', error)
+        }
+        await navigateTo('/auth/login')
       }
     }
   })

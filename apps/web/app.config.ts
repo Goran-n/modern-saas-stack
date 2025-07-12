@@ -1,8 +1,12 @@
 export default defineAppConfig({
   ui: {
-    // Apple-inspired clean theme with system blue
-    primary: 'blue',
-    gray: 'slate',
+    // Kibly custom brand palette - modern, sleek, professional
+    colors: {
+      primary: 'electric',
+      gray: 'neutral',
+      green: 'prosperity',
+      red: 'alert'
+    },
     notifications: {
       position: 'top-0 right-0'
     }

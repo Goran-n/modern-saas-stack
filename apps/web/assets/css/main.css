@@ -10,17 +10,70 @@
   --shadow-apple: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-/* Use Apple's system blue as primary */
-:root {
-  --ui-primary-50: 239 246 255;
-  --ui-primary-100: 219 234 254;
-  --ui-primary-200: 191 219 254;
-  --ui-primary-300: 147 197 253;
-  --ui-primary-400: 96 165 250;
-  --ui-primary-500: 59 130 246;
-  --ui-primary-600: 37 99 235;
-  --ui-primary-700: 29 78 216;
-  --ui-primary-800: 30 64 175;
-  --ui-primary-900: 30 58 138;
-  --ui-primary-950: 23 37 84;
+/* Kibly Custom Brand Palette */
+@theme static {
+  /* Primary: Midnight Blue - Deep, trustworthy, professional */
+  --color-midnight-50: #f8fafc;
+  --color-midnight-100: #f1f5f9;
+  --color-midnight-200: #e2e8f0;
+  --color-midnight-300: #cbd5e1;
+  --color-midnight-400: #94a3b8;
+  --color-midnight-500: #64748b;
+  --color-midnight-600: #475569;
+  --color-midnight-700: #334155;
+  --color-midnight-800: #1e293b;
+  --color-midnight-900: #0f172a;
+  --color-midnight-950: #020617;
+
+  /* Electric: Electric Blue - Interactive, innovative, modern */
+  --color-electric-50: #eff6ff;
+  --color-electric-100: #dbeafe;
+  --color-electric-200: #bfdbfe;
+  --color-electric-300: #93c5fd;
+  --color-electric-400: #60a5fa;
+  --color-electric-500: #3b82f6;
+  --color-electric-600: #2563eb;
+  --color-electric-700: #1d4ed8;
+  --color-electric-800: #1e40af;
+  --color-electric-900: #1e3a8a;
+  --color-electric-950: #172554;
+
+  /* Success: Emerald Green - Growth, prosperity, positive outcomes */
+  --color-prosperity-50: #ecfdf5;
+  --color-prosperity-100: #d1fae5;
+  --color-prosperity-200: #a7f3d0;
+  --color-prosperity-300: #6ee7b7;
+  --color-prosperity-400: #34d399;
+  --color-prosperity-500: #10b981;
+  --color-prosperity-600: #059669;
+  --color-prosperity-700: #047857;
+  --color-prosperity-800: #065f46;
+  --color-prosperity-900: #064e3b;
+  --color-prosperity-950: #022c22;
+
+  /* Neutral: Warm Gray - Professional, readable, sophisticated */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* Alert: Coral Red - Attention, caution, important information */
+  --color-alert-50: #fef2f2;
+  --color-alert-100: #fee2e2;
+  --color-alert-200: #fecaca;
+  --color-alert-300: #fca5a5;
+  --color-alert-400: #f87171;
+  --color-alert-500: #ef4444;
+  --color-alert-600: #dc2626;
+  --color-alert-700: #b91c1c;
+  --color-alert-800: #991b1b;
+  --color-alert-900: #7f1d1d;
+  --color-alert-950: #450a0a;
 }

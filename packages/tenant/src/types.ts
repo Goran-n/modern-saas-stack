@@ -50,109 +50,131 @@ export type Permission = typeof Permission[keyof typeof Permission]
 export const tenantStatusSchema = z.enum(['active', 'suspended', 'deleted'])
 export const memberRoleSchema = z.enum(['owner', 'admin', 'member', 'viewer'])
 
-// Input types
-export interface CreateTenantInput {
-  name: string
-  slug: string
-  email: string
-  ownerId: string
-  settings?: Record<string, any>
-  subscription?: Record<string, any>
-  metadata?: Record<string, any>
-}
+// Input schemas
+export const createTenantSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  slug: z.string().min(1, 'Slug is required'),
+  email: z.string().email('Invalid email address'),
+  ownerId: z.string().uuid('Invalid owner ID'),
+  settings: z.record(z.unknown()).optional(),
+  subscription: z.record(z.unknown()).optional(),
+  metadata: z.record(z.unknown()).optional()
+})
 
-export interface UpdateTenantInput {
-  tenantId: string
-  name?: string
-  status?: TenantStatus
-  settings?: Record<string, any>
-  subscription?: Record<string, any>
-  metadata?: Record<string, any>
-}
+export type CreateTenantInput = z.infer<typeof createTenantSchema>
 
-export interface InviteMemberInput {
-  tenantId: string
-  email: string
-  name: string
-  role: MemberRole
-  invitedBy: string
-}
+export const updateTenantSchema = z.object({
+  tenantId: z.string().uuid('Invalid tenant ID'),
+  name: z.string().min(1, 'Name is required').optional(),
+  status: tenantStatusSchema.optional(),
+  settings: z.record(z.unknown()).optional(),
+  subscription: z.record(z.unknown()).optional(),
+  metadata: z.record(z.unknown()).optional()
+})
 
-export interface UpdateMemberRoleInput {
-  tenantId: string
-  memberId: string
-  role: MemberRole
-  updatedBy?: string
-}
+export type UpdateTenantInput = z.infer<typeof updateTenantSchema>
 
-export interface CheckPermissionInput {
-  tenantId: string
-  userId: string
-  permission: Permission
-}
+export const inviteMemberSchema = z.object({
+  tenantId: z.string().uuid('Invalid tenant ID'),
+  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'Name is required'),
+  role: memberRoleSchema,
+  invitedBy: z.string().uuid('Invalid inviter ID')
+})
 
-export interface CreateUserInput {
-  id: string // Supabase user ID
-  email: string
-  name: string
-  metadata?: Record<string, any>
-}
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>
 
-// Domain types
-export interface Tenant {
-  id: string
-  name: string
-  slug: string
-  email: string
-  status: TenantStatus
-  settings: Record<string, any>
-  subscription: Record<string, any>
-  metadata: Record<string, any>
-  createdAt: Date
-  updatedAt: Date
-  deletedAt?: Date | null
-}
+export const updateMemberRoleSchema = z.object({
+  tenantId: z.string().uuid('Invalid tenant ID'),
+  memberId: z.string().uuid('Invalid member ID'),
+  role: memberRoleSchema,
+  updatedBy: z.string().uuid('Invalid updater ID').optional()
+})
 
-export interface User {
-  id: string
-  email: string
-  name: string
-  emailVerified: boolean
-  phoneVerified: boolean
-  phone?: string | null
-  preferences: Record<string, any>
-  lastLoginAt?: Date | null
-  createdAt: Date
-  updatedAt: Date
-}
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>
 
-export interface TenantMember {
-  id: string
-  tenantId: string
-  userId: string
-  role: MemberRole
-  invitedBy: string | null
-  joinedAt: Date
-  updatedAt: Date
-}
+export const checkPermissionSchema = z.object({
+  tenantId: z.string().uuid('Invalid tenant ID'),
+  userId: z.string().uuid('Invalid user ID'),
+  permission: z.enum(Object.values(Permission) as [Permission, ...Permission[]])
+})
 
-export interface Invitation {
-  id: string
-  tenantId: string
-  email: string
-  role: MemberRole
-  invitedBy: string
-  token: string
-  expiresAt: Date
-  acceptedAt: Date | null
-  createdAt: Date
-}
+export type CheckPermissionInput = z.infer<typeof checkPermissionSchema>
 
-export interface AuthToken {
-  userId: string
-  tenantId?: string
-  role?: MemberRole
-}
+export const createUserSchema = z.object({
+  id: z.string().uuid('Invalid user ID'),
+  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'Name is required'),
+  metadata: z.record(z.unknown()).optional()
+})
+
+export type CreateUserInput = z.infer<typeof createUserSchema>
+
+// Domain schemas
+export const tenantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  email: z.string().email(),
+  status: tenantStatusSchema,
+  settings: z.record(z.unknown()),
+  subscription: z.record(z.unknown()),
+  metadata: z.record(z.unknown()),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  deletedAt: z.date().nullable().optional()
+})
+
+export type Tenant = z.infer<typeof tenantSchema>
+
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  name: z.string(),
+  emailVerified: z.boolean(),
+  phoneVerified: z.boolean(),
+  phone: z.string().nullable().optional(),
+  preferences: z.record(z.unknown()),
+  lastLoginAt: z.date().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+})
+
+export type User = z.infer<typeof userSchema>
+
+export const tenantMemberSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: memberRoleSchema,
+  invitedBy: z.string().uuid().nullable(),
+  joinedAt: z.date(),
+  updatedAt: z.date()
+})
+
+export type TenantMember = z.infer<typeof tenantMemberSchema>
+
+export const invitationSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  email: z.string().email(),
+  role: memberRoleSchema,
+  invitedBy: z.string().uuid(),
+  token: z.string(),
+  expiresAt: z.date(),
+  acceptedAt: z.date().nullable(),
+  createdAt: z.date()
+})
+
+export type Invitation = z.infer<typeof invitationSchema>
+
+export const authTokenSchema = z.object({
+  userId: z.string().uuid(),
+  tenantId: z.string().uuid().optional(),
+  role: memberRoleSchema.optional()
+})
+
+export type AuthToken = z.infer<typeof authTokenSchema>
 
 // Role-based permission mappings
 export const rolePermissions: Record<MemberRole, Permission[]> = {

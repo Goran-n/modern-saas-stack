@@ -31,6 +31,7 @@
     "@nuxt/icon": "^1.7.2",
     "@nuxt/image": "^1.8.1",
     "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/supabase": "^1.5.3",
     "@types/node": "^22.10.1",
     "@types/sharp": "^0.32.0",
     "eslint": "^9.16.0",

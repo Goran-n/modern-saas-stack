@@ -1,0 +1,340 @@
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { createTRPCRouter } from "../trpc";
+import { tenantProcedure } from "../trpc/procedures";
+import { logger } from "@kibly/utils";
+import { files as filesTable, eq, and, desc, inArray } from "@kibly/shared-db";
+import { tasks } from "@trigger.dev/sdk/v3";
+import type { CategorizeFilePayload } from "@kibly/jobs/schemas";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "text/plain",
+  "text/csv",
+  "application/json",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+export const filesRouter = createTRPCRouter({
+  upload: tenantProcedure
+    .input(
+      z.object({
+        fileName: z.string().min(1).max(255),
+        mimeType: z.string(),
+        size: z.number().positive(),
+        base64Data: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { fileName, mimeType, size, base64Data } = input;
+
+      if (size > MAX_FILE_SIZE) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `File size exceeds maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+        });
+      }
+
+      if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "File type not allowed",
+        });
+      }
+
+      try {
+        const fileBuffer = Buffer.from(base64Data, "base64");
+        
+        const sanitisedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const timestamp = Date.now();
+        const pathTokens = [ctx.tenantId, ctx.user.id, `${timestamp}_${sanitisedFileName}`];
+        const fullPath = pathTokens.join("/");
+
+        // Upload directly using Supabase client
+        const { error: uploadError } = await ctx.supabase.storage
+          .from("files")
+          .upload(fullPath, fileBuffer, {
+            contentType: mimeType,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = ctx.supabase.storage
+          .from("files")
+          .getPublicUrl(fullPath);
+
+        const [fileRecord] = await ctx.db
+          .insert(filesTable)
+          .values({
+            tenantId: ctx.tenantId,
+            uploadedBy: ctx.user.id,
+            fileName,
+            pathTokens,
+            mimeType,
+            size,
+            source: "user_upload",
+            metadata: {
+              originalName: fileName,
+              publicUrl,
+            },
+          })
+          .returning();
+
+        logger.info("File uploaded successfully", {
+          fileId: fileRecord.id,
+          tenantId: ctx.tenantId,
+          userId: ctx.user.id,
+          fileName,
+          size,
+          requestId: ctx.requestId,
+        });
+
+        // Trigger categorization job
+        await tasks.trigger("categorize-file", {
+          fileId: fileRecord.id,
+          tenantId: ctx.tenantId,
+          mimeType: fileRecord.mimeType,
+          size: fileRecord.size,
+          pathTokens: fileRecord.pathTokens,
+          source: fileRecord.source,
+        } satisfies CategorizeFilePayload);
+
+        logger.info("File categorization job triggered", {
+          fileId: fileRecord.id,
+          tenantId: ctx.tenantId,
+        });
+
+        return {
+          id: fileRecord.id,
+          fileName: fileRecord.fileName,
+          size: fileRecord.size,
+          mimeType: fileRecord.mimeType,
+          createdAt: fileRecord.createdAt,
+        };
+      } catch (error) {
+        logger.error("Failed to upload file", {
+          error,
+          tenantId: ctx.tenantId,
+          userId: ctx.user.id,
+          fileName,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upload file",
+        });
+      }
+    }),
+
+  getSignedUrl: tenantProcedure
+    .input(
+      z.object({
+        fileId: z.string().uuid(),
+        expiresIn: z.number().min(60).max(3600).default(3600),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { fileId, expiresIn } = input;
+
+      const file = await ctx.db
+        .select()
+        .from(filesTable)
+        .where(
+          and(
+            eq(filesTable.id, fileId),
+            eq(filesTable.tenantId, ctx.tenantId)
+          )
+        )
+        .limit(1);
+
+      if (!file[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "File not found",
+        });
+      }
+
+      try {
+        const filePath = file[0].pathTokens.join("/");
+        const { data, error: urlError } = await ctx.supabase.storage
+          .from(file[0].bucket)
+          .createSignedUrl(filePath, expiresIn);
+
+        if (urlError || !data) {
+          throw urlError || new Error("Failed to generate signed URL");
+        }
+
+        return {
+          url: data.signedUrl,
+          expiresAt: new Date(Date.now() + expiresIn * 1000),
+        };
+      } catch (error) {
+        logger.error("Failed to generate signed URL", {
+          error,
+          fileId,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate download URL",
+        });
+      }
+    }),
+
+  list: tenantProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { limit, offset } = input;
+
+      const files = await ctx.db
+        .select({
+          id: filesTable.id,
+          fileName: filesTable.fileName,
+          mimeType: filesTable.mimeType,
+          size: filesTable.size,
+          createdAt: filesTable.createdAt,
+        })
+        .from(filesTable)
+        .where(eq(filesTable.tenantId, ctx.tenantId))
+        .orderBy(desc(filesTable.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        files,
+        hasMore: files.length === limit,
+      };
+    }),
+
+  delete: tenantProcedure
+    .input(
+      z.object({
+        fileId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { fileId } = input;
+
+      const file = await ctx.db
+        .select()
+        .from(filesTable)
+        .where(
+          and(
+            eq(filesTable.id, fileId),
+            eq(filesTable.tenantId, ctx.tenantId),
+            eq(filesTable.uploadedBy, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!file[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "File not found or you don't have permission to delete it",
+        });
+      }
+
+      try {
+        const filePath = file[0].pathTokens.join("/");
+        const { error: removeError } = await ctx.supabase.storage
+          .from(file[0].bucket)
+          .remove([filePath]);
+
+        if (removeError) {
+          throw removeError;
+        }
+
+        await ctx.db
+          .delete(filesTable)
+          .where(eq(filesTable.id, fileId));
+
+        logger.info("File deleted successfully", {
+          fileId,
+          tenantId: ctx.tenantId,
+          userId: ctx.user.id,
+          requestId: ctx.requestId,
+        });
+
+        return { success: true };
+      } catch (error) {
+        logger.error("Failed to delete file", {
+          error,
+          fileId,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete file",
+        });
+      }
+    }),
+
+  processBatch: tenantProcedure
+    .input(
+      z.object({
+        fileIds: z.array(z.string().uuid()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const files = await ctx.db
+        .select()
+        .from(filesTable)
+        .where(
+          and(
+            eq(filesTable.tenantId, ctx.tenantId),
+            inArray(filesTable.id, input.fileIds)
+          )
+        );
+
+      if (files.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No files found",
+        });
+      }
+
+      const jobHandle = await tasks.batchTrigger(
+        "categorize-file",
+        files.map(file => ({
+          payload: {
+            fileId: file.id,
+            tenantId: file.tenantId,
+            mimeType: file.mimeType,
+            size: file.size,
+            pathTokens: file.pathTokens,
+            source: file.source,
+          } satisfies CategorizeFilePayload,
+        }))
+      );
+
+      logger.info("Batch file categorization jobs triggered", {
+        count: files.length,
+        tenantId: ctx.tenantId,
+        requestId: ctx.requestId,
+      });
+
+      return {
+        triggered: files.length,
+        jobHandle: jobHandle.batchId,
+      };
+    }),
+});

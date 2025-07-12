@@ -1,0 +1,33 @@
+{
+  "name": "@kibly/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "doppler run -- bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target bun --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@hono/trpc-server": "^0.3.2",
+    "@kibly/config": "workspace:*",
+    "@kibly/shared-db": "workspace:*",
+    "@kibly/supabase-storage": "workspace:*",
+    "@kibly/tenant": "workspace:*",
+    "@kibly/trpc": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10",
+    "@trpc/server": "^10.45.2",
+    "hono": "^4.6.13",
+    "superjson": "^2.2.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2"
+  }
+}

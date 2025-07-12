@@ -97,7 +97,7 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
-const toast = useToast()
+const { auth, general } = useNotifications()
 const router = useRouter()
 
 const isLoading = ref(false)
@@ -129,20 +129,12 @@ async function onSubmit(event: { data: Schema }) {
     isLoading.value = true
     await authStore.signUp(event.data.email, event.data.password)
     
-    toast.add({
-      title: 'Account created!',
-      description: 'Please check your email to verify your account.',
-      color: 'success'
-    })
+    auth.signUpSuccess()
     
     // Redirect to login
     await router.push('/auth/login')
   } catch (error) {
-    toast.add({
-      title: 'Sign up failed',
-      description: error instanceof Error ? error.message : 'Failed to create account',
-      color: 'error'
-    })
+    auth.signUpFailed(error instanceof Error ? error.message : undefined)
   } finally {
     isLoading.value = false
   }
@@ -150,17 +142,9 @@ async function onSubmit(event: { data: Schema }) {
 
 async function signUpWithProvider() {
   try {
-    toast.add({
-      title: 'Coming soon',
-      description: 'Google sign-up will be available soon',
-      color: 'warning'
-    })
+    general.comingSoon('Google sign-up')
   } catch (error) {
-    toast.add({
-      title: 'Error',
-      description: error instanceof Error ? error.message : 'An error occurred',
-      color: 'error'
-    })
+    general.error('Error', error instanceof Error ? error.message : undefined)
   }
 }
 </script>

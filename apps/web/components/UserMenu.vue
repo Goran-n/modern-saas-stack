@@ -45,9 +45,10 @@
 
 <script setup lang="ts">
 const authStore = useAuthStore()
-const toast = useToast()
+const { auth } = useNotifications()
 
-const user = computed(() => authStore.user)
+// Use Supabase user composable directly
+const user = useSupabaseUser()
 
 const userName = computed(() => {
   const email = user.value?.email || 'Guest'
@@ -77,18 +78,9 @@ async function signOut() {
     await authStore.signOut()
     await navigateTo('/auth/login')
     
-    toast.add({
-      title: 'Signed out successfully',
-      icon: 'i-heroicons-check-circle',
-      color: 'success'
-    })
+    auth.signOutSuccess()
   } catch (error) {
-    toast.add({
-      title: 'Error signing out',
-      description: error instanceof Error ? error.message : 'An error occurred',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error'
-    })
+    auth.signOutFailed(error instanceof Error ? error.message : undefined)
   }
 }
 </script>

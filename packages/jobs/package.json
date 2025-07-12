@@ -1,0 +1,28 @@
+{
+  "name": "@kibly/jobs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "doppler run -- npx trigger.dev@latest dev",
+    "deploy": "doppler run -- npx trigger.dev@latest deploy",
+    "deploy:staging": "doppler run -- npx trigger.dev@latest deploy --env staging",
+    "deploy:prod": "doppler run -- npx trigger.dev@latest deploy --env prod",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+  },
+  "exports": {
+    "./schemas": "./src/schemas/index.ts"
+  },
+  "dependencies": {
+    "@kibly/config": "workspace:*",
+    "@kibly/shared-db": "workspace:*",
+    "@kibly/supabase-storage": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.17",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "trigger.dev": "^3.3.17",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.1"
+  }
+}

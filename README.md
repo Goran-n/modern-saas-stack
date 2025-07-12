@@ -22,7 +22,6 @@ kibly/
 │   ├── shared-config/    # Shared ESLint and Prettier configs
 │   ├── shared-types/     # Common TypeScript types
 │   ├── shared-utils/     # Shared utilities
-│   └── queue-monitor/    # BullMQ queue monitoring UI
 ```
 
 ## 🚀 Quick Start
@@ -90,7 +89,6 @@ kibly/
    # Or start individually
    bun run dev:api    # Backend API
    bun run dev:web    # Frontend
-   bun run dev:monitor # Queue monitor (optional)
    ```
 
 The API will be available at `http://localhost:3000` and the web app at `http://localhost:5173`.

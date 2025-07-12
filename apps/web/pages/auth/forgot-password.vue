@@ -46,7 +46,7 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
-const toast = useToast()
+const { auth } = useNotifications()
 const router = useRouter()
 
 const schema = z.object({
@@ -66,24 +66,14 @@ async function onSubmit(event: { data: Schema }) {
     isLoading.value = true
     await authStore.resetPassword(event.data.email)
     
-    toast.add({
-      title: 'Check your email',
-      description: 'We sent you a password reset link.',
-      icon: 'i-heroicons-check-circle',
-      color: 'success'
-    })
+    auth.passwordResetSent()
     
     // Redirect back to login after a delay
     setTimeout(() => {
       router.push('/auth/login')
     }, 3000)
   } catch (error) {
-    toast.add({
-      title: 'Error',
-      description: error instanceof Error ? error.message : 'Failed to send reset email',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error'
-    })
+    auth.passwordResetFailed(error instanceof Error ? error.message : undefined)
   } finally {
     isLoading.value = false
   }

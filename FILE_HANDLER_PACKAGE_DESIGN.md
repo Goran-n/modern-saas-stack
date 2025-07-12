@@ -1,7 +1,7 @@
-# File Handler Package Design Ticket
+# File Manager Package Design Ticket
 
 ## Overview
-Implement a Turborepo package for internal file handling that will manage files from various sources including direct integrations (e.g., Xero) and WhatsApp uploads stored in Supabase Storage.
+Implement a Turborepo package for internal file management that will manage files from various sources including direct integrations (e.g., Xero) and WhatsApp uploads stored in Supabase Storage.
 
 ## Requirements
 - Store files in Supabase Storage
@@ -15,7 +15,7 @@ Implement a Turborepo package for internal file handling that will manage files 
 ### 1. Database Schema
 
 ```typescript
-// packages/file-handler/src/schema.ts
+// packages/file-manager/src/schema.ts
 
 export const fileProcessingStatusEnum = pgEnum('file_processing_status', [
   'pending',
@@ -47,7 +47,7 @@ export const files = pgTable('files', {
 ### 2. Package Structure
 
 ```
-packages/file-handler/
+packages/file-manager/
 ├── src/
 │   ├── schema.ts        # Drizzle schema definition
 │   ├── types.ts         # TypeScript types and Zod schemas
@@ -60,7 +60,7 @@ packages/file-handler/
 ### 3. Core Types
 
 ```typescript
-// packages/file-handler/src/types.ts
+// packages/file-manager/src/types.ts
 
 import { z } from 'zod';
 
@@ -89,7 +89,7 @@ export type CreateFileInput = z.infer<typeof createFileSchema>;
 ### 4. File Operations
 
 ```typescript
-// packages/file-handler/src/operations.ts
+// packages/file-manager/src/operations.ts
 
 import { upload, download, remove, signedUrl } from '@kibly/supabase/storage';
 
@@ -214,7 +214,7 @@ export async function updateProcessingStatus(
 
 ## Missing Packages (Need to Create)
 
-The file handler package depends on three internal packages that need to be created:
+The file manager package depends on three internal packages that need to be created:
 
 ### 1. `@kibly/supabase/storage`
 **Purpose**: Wrapper for Supabase Storage operations with consistent error handling and logging.

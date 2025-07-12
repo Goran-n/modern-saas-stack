@@ -49,11 +49,11 @@ definePageMeta({
   middleware: ['auth']
 })
 
-const authStore = useAuthStore()
-const { user } = authStore
+// Use Supabase user composable directly
+const user = useSupabaseUser()
 
 const userName = computed(() => {
-  const email = user?.email || 'User'
+  const email = user.value?.email || 'User'
   return email.split('@')[0]
 })
 

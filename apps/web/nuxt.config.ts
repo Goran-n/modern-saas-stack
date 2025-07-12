@@ -7,12 +7,13 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/icon',
     '@nuxtjs/color-mode',
+    '@nuxtjs/supabase',
     '@pinia/nuxt',
     '@vueuse/nuxt'
   ],
 
 
-  ssr: true,
+  ssr: false,
   
   devtools: { enabled: true },
 
@@ -27,18 +28,43 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.API_URL || 'http://localhost:5001',
-      supabaseUrl: process.env.SUPABASE_URL || '',
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || ''
+      apiUrl: process.env.API_URL || 'http://localhost:5001'
+    }
+  },
+  
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_ANON_KEY,
+    redirect: false,
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/auth/confirm',
+      exclude: ['/auth/*']
+    },
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: true
     }
   },
 
   css: ['~/assets/css/main.css'],
 
+  ui: {
+    theme: {
+      colors: ['primary', 'gray', 'green', 'red', 'midnight', 'electric', 'prosperity', 'alert']
+    }
+  },
+
   colorMode: {
     classSuffix: '',
     preference: 'system',
     fallback: 'light'
+  },
+  
+  pinia: {
+    storesDirs: ['./stores/**'],
+    disableVuex: true
   },
 
   app: {
@@ -74,5 +100,16 @@ export default defineNuxtConfig({
     families: [
       { name: 'Inter', provider: 'google' }
     ]
+  },
+  
+  vite: {
+    resolve: {
+      alias: {
+        cookie: 'cookie'
+      }
+    },
+    optimizeDeps: {
+      include: ['cookie']
+    }
   }
 })

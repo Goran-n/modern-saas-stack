@@ -78,9 +78,10 @@ import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
 const colorMode = useColorMode()
-const toast = useToast()
+const { auth, general } = useNotifications()
 
-const user = computed(() => authStore.user)
+// Use Supabase user composable directly
+const user = useSupabaseUser()
 
 const userName = computed(() => {
   const email = user.value?.email || 'Guest'
@@ -147,11 +148,7 @@ const items = computed(() => [
 function toggleColorMode() {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   
-  toast.add({
-    title: `Switched to ${colorMode.value} mode`,
-    icon: colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun',
-    color: 'primary'
-  })
+  general.info(`Switched to ${colorMode.value} mode`, undefined)
 }
 
 async function signOut() {
@@ -159,18 +156,9 @@ async function signOut() {
     await authStore.signOut()
     await navigateTo('/auth/login')
     
-    toast.add({
-      title: 'Signed out successfully',
-      icon: 'i-heroicons-check-circle',
-      color: 'success'
-    })
+    auth.signOutSuccess()
   } catch (error) {
-    toast.add({
-      title: 'Error signing out',
-      description: error instanceof Error ? error.message : 'An error occurred',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error'
-    })
+    auth.signOutFailed(error instanceof Error ? error.message : undefined)
   }
 }
 

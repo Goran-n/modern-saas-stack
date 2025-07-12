@@ -1,0 +1,32 @@
+{
+  "name": "@kibly/file-manager",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "zod": "^3.22.4",
+    "@kibly/supabase-storage": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "@kibly/shared-db": "workspace:*",
+    "@kibly/config": "workspace:*",
+    "@trigger.dev/sdk": "^3.0.0-beta.63",
+    "@kibly/jobs": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
+  }
+}
