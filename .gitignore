@@ -67,6 +67,10 @@ jspm_packages/
 # Turbo
 .turbo/
 
+# Trigger.dev temporary files
+.trigger/tmp/
+**/.trigger/tmp/
+
 # Bun
 .bun/
 

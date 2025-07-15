@@ -35,7 +35,10 @@
     "lint:api": "turbo run lint --filter @kibly/api",
     "lint:web": "turbo run lint --filter @kibly/web",
     "lint:tsc": "turbo run typecheck",
-    "db:migrate": "turbo run db:migrate --filter @kibly/api",
+    "db:generate": "doppler run -- drizzle-kit generate",
+    "db:push": "doppler run -- drizzle-kit push",
+    "db:migrate": "doppler run -- drizzle-kit migrate",
+    "db:studio": "doppler run -- drizzle-kit studio",
     "db:seed": "turbo run db:seed --filter @kibly/api",
     "dev:cleanup": "bun scripts/cleanup-dev.ts",
     "dev:clean": "bun scripts/cleanup-dev.ts"
@@ -44,6 +47,7 @@
     "@turbo/gen": "^2.5.4",
     "@types/jsonwebtoken": "^9.0.10",
     "concurrently": "^9.2.0",
+    "drizzle-kit": "latest",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   },

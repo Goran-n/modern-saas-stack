@@ -12,6 +12,12 @@ export const supabaseSchema = z.object({
   SUPABASE_URL: z.string().url().min(1, 'SUPABASE_URL is required'),
   
   /**
+   * Supabase project ID (extracted from URL)
+   * @optional - auto-derived from SUPABASE_URL if not provided
+   */
+  SUPABASE_PROJECT_ID: z.string().optional(),
+  
+  /**
    * Supabase anonymous key
    * @required
    */
@@ -29,6 +35,22 @@ export const supabaseSchema = z.object({
    * @default 'vault'
    */
   STORAGE_BUCKET: z.string().default('vault'),
+  
+  /**
+   * Storage signed URL expiry time in seconds
+   * @optional
+   * @default 300 (5 minutes)
+   */
+  STORAGE_SIGNED_URL_EXPIRY: z.coerce.number().int().min(30).max(3600).default(300),
+}).transform((data) => {
+  // Auto-derive project ID from URL if not provided
+  if (!data.SUPABASE_PROJECT_ID && data.SUPABASE_URL) {
+    const match = data.SUPABASE_URL.match(/https?:\/\/([^.]+)\.supabase\.(co|in)/);
+    if (match) {
+      data.SUPABASE_PROJECT_ID = match[1];
+    }
+  }
+  return data;
 });
 
 export type SupabaseConfig = z.infer<typeof supabaseSchema>;

@@ -8,6 +8,7 @@ export * from './auth';
 export * from './redis';
 export * from './web';
 export * from './trigger';
+export * from './portkey';
 
 import { baseSchema } from './base';
 import { databaseSchema } from './database';
@@ -16,6 +17,7 @@ import { authSchema } from './auth';
 import { redisSchema } from './redis';
 import { webSchema } from './web';
 import { triggerSchema } from './trigger';
+import { portkeySchema } from './portkey';
 
 /**
  * Complete application configuration schema
@@ -27,7 +29,8 @@ export const fullConfigSchema = baseSchema
   .merge(authSchema)
   .merge(redisSchema)
   .merge(webSchema)
-  .merge(triggerSchema);
+  .merge(triggerSchema)
+  .merge(portkeySchema);
 
 /**
  * Core required configuration schema
@@ -37,7 +40,8 @@ export const coreConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(supabaseSchema)
   .merge(authSchema)
-  .merge(triggerSchema);
+  .merge(triggerSchema)
+  .merge(portkeySchema);
 
 /**
  * File manager specific configuration schema

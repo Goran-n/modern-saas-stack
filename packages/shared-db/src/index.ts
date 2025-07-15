@@ -1,5 +1,6 @@
 export * from './client'
 export * from './schemas'
+export * from './types'
 
 // Re-export Drizzle types and functions for convenience
 export type { InferSelectModel, InferInsertModel } from 'drizzle-orm'

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { triggerSchema } from '../schemas/trigger';
+import { portkeySchema } from '../schemas/portkey';
 
 /**
  * Development environment configuration
@@ -37,6 +39,8 @@ export const developmentConfigSchema = z.object({
   WEB_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   API_URL: z.string().url().default('http://localhost:5001'),
   DEV_MODE: z.coerce.boolean().default(true),
-});
+})
+.merge(triggerSchema)
+.merge(portkeySchema);
 
 export type DevelopmentConfig = z.infer<typeof developmentConfigSchema>;
