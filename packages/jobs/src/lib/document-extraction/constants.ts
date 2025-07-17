@@ -87,6 +87,9 @@ export const DEFAULT_FIELD_CONFIDENCE = {
   
   // Lower confidence fields
   vendorAddress: 75,
+  vendorCity: 75,
+  vendorPostalCode: 75,
+  vendorCountry: 75,
   customerAddress: 75,
   notes: 70,
   paymentTerms: 70,

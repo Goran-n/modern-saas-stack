@@ -1,8 +1,8 @@
 import { categorizeFileSchema } from "../../schemas/file";
-import { createDrizzleClient, files as filesTable, documentExtractions, eq } from "@kibly/shared-db";
+import { createDrizzleClient, files as filesTable, documentExtractions, eq, type NewDocumentExtraction } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
 import { getConfig } from "@kibly/config";
-import { schemaTask } from "@trigger.dev/sdk/v3";
+import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
 import { DocumentExtractor } from "../../lib/document-extraction/extractor";
 import { SupabaseStorageClient } from "@kibly/supabase-storage";
 
@@ -218,7 +218,7 @@ export const categorizeFile = schemaTask({
       const extraction = await extractor.extractDocument(signedUrl.signedUrl, file.mimeType);
       
       // Save extraction results
-      await db.insert(documentExtractions).values({
+      const extractionData: NewDocumentExtraction = {
         fileId: file.id,
         documentType: extraction.documentType,
         documentTypeConfidence: extraction.documentTypeConfidence.toString(),
@@ -233,7 +233,30 @@ export const categorizeFile = schemaTask({
         processingDurationMs: extraction.processingDuration,
         modelVersion: extraction.processingVersion,
         errors: extraction.errors,
-      });
+      };
+      
+      const [insertedExtraction] = await db.insert(documentExtractions).values(extractionData).returning();
+      
+      if (!insertedExtraction) {
+        throw new Error('Failed to insert document extraction')
+      }
+      
+      // Trigger supplier processing for invoice-type documents
+      if (['invoice', 'receipt', 'purchase_order'].includes(extraction.documentType || '')) {
+        logger.info("Triggering supplier processing", {
+          documentExtractionId: insertedExtraction.id,
+          documentType: extraction.documentType,
+          tenantId,
+        });
+        
+        await tasks.trigger('process-invoice-supplier', {
+          documentExtractionId: insertedExtraction.id,
+          tenantId,
+          userId: undefined, // userId not available in file processing context
+        }, {
+          concurrencyKey: `tenant-${tenantId}`, // Ensure sequential processing per tenant
+        });
+      }
 
       // Update file with categorization results
       await db

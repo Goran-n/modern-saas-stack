@@ -9,11 +9,16 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "bun run test-runner.ts",
+    "test:watch": "bun run test-runner.ts --watch",
+    "test:local": "docker-compose -f ../../docker-compose.test.yml up -d && sleep 3 && TEST_DATABASE_URL=postgresql://test:test@localhost:5433/kibly_test bun run test-runner.ts",
+    "test:local:down": "docker-compose -f ../../docker-compose.test.yml down -v"
   },
   "dependencies": {
     "@kibly/shared-db": "workspace:*",
     "@kibly/utils": "workspace:*",
+    "@kibly/supplier": "workspace:*",
+    "@kibly/jobs": "workspace:*",
     "nanoid": "^5.0.9",
     "date-fns": "^3.6.0"
   },

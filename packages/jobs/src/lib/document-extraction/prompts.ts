@@ -20,6 +20,9 @@ Required JSON structure (all fields must be included):
     
     "vendorName": { "value": string or null, "confidence": number },
     "vendorAddress": { "value": string or null, "confidence": number },
+    "vendorCity": { "value": string or null, "confidence": number },
+    "vendorPostalCode": { "value": string or null, "confidence": number },
+    "vendorCountry": { "value": string or null, "confidence": number },
     "vendorEmail": { "value": string or null, "confidence": number },
     "vendorPhone": { "value": string or null, "confidence": number },
     "vendorWebsite": { "value": string or null, "confidence": number },
@@ -62,6 +65,8 @@ Important:
 - Use ISO date format YYYY-MM-DD
 - Tax type must be one of: ${TAX_TYPES.join(', ')}
 - Currency must be a three-letter ISO 4217 code (e.g., USD, EUR, GBP)
+- For addresses: extract vendorAddress as the full address, then also extract city, postal code, and country separately
+- For vendorCountry: use ISO 3166-1 alpha-2 codes (e.g., US, GB, DE, FR)
 - If a field cannot be found, use null with confidence 0
 - If a field is partially visible or unclear, extract what you can with appropriate confidence`;
 

@@ -12,6 +12,7 @@
     "extract": "bun src/lib/document-extraction/cli.ts"
   },
   "exports": {
+    ".": "./src/index.ts",
     "./schemas": "./src/schemas/index.ts"
   },
   "dependencies": {

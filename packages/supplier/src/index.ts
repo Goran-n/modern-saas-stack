@@ -1,8 +1,16 @@
 // Type exports
 export * from './types';
 
+// Constants exports
+export { 
+  CONFIDENCE_SCORES, 
+  CONFIDENCE_THRESHOLDS,
+  PROCESSING_NOTES,
+  DEFAULT_CONFIDENCE 
+} from './constants';
+
 // Error exports
-export { SupplierError, SupplierErrors } from './errors';
+export { SupplierError, SupplierErrors, createError } from './errors';
 
 // Core exports
 export { AttributeNormalizer } from './ingestion/normalizer';
@@ -31,3 +39,11 @@ export {
 
 // Utility exports
 export { generateSlug } from './utils/slug';
+export { 
+  extractVendorData, 
+  extractVendorDataWithConfidence,
+  extractVendorAddress,
+  hasMinimumVendorData,
+  getVendorDataCompleteness,
+  type ExtractedVendorData
+} from './utils/document-extraction';

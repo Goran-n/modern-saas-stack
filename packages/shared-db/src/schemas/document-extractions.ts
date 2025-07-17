@@ -1,5 +1,6 @@
 import { pgTable, uuid, text, jsonb, timestamp, numeric, integer, pgEnum } from 'drizzle-orm/pg-core';
 import { files } from './files';
+import { suppliers } from './suppliers';
 
 export const documentTypeEnum = pgEnum('document_type', [
   'invoice',
@@ -46,7 +47,7 @@ export const documentExtractions = pgTable('document_extractions', {
   annotations: jsonb('annotations').$type<import('../types').FieldAnnotation[]>(),
   
   // Supplier matching
-  matchedSupplierId: uuid('matched_supplier_id'),
+  matchedSupplierId: uuid('matched_supplier_id').references(() => suppliers.id),
   matchConfidence: numeric('match_confidence', { precision: 5, scale: 2 }),
   suggestedMatches: jsonb('suggested_matches').array().$type<import('../types').SuggestedMatch[]>(),
   
@@ -55,6 +56,7 @@ export const documentExtractions = pgTable('document_extractions', {
   processingDurationMs: integer('processing_duration_ms').notNull(),
   modelVersion: text('model_version').notNull(),
   errors: jsonb('errors').default([]).$type<import('../types').ExtractionError[]>(),
+  processingNotes: text('processing_notes'),
   
   // Timestamps
   createdAt: timestamp('created_at').notNull().defaultNow(),

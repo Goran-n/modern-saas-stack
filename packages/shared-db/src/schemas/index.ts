@@ -9,3 +9,14 @@ export {
   type DocumentExtraction,
   type NewDocumentExtraction
 } from './document-extractions'
+export {
+  suppliers,
+  supplierDataSources,
+  supplierAttributes,
+  supplierStatusEnum,
+  dataSourceEnum,
+  attributeTypeEnum,
+  suppliersRelations,
+  supplierDataSourcesRelations,
+  supplierAttributesRelations
+} from './suppliers'

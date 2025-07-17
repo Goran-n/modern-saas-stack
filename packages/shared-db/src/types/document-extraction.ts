@@ -27,6 +27,9 @@ export interface ExtractedFields {
   // Vendor information
   vendorName?: ExtractedFieldValue;
   vendorAddress?: ExtractedFieldValue;
+  vendorCity?: ExtractedFieldValue;
+  vendorPostalCode?: ExtractedFieldValue;
+  vendorCountry?: ExtractedFieldValue;
   vendorEmail?: ExtractedFieldValue;
   vendorPhone?: ExtractedFieldValue;
   vendorWebsite?: ExtractedFieldValue;

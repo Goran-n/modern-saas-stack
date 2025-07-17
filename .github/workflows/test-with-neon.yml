@@ -1,0 +1,58 @@
+name: Test with Neon Database Branches
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create Neon Branch
+        id: create-branch
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          # Branch name includes PR number or commit SHA
+          branch_name: test-${{ github.event.pull_request.number || github.sha }}-${{ github.run_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          # Optional: branch from specific parent (e.g., staging)
+          # parent: staging
+
+      - name: Run migrations
+        run: |
+          cd packages/shared-db
+          NEON_DATABASE_URL=${{ steps.create-branch.outputs.db_url }} bun run migrate
+        env:
+          NEON_DATABASE_URL: ${{ steps.create-branch.outputs.db_url }}
+
+      - name: Run tests
+        run: |
+          cd packages/tenant
+          bun test
+        env:
+          NEON_DATABASE_URL: ${{ steps.create-branch.outputs.db_url }}
+          NEON_BRANCH_NAME: ${{ steps.create-branch.outputs.branch_id }}
+          NODE_ENV: test
+
+      - name: Delete Neon Branch
+        if: always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ${{ steps.create-branch.outputs.branch_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}

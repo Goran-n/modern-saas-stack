@@ -10,7 +10,12 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vitest"
+    "test": "vitest",
+    "test:unit": "vitest run src/__tests__/unit",
+    "test:integration": "vitest run src/__tests__/integration",
+    "test:watch": "vitest watch",
+    "test:local": "docker compose -f ../../docker-compose.test.yml up -d && sleep 3 && TEST_DATABASE_URL=postgresql://test:test@localhost:5433/kibly_test vitest",
+    "test:local:down": "docker compose -f ../../docker-compose.test.yml down -v"
   },
   "dependencies": {
     "@kibly/shared-db": "workspace:*",

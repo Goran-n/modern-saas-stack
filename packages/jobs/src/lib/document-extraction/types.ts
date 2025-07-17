@@ -150,6 +150,9 @@ export const accountingDocumentSchema = z.object({
   // Vendor information
   vendorName: z.string().nullable().describe('Legal name of the vendor'),
   vendorAddress: z.string().nullable().describe('Complete vendor address'),
+  vendorCity: z.string().nullable().describe('Vendor city'),
+  vendorPostalCode: z.string().nullable().describe('Vendor postal/ZIP code'),
+  vendorCountry: z.string().nullable().describe('Vendor country ISO code'),
   vendorEmail: z.string().email().nullable(),
   vendorPhone: z.string().nullable(),
   vendorWebsite: z.string().nullable(),
