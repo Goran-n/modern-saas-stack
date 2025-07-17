@@ -1,5 +1,5 @@
 import { getDb } from '../db'
-import { users } from '@kibly/shared-db/schemas/tenants'
+import { users } from '@kibly/shared-db'
 import { eq } from 'drizzle-orm'
 import type { User } from '../types'
 

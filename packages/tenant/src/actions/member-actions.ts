@@ -4,7 +4,7 @@ import {
   users, 
   tenantMembers,
   invitations 
-} from '@kibly/shared-db/schemas/tenants'
+} from '@kibly/shared-db'
 import { eq, and, isNull } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { v4 as uuidv4 } from 'uuid'
@@ -67,6 +67,10 @@ export async function inviteMember(input: InviteMemberInput): Promise<Invitation
     createdAt: new Date()
   }).returning()
 
+  if (!invitation) {
+    throw new Error('Failed to create invitation')
+  }
+
   logger.info('Invitation created', { invitationId: invitation.id })
 
   return invitation
@@ -123,6 +127,10 @@ export async function acceptInvitation(token: string, userData: CreateUserInput)
     updatedAt: new Date()
   }).returning()
 
+  if (!member) {
+    throw new Error('Failed to create tenant member')
+  }
+
   await db.update(invitations)
     .set({ acceptedAt: new Date() })
     .where(eq(invitations.id, invitation.id))
@@ -154,7 +162,7 @@ export async function updateMemberRole(input: UpdateMemberRoleInput): Promise<Te
         eq(tenantMembers.role, 'owner')
       ))
 
-    if (owners.length === 1 && owners[0].id === validated.memberId) {
+    if (owners.length === 1 && owners[0]?.id === validated.memberId) {
       throw new Error('Cannot remove the last owner')
     }
   }

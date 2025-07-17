@@ -1,5 +1,5 @@
 import { getDb } from '../db'
-import { tenantMembers } from '@kibly/shared-db/schemas/tenants'
+import { tenantMembers } from '@kibly/shared-db'
 import { eq, and } from 'drizzle-orm'
 import type {
   CheckPermissionInput,

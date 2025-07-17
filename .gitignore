@@ -81,6 +81,16 @@ jspm_packages/
 # TypeScript
 *.tsbuildinfo
 
+# Build artifacts in source directories
+packages/**/src/**/*.js
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts.map
+apps/**/src/**/*.js
+apps/**/src/**/*.d.ts
+apps/**/src/**/*.js.map
+apps/**/src/**/*.d.ts.map
+
 # Doppler
 .doppler/
 

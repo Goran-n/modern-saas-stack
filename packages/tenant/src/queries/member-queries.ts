@@ -2,7 +2,7 @@ import { getDb } from '../db'
 import { 
   tenantMembers,
   users
-} from '@kibly/shared-db/schemas/tenants'
+} from '@kibly/shared-db'
 import { eq, desc } from 'drizzle-orm'
 import type {
   TenantMember,

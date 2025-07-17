@@ -16,4 +16,7 @@ export default defineConfig({
     },
   },
   dirs: ["./src/tasks"],
+  build: {
+    external: ["pino", "thread-stream", "pino-pretty"],
+  },
 });

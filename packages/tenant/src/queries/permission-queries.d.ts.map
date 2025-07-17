@@ -1,1 +1,0 @@
-{"version":3,"file":"permission-queries.d.ts","sourceRoot":"","sources":["permission-queries.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EACV,oBAAoB,EACpB,UAAU,EACX,MAAM,UAAU,CAAA;AAGjB,wBAAsB,eAAe,CAAC,KAAK,EAAE,oBAAoB,GAAG,OAAO,CAAC,OAAO,CAAC,CAmBnF;AAED,wBAAsB,kBAAkB,CAAC,QAAQ,EAAE,MAAM,EAAE,MAAM,EAAE,MAAM,GAAG,OAAO,CAAC,UAAU,EAAE,CAAC,CAgBhG"}

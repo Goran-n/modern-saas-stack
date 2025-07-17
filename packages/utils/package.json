@@ -2,20 +2,12 @@
   "name": "@kibly/utils",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./logger": {
-      "types": "./dist/logger.d.ts",
-      "default": "./dist/logger.js"
-    }
+    ".": "./src/index.ts",
+    "./logger": "./src/logger.ts"
   },
   "scripts": {
-    "build": "tsc",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },

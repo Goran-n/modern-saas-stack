@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Supabase configuration environment variables schema
  */
-export const supabaseSchema = z.object({
+export const supabaseSchemaBase = z.object({
   /**
    * Supabase project URL
    * @required
@@ -42,7 +42,13 @@ export const supabaseSchema = z.object({
    * @default 300 (5 minutes)
    */
   STORAGE_SIGNED_URL_EXPIRY: z.coerce.number().int().min(30).max(3600).default(300),
-}).transform((data) => {
+});
+
+// Export the base schema for merging
+export const supabaseSchema = supabaseSchemaBase;
+
+// Export the transformed schema for direct use
+export const supabaseSchemaWithTransform = supabaseSchemaBase.transform((data) => {
   // Auto-derive project ID from URL if not provided
   if (!data.SUPABASE_PROJECT_ID && data.SUPABASE_URL) {
     const match = data.SUPABASE_URL.match(/https?:\/\/([^.]+)\.supabase\.(co|in)/);

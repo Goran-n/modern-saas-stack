@@ -1,12 +1,9 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@kibly/tsconfig/base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "noEmit": true,
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true
+    "types": ["node"],
+    "exactOptionalPropertyTypes": false
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules", ".trigger"]
 }

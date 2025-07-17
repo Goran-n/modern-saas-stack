@@ -3,7 +3,7 @@ import { getDb } from '../db'
 import { 
   tenants, 
   tenantMembers
-} from '@kibly/shared-db/schemas/tenants'
+} from '@kibly/shared-db'
 import { eq } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
 import type {
@@ -36,6 +36,10 @@ export async function createTenant(input: CreateTenantInput): Promise<{ tenant: 
       updatedAt: new Date()
     }).returning()
 
+    if (!tenant) {
+      throw new Error('Failed to create tenant')
+    }
+
     const [member] = await tx.insert(tenantMembers).values({
       id: uuidv4(),
       tenantId: tenant.id,
@@ -45,6 +49,10 @@ export async function createTenant(input: CreateTenantInput): Promise<{ tenant: 
       joinedAt: new Date(),
       updatedAt: new Date()
     }).returning()
+
+    if (!member) {
+      throw new Error('Failed to create tenant member')
+    }
 
     logger.info('Tenant created successfully', { 
       tenantId: tenant.id, 

@@ -24,7 +24,6 @@
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^build"],
       "outputs": []
     },
     "typecheck:strict": {

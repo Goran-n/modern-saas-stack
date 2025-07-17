@@ -4,7 +4,7 @@ import { getDb } from '../db'
 import { 
   users, 
   tenantMembers 
-} from '@kibly/shared-db/schemas/tenants'
+} from '@kibly/shared-db'
 import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
 import type {
@@ -30,7 +30,8 @@ export async function generateTenantToken(userId: string, tenantId?: string): Pr
     throw new Error('User has no tenant memberships')
   }
 
-  const targetTenantId = tenantId || memberships[0].tenantId
+  const firstMembership = memberships[0]!  // Safe to use ! here as we checked length above
+  const targetTenantId = tenantId || firstMembership.tenantId
   const membership = memberships.find(m => m.tenantId === targetTenantId)
 
   if (!membership) {

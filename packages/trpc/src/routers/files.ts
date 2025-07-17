@@ -89,6 +89,13 @@ export const filesRouter = createTRPCRouter({
           })
           .returning();
 
+        if (!fileRecord) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create file record",
+          });
+        }
+
         logger.info("File uploaded successfully", {
           fileId: fileRecord.id,
           tenantId: ctx.tenantId,

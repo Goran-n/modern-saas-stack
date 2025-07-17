@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { createClient } from '@supabase/supabase-js'
-import { createLogger } from '@kibly/utils/logger'
+import { createLogger } from '@kibly/utils'
 
 const logger = createLogger('auth')
 
@@ -34,7 +34,7 @@ export class AuthService {
         id: decoded.sub,
         email: decoded.email,
         tenantId: decoded.user_metadata?.tenant_id,
-        role: decoded.role
+        ...(decoded.role && { role: decoded.role })
       }
     } catch (error) {
       logger.error('Failed to verify token', String(error))
@@ -54,7 +54,7 @@ export class AuthService {
         id: data.user.id,
         email: data.user.email!,
         tenantId: data.user.user_metadata?.tenant_id,
-        role: data.user.role
+        ...(data.user.role && { role: data.user.role })
       }
     } catch (error) {
       logger.error('Failed to get user', String(error))
