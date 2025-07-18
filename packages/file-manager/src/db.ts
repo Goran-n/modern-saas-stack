@@ -1,4 +1,4 @@
-import { createDrizzleClient, type DrizzleClient } from '@kibly/shared-db';
+import { getDatabaseConnection, type DrizzleClient } from '@kibly/shared-db';
 import { getConfig } from '@kibly/config';
 
 let dbInstance: DrizzleClient | null = null;
@@ -10,7 +10,7 @@ let dbInstance: DrizzleClient | null = null;
 export function getDb(): DrizzleClient {
   if (!dbInstance) {
     const config = getConfig().getForFileManager();
-    dbInstance = createDrizzleClient(config.DATABASE_URL);
+    dbInstance = getDatabaseConnection(config.DATABASE_URL);
   }
   return dbInstance;
 }

@@ -21,9 +21,9 @@ bun install
 ```
 
 2. Configure environment variables in Doppler:
-- `VITE_API_URL` - Backend API URL
-- `VITE_SUPABASE_URL` - Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `NUXT_PUBLIC_API_URL` - Backend API URL
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_ANON_KEY` - Supabase anonymous key
 - `NUXT_UI_PRO_LICENSE` - Nuxt UI Pro license key (for production)
 
 3. Run development server:

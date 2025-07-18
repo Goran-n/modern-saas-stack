@@ -4,6 +4,7 @@ import {
   tenantMembers
 } from '@kibly/shared-db'
 import { eq, desc } from 'drizzle-orm'
+import { logger } from '@kibly/utils'
 import type {
   Tenant,
   TenantMember,
@@ -44,23 +45,46 @@ export async function listTenants(filters?: { status?: TenantStatus }): Promise<
 
 export async function getUserTenants(userId: string): Promise<(TenantMember & { tenant: Tenant })[]> {
   const db = getDb()
+  const startTime = Date.now()
   
-  const memberships = await db.select({
-    member: tenantMembers,
-    tenant: tenants
-  })
-    .from(tenantMembers)
-    .innerJoin(tenants, eq(tenantMembers.tenantId, tenants.id))
-    .where(eq(tenantMembers.userId, userId))
-    .orderBy(desc(tenantMembers.joinedAt))
+  try {
+    const memberships = await db.select({
+      member: tenantMembers,
+      tenant: tenants
+    })
+      .from(tenantMembers)
+      .innerJoin(tenants, eq(tenantMembers.tenantId, tenants.id))
+      .where(eq(tenantMembers.userId, userId))
+      .orderBy(desc(tenantMembers.joinedAt))
 
-  return memberships.map(({ member, tenant }) => ({
-    ...member,
-    tenant: {
-      ...tenant,
-      settings: tenant.settings as Record<string, any>,
-      subscription: tenant.subscription as Record<string, any>,
-      metadata: tenant.metadata as Record<string, any>
-    } as Tenant
-  }))
+    const duration = Date.now() - startTime
+    
+    if (memberships.length === 0) {
+      logger.debug('No tenants found for user', { userId, duration })
+    } else {
+      logger.debug('getUserTenants query successful', { 
+        userId, 
+        tenantCount: memberships.length,
+        duration,
+      })
+    }
+
+    return memberships.map(({ member, tenant }) => ({
+      ...member,
+      tenant: {
+        ...tenant,
+        settings: tenant.settings as Record<string, any>,
+        subscription: tenant.subscription as Record<string, any>,
+        metadata: tenant.metadata as Record<string, any>
+      } as Tenant
+    }))
+  } catch (error) {
+    const duration = Date.now() - startTime
+    logger.error('getUserTenants query failed', { 
+      userId, 
+      duration,
+      error: error instanceof Error ? error.message : error,
+    })
+    throw error
+  }
 }

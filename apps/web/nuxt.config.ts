@@ -28,7 +28,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.API_URL || 'http://localhost:5001'
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:5000'
     }
   },
   
@@ -81,7 +81,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: process.env.API_URL || 'http://localhost:5001',
+        target: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:5000',
         changeOrigin: true
       }
     }

@@ -41,12 +41,12 @@ export const EXTRACTION_METHODS = [
   'manual'
 ] as const;
 
-// Field sources
+// Field sources - aligned with database schema
 export const FIELD_SOURCES = [
   'ai_extraction',
   'ocr',
   'rules',
-  'user_corrected'
+  'manual'
 ] as const;
 
 // Address types

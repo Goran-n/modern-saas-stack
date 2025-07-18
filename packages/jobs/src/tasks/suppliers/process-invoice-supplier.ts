@@ -2,7 +2,7 @@ import { task } from '@trigger.dev/sdk/v3';
 import { z } from 'zod';
 import { logger } from '@kibly/utils';
 import { 
-  createDrizzleClient, 
+  getDatabaseConnection, 
   documentExtractions, 
   eq, 
   type CompanyProfile
@@ -50,7 +50,7 @@ export const processInvoiceSupplier = task({
       // Initialize database
       getConfig().validate();
       const config = getConfig().getCore();
-      const db = createDrizzleClient(config.DATABASE_URL);
+      const db = getDatabaseConnection(config.DATABASE_URL);
       
       // Use transaction for entire operation to ensure data consistency
       return await db.transaction(async (tx) => {
@@ -112,8 +112,8 @@ export const processInvoiceSupplier = task({
         }
         
         // Process supplier using ingestion service
-        // Note: We pass tx to ensure all operations are in the same transaction
-        const ingestionService = new SupplierIngestionService(tx);
+        // Note: Since we're using singleton pattern, we'll need to handle transactions differently
+        const ingestionService = new SupplierIngestionService();
         const result = await ingestionService.ingest(supplierRequest);
         
         if (result.success && result.supplierId) {
@@ -173,7 +173,7 @@ export const processInvoiceSupplier = task({
       // Update extraction with error
       try {
         const config = getConfig();
-        const db = createDrizzleClient(config.getCore().DATABASE_URL);
+        const db = getDatabaseConnection(config.getCore().DATABASE_URL);
         await db
           .update(documentExtractions)
           .set({

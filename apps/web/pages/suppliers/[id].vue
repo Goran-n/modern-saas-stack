@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div class="mb-4">
+  <UContainer class="py-6">
+    <div class="mb-6">
       <NuxtLink to="/suppliers" class="text-sky-600 hover:text-sky-700 flex items-center gap-2">
         <UIcon name="i-heroicons-arrow-left" />
         Back to suppliers
@@ -36,6 +36,8 @@
           <UCard 
             v-for="file in files" 
             :key="file.id"
+            class="hover:bg-gray-50 cursor-pointer"
+            @click="$router.push(`/files/${file.id}`)"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -48,15 +50,18 @@
                   <p class="text-sm text-gray-500">{{ formatFileSize(file.size || 0) }}</p>
                 </div>
               </div>
-              <span class="text-sm text-gray-500">
-                {{ formatDate(file.createdAt) }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">
+                  {{ formatDate(file.createdAt) }}
+                </span>
+                <UIcon name="i-heroicons-chevron-right" class="text-gray-400" />
+              </div>
             </div>
           </UCard>
         </div>
       </div>
     </UCard>
-  </div>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

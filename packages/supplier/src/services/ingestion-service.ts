@@ -1,5 +1,4 @@
 import { logger } from '@kibly/utils';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
   suppliers,
   supplierDataSources,
@@ -20,6 +19,7 @@ import { generateSlug } from '../utils/slug';
 import { SupplierError } from '../errors';
 import { SupplierValidator } from '../validation/supplier-validator';
 import { CONFIDENCE_THRESHOLDS, DEFAULT_CONFIDENCE } from '../constants';
+import { getDb } from '../db';
 
 export interface IngestionResult {
   success: boolean;
@@ -29,7 +29,9 @@ export interface IngestionResult {
 }
 
 export class SupplierIngestionService {
-  constructor(private db: PostgresJsDatabase<any>) {}
+  private get db() {
+    return getDb();
+  }
 
   /**
    * Ingest supplier data from invoice or manual entry
@@ -190,7 +192,7 @@ export class SupplierIngestionService {
               vatNumber: data.identifiers.vatNumber,
               legalName: data.name,
               displayName: data.name,
-              slug: await generateSlug(data.name, tenantId, tx as any),
+              slug: await generateSlug(data.name, tenantId, tx),
               status: SupplierStatus.ACTIVE,
               tenantId,
             })

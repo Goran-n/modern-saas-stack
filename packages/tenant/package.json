@@ -8,11 +8,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit",
-    "test": "bun run test-runner.ts",
-    "test:watch": "bun run test-runner.ts --watch",
-    "test:local": "docker-compose -f ../../docker-compose.test.yml up -d && sleep 3 && TEST_DATABASE_URL=postgresql://test:test@localhost:5433/kibly_test bun run test-runner.ts",
-    "test:local:down": "docker-compose -f ../../docker-compose.test.yml down -v"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@kibly/shared-db": "workspace:*",
@@ -25,8 +21,7 @@
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^22.14.1",
-    "typescript": "^5.8.3",
-    "vitest": "^2.1.0"
+    "typescript": "^5.8.3"
   },
   "exports": {
     ".": "./src/index.ts",

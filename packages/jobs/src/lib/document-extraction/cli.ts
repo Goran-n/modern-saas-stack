@@ -5,7 +5,7 @@ import { logger } from '@kibly/utils';
 import { DocumentExtractor } from './extractor';
 import { SupabaseStorageClient } from '@kibly/supabase-storage';
 import { getConfig } from '@kibly/config';
-import { createDrizzleClient, files as filesTable, documentExtractions, eq } from '@kibly/shared-db';
+import { getDatabaseConnection, files as filesTable, documentExtractions, eq } from '@kibly/shared-db';
 
 program
   .name('extract-document')
@@ -35,7 +35,7 @@ program
       const config = getConfig().getCore();
       logger.info('Config loaded successfully');
       
-      const db = createDrizzleClient(config.DATABASE_URL);
+      const db = getDatabaseConnection(config.DATABASE_URL);
       
       // Fetch file details
       const [file] = await db
@@ -98,7 +98,7 @@ program
             fileId: file.id,
             documentType: result.documentType,
             documentTypeConfidence: result.documentTypeConfidence.toString(),
-            extractedFields: result.fields as any, // Type cast due to Drizzle ORM limitation
+            extractedFields: result.fields || {},
             companyProfile: result.companyProfile,
             lineItems: result.lineItems,
             overallConfidence: result.overallConfidence.toString(),

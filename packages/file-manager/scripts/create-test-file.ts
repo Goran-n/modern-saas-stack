@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 // Create a test file record directly in the database
-import { createDrizzleClient, files as filesTable } from '@kibly/shared-db';
+import { getDatabaseConnection, files as filesTable } from '@kibly/shared-db';
 import { getConfig } from '@kibly/config';
 import { createLogger } from '@kibly/utils';
 import { tasks } from '@trigger.dev/sdk/v3';
@@ -13,7 +13,7 @@ async function main() {
   try {
     getConfig().validate();
     const config = getConfig().getCore();
-    const db = createDrizzleClient(config.DATABASE_URL);
+    const db = getDatabaseConnection(config.DATABASE_URL);
     
     const tenantId = '8e4fd8f9-813e-4239-a954-956926648e10';
     const fileName = 'Invoice-124114EE-0006.pdf';

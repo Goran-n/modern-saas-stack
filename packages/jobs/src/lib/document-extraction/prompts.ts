@@ -7,38 +7,39 @@ Extract ALL relevant financial and business information from this document into 
 Required JSON structure (all fields must be included):
 {
   "fields": {
-    "totalAmount": { "value": number or null, "confidence": number },
-    "subtotalAmount": { "value": number or null, "confidence": number },
-    "taxAmount": { "value": number or null, "confidence": number },
-    "taxRate": { "value": number or null, "confidence": number },
-    "taxType": { "value": string or null, "confidence": number },
-    "currency": { "value": string or null, "confidence": number },
+    "totalAmount": { "value": number or null, "confidence": number, "source": "ai_extraction" },
+    "subtotalAmount": { "value": number or null, "confidence": number, "source": "ai_extraction" },
+    "taxAmount": { "value": number or null, "confidence": number, "source": "ai_extraction" },
+    "taxRate": { "value": number or null, "confidence": number, "source": "ai_extraction" },
+    "taxType": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "currency": { "value": string or null, "confidence": number, "source": "ai_extraction" },
     
-    "documentNumber": { "value": string or null, "confidence": number },
-    "documentDate": { "value": string or null, "confidence": number },
-    "dueDate": { "value": string or null, "confidence": number },
+    "documentNumber": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "documentDate": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "dueDate": { "value": string or null, "confidence": number, "source": "ai_extraction" },
     
-    "vendorName": { "value": string or null, "confidence": number },
-    "vendorAddress": { "value": string or null, "confidence": number },
-    "vendorCity": { "value": string or null, "confidence": number },
-    "vendorPostalCode": { "value": string or null, "confidence": number },
-    "vendorCountry": { "value": string or null, "confidence": number },
-    "vendorEmail": { "value": string or null, "confidence": number },
-    "vendorPhone": { "value": string or null, "confidence": number },
-    "vendorWebsite": { "value": string or null, "confidence": number },
-    "vendorTaxId": { "value": string or null, "confidence": number },
+    "vendorName": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorAddress": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorCity": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorPostalCode": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorCountry": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorEmail": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorPhone": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorWebsite": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorTaxId": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "vendorCompanyNumber": { "value": string or null, "confidence": number, "source": "ai_extraction" },
     
-    "customerName": { "value": string or null, "confidence": number },
-    "customerAddress": { "value": string or null, "confidence": number },
-    "customerEmail": { "value": string or null, "confidence": number },
-    "customerTaxId": { "value": string or null, "confidence": number },
+    "customerName": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "customerAddress": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "customerEmail": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "customerTaxId": { "value": string or null, "confidence": number, "source": "ai_extraction" },
     
-    "paymentMethod": { "value": string or null, "confidence": number },
-    "paymentTerms": { "value": string or null, "confidence": number },
-    "bankAccount": { "value": string or null, "confidence": number },
+    "paymentMethod": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "paymentTerms": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "bankAccount": { "value": string or null, "confidence": number, "source": "ai_extraction" },
     
-    "language": { "value": string or null, "confidence": number },
-    "notes": { "value": string or null, "confidence": number }
+    "language": { "value": string or null, "confidence": number, "source": "ai_extraction" },
+    "notes": { "value": string or null, "confidence": number, "source": "ai_extraction" }
   },
   "lineItems": [
     {
@@ -67,6 +68,9 @@ Important:
 - Currency must be a three-letter ISO 4217 code (e.g., USD, EUR, GBP)
 - For addresses: extract vendorAddress as the full address, then also extract city, postal code, and country separately
 - For vendorCountry: use ISO 3166-1 alpha-2 codes (e.g., US, GB, DE, FR)
+- For vendorTaxId: extract VAT numbers, tax IDs, or similar tax-related identifiers (e.g., GB123456789, DE123456789)
+- For vendorCompanyNumber: extract company registration numbers, company numbers, or business registration IDs (e.g., 12345678, RC123456)
+- Source values must be one of: 'ai_extraction', 'ocr', 'rules', 'manual' (use 'ai_extraction' for AI-extracted data)
 - If a field cannot be found, use null with confidence 0
 - If a field is partially visible or unclear, extract what you can with appropriate confidence`;
 

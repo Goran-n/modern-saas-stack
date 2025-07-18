@@ -15,7 +15,7 @@ export function getDb(): DrizzleClient {
       logger.debug('Using TEST_DATABASE_URL for database connection');
       dbInstance = getDatabaseConnection(process.env.TEST_DATABASE_URL);
     } else {
-      const config = getConfig().getForTenant();
+      const config = getConfig().getCore();
       logger.debug('Using configured DATABASE_URL for database connection');
       dbInstance = getDatabaseConnection(config.DATABASE_URL);
     }

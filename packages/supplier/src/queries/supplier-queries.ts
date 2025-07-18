@@ -1,4 +1,3 @@
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
   suppliers,
   supplierAttributes,
@@ -7,9 +6,12 @@ import {
   sql,
 } from '@kibly/shared-db';
 import { SupplierErrors } from '../errors';
+import { getDb } from '../db';
 
 export class SupplierQueries {
-  constructor(private db: PostgresJsDatabase<any>) {}
+  private get db() {
+    return getDb();
+  }
 
   /**
    * Get supplier by ID with tenant validation

@@ -4,16 +4,16 @@ import {
   TAX_TYPES, 
   VALIDATION_STATUSES, 
   EXTRACTION_METHODS, 
-  FIELD_SOURCES,
-  ADDRESS_TYPES 
+  FIELD_SOURCES
 } from './constants';
+import type { ExtractedFields, ExtractedFieldValue, CompanyProfile } from '@kibly/shared-db';
 
 // Document types that we can classify
 export const documentTypeEnum = z.enum(DOCUMENT_TYPES);
 
 export type DocumentType = z.infer<typeof documentTypeEnum>;
 
-// Field confidence schema
+// Field confidence schema - matches database ExtractedFieldValue
 export const fieldWithConfidenceSchema = z.object({
   value: z.any(),
   confidence: z.number().min(0).max(100),
@@ -24,51 +24,7 @@ export const fieldWithConfidenceSchema = z.object({
   })).optional(),
 });
 
-// Company profile schema for standardised supplier data
-export const companyProfileSchema = z.object({
-  // Primary identifiers
-  taxIdentifiers: z.object({
-    vatNumber: z.string().optional(),
-    taxId: z.string().optional(),
-    companyNumber: z.string().optional(),
-    countryCode: z.string(),
-  }),
-  
-  // Company details
-  legalName: z.string(),
-  tradingNames: z.array(z.string()).default([]),
-  
-  // Contact information
-  addresses: z.array(z.object({
-    type: z.enum(ADDRESS_TYPES),
-    line1: z.string(),
-    line2: z.string().optional(),
-    city: z.string(),
-    state: z.string().optional(),
-    postalCode: z.string().optional(),
-    country: z.string(),
-    confidence: z.number().min(0).max(100),
-  })).default([]),
-  
-  primaryEmail: z.string().email().optional(),
-  domains: z.array(z.string()).default([]),
-  phones: z.array(z.string()).default([]),
-  
-  // Financial details
-  bankAccounts: z.array(z.object({
-    accountNumber: z.string().optional(),
-    iban: z.string().optional(),
-    swiftCode: z.string().optional(),
-    bankName: z.string().optional(),
-  })).default([]),
-  paymentMethods: z.array(z.string()).default([]),
-  defaultCurrency: z.string().optional(),
-  
-  // Matching metadata
-  normalizedName: z.string(),
-  matchingKeys: z.array(z.string()).default([]),
-  lastVerifiedDate: z.date().optional(),
-});
+// Company profile schema removed - using database type directly
 
 // Annotation for highlighting extracted fields
 export const fieldAnnotationSchema = z.object({
@@ -90,11 +46,11 @@ export const extractedDocumentSchema = z.object({
   documentTypeConfidence: z.number().min(0).max(100),
   processingVersion: z.string(),
   
-  // Extraction results
-  fields: z.record(z.string(), fieldWithConfidenceSchema),
+  // Extraction results - now using database ExtractedFields type
+  fields: z.custom<ExtractedFields>(),
   
   // Company profile (for invoices, receipts, etc.)
-  companyProfile: companyProfileSchema.optional(),
+  companyProfile: z.custom<CompanyProfile>().optional(),
   
   // Line items for invoices/receipts
   lineItems: z.array(z.object({
@@ -157,6 +113,7 @@ export const accountingDocumentSchema = z.object({
   vendorPhone: z.string().nullable(),
   vendorWebsite: z.string().nullable(),
   vendorTaxId: z.string().nullable().describe('VAT/Tax ID of vendor'),
+  vendorCompanyNumber: z.string().nullable().describe('Company registration number'),
   
   // Customer information
   customerName: z.string().nullable(),
@@ -177,9 +134,8 @@ export const accountingDocumentSchema = z.object({
   lineItems: z.array(lineItemSchema).default([]),
 });
 
-// Types
+// Types - now using database types as single source of truth
 export type ExtractedDocument = z.infer<typeof extractedDocumentSchema>;
-export type CompanyProfile = z.infer<typeof companyProfileSchema>;
 export type AccountingDocument = z.infer<typeof accountingDocumentSchema>;
-export type FieldWithConfidence = z.infer<typeof fieldWithConfidenceSchema>;
-export type FieldAnnotation = z.infer<typeof fieldAnnotationSchema>;
+export type FieldWithConfidence = ExtractedFieldValue; // Use database type
+export { type CompanyProfile, type FieldAnnotation, type LineItem, type ExtractionError } from '@kibly/shared-db';

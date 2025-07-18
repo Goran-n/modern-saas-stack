@@ -199,9 +199,9 @@ Environment variables are managed through Doppler. Key variables:
 - `XERO_CLIENT_ID/SECRET` - Xero OAuth credentials
 
 **Frontend** (`kibly-web`):
-- `VITE_SUPABASE_URL` - Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `VITE_API_BASE_URL` - Backend API URL
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_ANON_KEY` - Supabase anonymous key
+- `NUXT_PUBLIC_API_URL` - Backend API URL
 
 ## 🔐 Authentication & Authorization
 

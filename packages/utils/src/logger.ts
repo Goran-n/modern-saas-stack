@@ -28,6 +28,11 @@ function getDefaultOptions(config?: LoggerConfig): LoggerOptions {
     serializers: {
       err: pino.stdSerializers.err,
       error: pino.stdSerializers.err,
+      // Add custom serializers for better error visibility
+      errorMessage: (value: any) => value,
+      errorCode: (value: any) => value,
+      errorCause: (value: any) => value,
+      stack: (value: any) => value,
     },
   };
 
@@ -39,8 +44,16 @@ function getDefaultOptions(config?: LoggerConfig): LoggerOptions {
         target: 'pino-pretty',
         options: {
           colorize: true,
+          colorizeObjects: true,
           translateTime: 'HH:MM:ss',
           ignore: 'pid,hostname',
+          messageKey: 'msg',
+          errorLikeObjectKeys: ['err', 'error', 'e'],
+          singleLine: false, // Multi-line for better error readability
+          sync: false, // Use async for better performance
+          hideObject: false, // Show all object properties
+          // Ensure nested objects are displayed
+          depth: 5,
         },
       },
     };

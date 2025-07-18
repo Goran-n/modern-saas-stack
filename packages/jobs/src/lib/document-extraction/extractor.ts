@@ -6,13 +6,13 @@ import {
 import { logger } from '@kibly/utils';
 import { getPortkeyClient } from './portkey-client';
 import { PROCESSING_CONFIG, CONFIDENCE_THRESHOLDS } from './constants';
-import { MonetaryValidator } from './monetary-validator';
 import {
   DocumentClassifier,
   TextExtractor,
   CompanyProfileExtractor,
   AccountingDocumentExtractor,
 } from './services';
+import type { ExtractedFields } from '@kibly/shared-db';
 
 export class DocumentExtractor {
   private readonly portkey;
@@ -50,18 +50,25 @@ export class DocumentExtractor {
       // Extract if accounting document
       if (this.isAccountingDocument(classification.type)) {
         const extractionResult = await this.accountingExtractor.extract(extractedText);
-        const companyProfile = this.companyExtractor.extract(extractionResult.document);
         
-        return this.buildExtractedDocument({
+        // Build flat document for company profile extraction
+        const flatDocument = this.buildFlatDocument(extractionResult.fields);
+        const companyProfile = this.companyExtractor.extract(flatDocument);
+        
+        return {
           documentType: classification.type,
           documentTypeConfidence: classification.confidence,
-          extraction: extractionResult.document,
-          fieldConfidences: extractionResult.fieldConfidences,
-          overallConfidence: extractionResult.overallConfidence,
+          processingVersion: this.processingVersion,
+          fields: extractionResult.fields,
           companyProfile,
-          processingDuration: Date.now() - startTime,
+          lineItems: this.processLineItems(extractionResult.lineItems),
+          overallConfidence: extractionResult.overallConfidence,
+          dataCompleteness: this.calculateDataCompleteness(extractionResult.fields),
+          validationStatus: this.determineValidationStatus(extractionResult.overallConfidence, this.calculateDataCompleteness(extractionResult.fields)),
           extractionMethod: 'primary',
-        });
+          processingDuration: Date.now() - startTime,
+          errors: [],
+        };
       }
       
       // Return minimal extraction for non-accounting documents
@@ -83,74 +90,25 @@ export class DocumentExtractor {
     }
   }
 
-  private buildExtractedDocument(params: {
-    documentType: DocumentType;
-    documentTypeConfidence: number;
-    extraction: AccountingDocument;
-    fieldConfidences: Record<string, number>;
-    overallConfidence: number;
-    companyProfile?: any;
-    processingDuration: number;
-    extractionMethod?: 'primary' | 'ocr_fallback';
-  }): ExtractedDocument {
-    // Build fields with LLM-provided confidence scores
-    const fields: ExtractedDocument['fields'] = {};
-    const source = params.extractionMethod === 'ocr_fallback' ? 'ocr' : 'ai_extraction';
+  private buildFlatDocument(fields: ExtractedFields): AccountingDocument {
+    // Build flat document for company profile extraction
+    const flatDocument: any = {};
     
-    Object.entries(params.extraction).forEach(([fieldName, value]) => {
-      if (value !== null && value !== undefined && fieldName !== 'lineItems') {
-        fields[fieldName] = {
-          value,
-          confidence: params.fieldConfidences[fieldName] || 0,
-          source,
-        };
+    Object.entries(fields).forEach(([fieldName, fieldData]) => {
+      if (fieldData) {
+        flatDocument[fieldName] = fieldData.value;
       }
     });
     
-    // Calculate data completeness
+    return flatDocument as AccountingDocument;
+  }
+
+  private calculateDataCompleteness(fields: ExtractedFields): number {
     const criticalFields = ['totalAmount', 'currency', 'vendorName', 'documentDate'];
     const presentCriticalFields = criticalFields.filter(field => 
-      params.extraction[field as keyof AccountingDocument] !== null
+      fields[field] && fields[field].value !== null && fields[field].value !== undefined
     );
-    const dataCompleteness = (presentCriticalFields.length / criticalFields.length) * 100;
-    
-    // Perform monetary validation
-    const monetaryValidation = MonetaryValidator.validate(params.extraction);
-    const errors: Array<{ field: string; error: string }> = monetaryValidation.errors.map(error => ({
-      field: 'monetary',
-      error,
-    }));
-    
-    // Add warnings as lower priority errors
-    monetaryValidation.warnings.forEach(warning => {
-      errors.push({
-        field: 'monetary_warning',
-        error: warning,
-      });
-    });
-    
-    // Determine validation status
-    let validationStatus = this.determineValidationStatus(params.overallConfidence, dataCompleteness);
-    if (!monetaryValidation.isValid) {
-      validationStatus = 'invalid';
-    } else if (monetaryValidation.warnings.length > 0 && validationStatus === 'valid') {
-      validationStatus = 'needs_review';
-    }
-    
-    return {
-      documentType: params.documentType,
-      documentTypeConfidence: params.documentTypeConfidence,
-      processingVersion: this.processingVersion,
-      fields,
-      companyProfile: params.companyProfile,
-      lineItems: this.processLineItems(params.extraction.lineItems),
-      overallConfidence: params.overallConfidence,
-      dataCompleteness,
-      validationStatus,
-      extractionMethod: params.extractionMethod || 'primary',
-      processingDuration: params.processingDuration,
-      errors,
-    };
+    return (presentCriticalFields.length / criticalFields.length) * 100;
   }
 
   private determineValidationStatus(confidence: number, completeness: number): ExtractedDocument['validationStatus'] {

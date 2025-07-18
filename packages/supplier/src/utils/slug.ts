@@ -1,5 +1,6 @@
 import { suppliers, eq, and, like } from '@kibly/shared-db';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import type { PgTransaction } from 'drizzle-orm/pg-core';
 
 /**
  * Generate a unique slug for a supplier within a tenant
@@ -12,7 +13,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 export async function generateSlug(
   name: string,
   tenantId: string,
-  db: PostgresJsDatabase<any>
+  db: PostgresJsDatabase<any> | PgTransaction<any, any, any>
 ): Promise<string> {
   // Create base slug
   const baseSlug = name

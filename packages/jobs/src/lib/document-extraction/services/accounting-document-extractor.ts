@@ -1,11 +1,11 @@
-import { accountingDocumentSchema, AccountingDocument } from '../types';
 import { accountingDocumentPrompt } from '../prompts';
 import { PROCESSING_CONFIG } from '../constants';
 import { logger } from '@kibly/utils';
+import type { ExtractedFields } from '@kibly/shared-db';
 
 export interface AccountingExtractionResult {
-  document: AccountingDocument;
-  fieldConfidences: Record<string, number>;
+  fields: ExtractedFields;
+  lineItems: any[];
   overallConfidence: number;
 }
 
@@ -46,19 +46,21 @@ export class AccountingDocumentExtractor {
         keysLength: Object.keys(parsed).length 
       });
       
-      // Extract values and confidences
-      const document: any = {};
-      const fieldConfidences: Record<string, number> = {};
+      // Build structured fields directly
+      const fields: ExtractedFields = {};
       
       if (parsed.fields) {
         Object.entries(parsed.fields).forEach(([fieldName, fieldData]: [string, any]) => {
-          document[fieldName] = fieldData.value;
-          fieldConfidences[fieldName] = fieldData.confidence || 0;
+          fields[fieldName] = {
+            value: fieldData.value,
+            confidence: fieldData.confidence || 0,
+            source: 'ai_extraction',
+          };
         });
       }
       
       // Handle line items
-      document.lineItems = Array.isArray(parsed.lineItems) ? parsed.lineItems.map((item: any) => ({
+      const lineItems = Array.isArray(parsed.lineItems) ? parsed.lineItems.map((item: any) => ({
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
@@ -66,12 +68,9 @@ export class AccountingDocumentExtractor {
         taxAmount: item.taxAmount,
       })) : [];
       
-      // Validate the document structure
-      const validatedDocument = accountingDocumentSchema.parse(document);
-      
       return {
-        document: validatedDocument,
-        fieldConfidences,
+        fields,
+        lineItems,
         overallConfidence: parsed.overallConfidence || 0,
       };
     } catch (error) {

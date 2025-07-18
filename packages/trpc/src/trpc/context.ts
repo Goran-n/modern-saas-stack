@@ -1,7 +1,7 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getConfig } from "@kibly/config";
-import { createDrizzleClient } from "@kibly/shared-db";
+import { getDatabaseConnection } from "@kibly/shared-db";
 import type { DrizzleClient } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
 import type { User } from "@supabase/supabase-js";
@@ -26,7 +26,7 @@ export async function createContext({
   
   const supabase = createClient(
     config.SUPABASE_URL,
-    config.SUPABASE_ANON_KEY,
+    config.SUPABASE_SERVICE_KEY || config.SUPABASE_ANON_KEY,
     {
       auth: {
         persistSession: false,
@@ -53,7 +53,7 @@ export async function createContext({
     }
   }
 
-  const db = createDrizzleClient(config.DATABASE_URL);
+  const db = getDatabaseConnection(config.DATABASE_URL);
 
   return {
     db,

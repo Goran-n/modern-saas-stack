@@ -1,5 +1,5 @@
 import { categorizeFileSchema } from "../../schemas/file";
-import { createDrizzleClient, files as filesTable, documentExtractions, eq, type NewDocumentExtraction } from "@kibly/shared-db";
+import { getDatabaseConnection, files as filesTable, documentExtractions, eq, type NewDocumentExtraction } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
 import { getConfig } from "@kibly/config";
 import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
@@ -24,7 +24,7 @@ export const categorizeFile = schemaTask({
     // Validate configuration before using it
     getConfig().validate();
     const config = getConfig().getCore();
-    const db = createDrizzleClient(config.DATABASE_URL);
+    const db = getDatabaseConnection(config.DATABASE_URL);
     
     try {
       logger.info("Starting file categorization", {
@@ -222,8 +222,8 @@ export const categorizeFile = schemaTask({
         fileId: file.id,
         documentType: extraction.documentType,
         documentTypeConfidence: extraction.documentTypeConfidence.toString(),
-        extractedFields: extraction.fields as any, // Type cast due to Drizzle ORM limitation
-        companyProfile: extraction.companyProfile,
+        extractedFields: extraction.fields || {},
+        companyProfile: extraction.companyProfile ? extraction.companyProfile : null,
         lineItems: extraction.lineItems,
         overallConfidence: extraction.overallConfidence.toString(),
         dataCompleteness: extraction.dataCompleteness.toString(),

@@ -66,12 +66,23 @@ export const hasTenantAccess = middleware(async ({ ctx, next }) => {
       },
     });
   } catch (error) {
-    logger.error("Failed to verify tenant access", {
-      error,
-      userId: ctx.user.id,
-      tenantId: ctx.tenantId,
-      requestId: ctx.requestId,
-    });
+    if (error instanceof Error) {
+      logger.error({
+        err: error,
+        userId: ctx.user.id,
+        tenantId: ctx.tenantId,
+        requestId: ctx.requestId,
+        msg: "Failed to verify tenant access",
+      });
+    } else {
+      logger.error({
+        error,
+        userId: ctx.user.id,
+        tenantId: ctx.tenantId,
+        requestId: ctx.requestId,
+        msg: "Failed to verify tenant access",
+      });
+    }
 
     if (error instanceof TRPCError) {
       throw error;

@@ -1,5 +1,4 @@
 import { logger } from '@kibly/utils';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
   suppliers,
   supplierAttributes,
@@ -9,6 +8,7 @@ import {
 import { generateSlug } from '../utils/slug';
 import { SupplierError, SupplierErrors } from '../errors';
 import { SupplierStatus } from '../types';
+import { getDb } from '../db';
 
 export interface CreateSupplierInput {
   companyNumber?: string | null;
@@ -25,7 +25,9 @@ export interface UpdateSupplierInput {
 }
 
 export class SupplierService {
-  constructor(private db: PostgresJsDatabase<any>) {}
+  private get db() {
+    return getDb();
+  }
 
   /**
    * Create a new supplier manually

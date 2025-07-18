@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <UContainer class="py-6">
     <UCard>
       <template #header>
         <h1 class="text-2xl font-semibold">Suppliers</h1>
@@ -46,7 +46,7 @@
         </NuxtLink>
       </div>
     </UCard>
-  </div>
+  </UContainer>
 </template>
 
 <script setup lang="ts">

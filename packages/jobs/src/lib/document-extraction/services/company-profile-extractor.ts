@@ -1,4 +1,5 @@
-import { AccountingDocument, CompanyProfile } from '../types';
+import { AccountingDocument } from '../types';
+import type { CompanyProfile } from '@kibly/shared-db';
 import { logger } from '@kibly/utils';
 
 export class CompanyProfileExtractor {
@@ -12,29 +13,28 @@ export class CompanyProfileExtractor {
     
     const profile: CompanyProfile = {
       taxIdentifiers: {
-        vatNumber: document.vendorTaxId?.match(/^[A-Z]{2}\d+/)?.[0] ?? undefined,
-        taxId: document.vendorTaxId ?? undefined,
-        companyNumber: undefined,
         countryCode: this.inferCountryCode(document),
+        ...(document.vendorTaxId?.match(/^[A-Z]{2}\d+/) && { vatNumber: document.vendorTaxId.match(/^[A-Z]{2}\d+/)![0] }),
+        ...(document.vendorTaxId && { taxId: document.vendorTaxId }),
+        ...(document.vendorCompanyNumber && { companyNumber: document.vendorCompanyNumber }),
       },
       legalName: document.vendorName,
       tradingNames: [],
       addresses: document.vendorAddress ? [{
         type: 'billing' as const,
         line1: document.vendorAddress,
-        line2: undefined,
         city: '',
         country: '',
         confidence: 80,
       }] : [],
-      primaryEmail: document.vendorEmail || undefined,
+      ...(document.vendorEmail && { primaryEmail: document.vendorEmail }),
       domains,
       phones: document.vendorPhone ? [document.vendorPhone] : [],
       bankAccounts: [],
       paymentMethods: document.paymentMethod ? [document.paymentMethod] : [],
-      defaultCurrency: document.currency || undefined,
+      ...(document.currency && { defaultCurrency: document.currency }),
       normalizedName,
-      matchingKeys: this.generateMatchingKeys(normalizedName, document.vendorTaxId, domains),
+      matchingKeys: this.generateMatchingKeys(normalizedName, document.vendorTaxId, document.vendorCompanyNumber, domains),
     };
 
     logger.info('Company profile extracted', {
@@ -70,11 +70,15 @@ export class CompanyProfileExtractor {
     return [...new Set(domains)];
   }
 
-  private generateMatchingKeys(normalizedName: string, taxId?: string | null, domains?: string[]): string[] {
+  private generateMatchingKeys(normalizedName: string, taxId?: string | null, companyNumber?: string | null, domains?: string[]): string[] {
     const keys: string[] = [normalizedName];
     
     if (taxId) {
       keys.push(taxId.toLowerCase().replace(/[^\w]/g, ''));
+    }
+    
+    if (companyNumber) {
+      keys.push(companyNumber.toLowerCase().replace(/[^\w]/g, ''));
     }
     
     if (domains) {

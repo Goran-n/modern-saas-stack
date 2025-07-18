@@ -19,6 +19,17 @@ export interface AuthUser {
   role?: string
 }
 
+interface JwtPayload {
+  sub: string
+  email: string
+  role?: string
+  user_metadata?: {
+    tenant_id?: string
+  }
+  iat?: number
+  exp?: number
+}
+
 export class AuthService {
   private supabase: ReturnType<typeof createClient>
 
@@ -28,12 +39,12 @@ export class AuthService {
 
   async verifyToken(token: string): Promise<AuthUser | null> {
     try {
-      const decoded = jwt.verify(token, this.config.supabase.jwtSecret) as any
+      const decoded = jwt.verify(token, this.config.supabase.jwtSecret) as JwtPayload
       
       return {
         id: decoded.sub,
         email: decoded.email,
-        tenantId: decoded.user_metadata?.tenant_id,
+        ...(decoded.user_metadata?.tenant_id && { tenantId: decoded.user_metadata.tenant_id }),
         ...(decoded.role && { role: decoded.role })
       }
     } catch (error) {

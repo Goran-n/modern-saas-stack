@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { createDrizzleClient, files, eq } from '@kibly/shared-db';
+import { getDatabaseConnection, files, eq } from '@kibly/shared-db';
 import { getConfig } from '@kibly/config';
 
 async function main() {
@@ -8,7 +8,7 @@ async function main() {
   
   getConfig().validate();
   const config = getConfig().getCore();
-  const db = createDrizzleClient(config.DATABASE_URL);
+  const db = getDatabaseConnection(config.DATABASE_URL);
   
   if (fileId) {
     // Check specific file

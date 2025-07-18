@@ -58,7 +58,7 @@ export function extractVendorData(fields: ExtractedFields | null | undefined): E
 
   return {
     name: getFieldValue(fields.vendorName),
-    companyNumber: getFieldValue((fields as any).vendorCompanyNumber),
+    companyNumber: getFieldValue(fields.vendorCompanyNumber),
     vatNumber: isVatNumber ? taxId : null,
     address: {
       line1: getFieldValue(fields.vendorAddress),
@@ -76,29 +76,49 @@ export function extractVendorData(fields: ExtractedFields | null | undefined): E
 
 /**
  * Extract vendor data with confidence scores
+ * 
+ * This function extracts vendor information from document fields and includes
+ * confidence scores for each field that was extracted by the AI model.
+ * 
+ * @param fields - The extracted fields from document analysis (can be null/undefined)
+ * @returns ExtractedVendorData with confidence scores for available fields
  */
 export function extractVendorDataWithConfidence(
   fields: ExtractedFields | null | undefined
 ): ExtractedVendorData {
+  // Start with basic vendor data extraction
   const vendorData = extractVendorData(fields);
   
+  // Early return if no fields available
   if (!fields) {
     return vendorData;
   }
 
-  const confidence: ExtractedVendorData['confidence'] = {
-    name: getFieldConfidence(fields.vendorName),
-    companyNumber: getFieldConfidence((fields as any).vendorCompanyNumber),
-    vatNumber: getFieldConfidence(fields.vendorTaxId),
-    address: getFieldConfidence(fields.vendorAddress),
-    email: getFieldConfidence(fields.vendorEmail),
-    phone: getFieldConfidence(fields.vendorPhone),
-    website: getFieldConfidence(fields.vendorWebsite),
+  const confidence: ExtractedVendorData['confidence'] = {};
+  
+  // Map ExtractedFields to ExtractedVendorData confidence structure
+  // This mapping handles the field name differences between the two interfaces
+  const fieldMapping = {
+    name: fields.vendorName,                    // vendorName -> name
+    companyNumber: fields.vendorCompanyNumber,  // vendorCompanyNumber -> companyNumber
+    vatNumber: fields.vendorTaxId,              // vendorTaxId -> vatNumber
+    address: fields.vendorAddress,              // vendorAddress -> address
+    email: fields.vendorEmail,                  // vendorEmail -> email
+    phone: fields.vendorPhone,                  // vendorPhone -> phone
+    website: fields.vendorWebsite,              // vendorWebsite -> website
   };
+
+  // Extract confidence scores for each field that has a value
+  for (const [key, field] of Object.entries(fieldMapping)) {
+    if (field?.confidence !== undefined) {
+      confidence[key as keyof typeof confidence] = field.confidence;
+    }
+  }
 
   return {
     ...vendorData,
-    confidence,
+    // Only include confidence object if we have at least one confidence score
+    ...(Object.keys(confidence).length > 0 && { confidence }),
   };
 }
 
@@ -127,22 +147,22 @@ export function hasMinimumVendorData(fields: ExtractedFields | null | undefined)
 export function getVendorDataCompleteness(fields: ExtractedFields | null | undefined): number {
   if (!fields) return 0;
   
-  const vendorFields = [
-    'vendorName',
-    'vendorTaxId',
-    'vendorAddress',
-    'vendorCity',
-    'vendorPostalCode',
-    'vendorCountry',
-    'vendorEmail',
-    'vendorPhone',
+  const fieldValues = [
+    fields.vendorName,
+    fields.vendorTaxId,
+    fields.vendorCompanyNumber,
+    fields.vendorAddress,
+    fields.vendorCity,
+    fields.vendorPostalCode,
+    fields.vendorCountry,
+    fields.vendorEmail,
+    fields.vendorPhone,
   ];
   
   let filledFields = 0;
   let totalConfidence = 0;
   
-  for (const fieldName of vendorFields) {
-    const field = (fields as any)[fieldName] as ExtractedFieldValue | undefined;
+  for (const field of fieldValues) {
     if (field?.value) {
       filledFields++;
       totalConfidence += field.confidence || 0;
@@ -152,7 +172,7 @@ export function getVendorDataCompleteness(fields: ExtractedFields | null | undef
   if (filledFields === 0) return 0;
   
   // Weight by both completeness and average confidence
-  const completeness = (filledFields / vendorFields.length) * 100;
+  const completeness = (filledFields / fieldValues.length) * 100;
   const avgConfidence = totalConfidence / filledFields;
   
   return Math.round((completeness * 0.5) + (avgConfidence * 0.5));
@@ -163,6 +183,3 @@ function getFieldValue(field: ExtractedFieldValue | undefined): string | null {
   return field?.value ? String(field.value) : null;
 }
 
-function getFieldConfidence(field: ExtractedFieldValue | undefined): number | undefined {
-  return field?.confidence;
-}

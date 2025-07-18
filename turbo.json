@@ -30,23 +30,6 @@
       "cache": false,
       "outputs": []
     },
-    "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"],
-      "inputs": ["src/**", "tests/**", "test/**", "**/*.test.*", "**/*.spec.*"]
-    },
-    "test:unit": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
-    },
-    "test:integration": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
-    },
-    "test:e2e": {
-      "dependsOn": ["^build", "db:migrate"],
-      "outputs": ["coverage/**"]
-    },
     "clean": {
       "cache": false
     },

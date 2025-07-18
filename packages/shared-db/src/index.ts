@@ -1,8 +1,7 @@
-export * from './client'
 export * from './schemas'
 export * from './types'
 export { getDatabaseConnection, closeDatabaseConnection, checkDatabaseHealth, getConnectionStats } from './singleton'
-export type { DrizzleClient as SingletonDrizzleClient } from './singleton'
+export type { DrizzleClient } from './singleton'
 export * from './helpers'
 
 // Re-export Drizzle types and functions for convenience

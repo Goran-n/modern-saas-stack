@@ -34,6 +34,7 @@ export interface ExtractedFields {
   vendorPhone?: ExtractedFieldValue;
   vendorWebsite?: ExtractedFieldValue;
   vendorTaxId?: ExtractedFieldValue;
+  vendorCompanyNumber?: ExtractedFieldValue;
   
   // Customer information
   customerName?: ExtractedFieldValue;

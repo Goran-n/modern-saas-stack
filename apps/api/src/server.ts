@@ -142,7 +142,7 @@ export function createHonoApp() {
     trpcServer({
       router: appRouter,
       createContext: async (opts) => {
-        return await createContext(opts) as any;
+        return await createContext(opts) as unknown as Record<string, unknown>;
       },
       onError({ error, path, type, ctx, input }) {
         logger.error({
