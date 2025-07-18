@@ -3,6 +3,7 @@ import type { FetchOptions } from 'ofetch'
 export const useApi = () => {
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
+  const tenantStore = useTenantStore()
   const { auth } = useNotifications()
   
   const apiFetch = $fetch.create({
@@ -14,10 +15,17 @@ export const useApi = () => {
       const token = session?.access_token
       
       if (token) {
-        options.headers = new Headers({
+        const headers: any = {
           ...options.headers,
           'Authorization': `Bearer ${token}`
-        })
+        }
+        
+        // Add tenant ID if selected
+        if (tenantStore.selectedTenantId) {
+          headers['x-tenant-id'] = tenantStore.selectedTenantId
+        }
+        
+        options.headers = new Headers(headers)
       }
     },
     async onResponseError({ response }) {

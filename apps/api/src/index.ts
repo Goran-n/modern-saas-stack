@@ -97,7 +97,7 @@ async function main() {
     url: `http://${hostname}:${port}`,
     trpcEndpoint: `http://${hostname}:${port}/trpc`,
     healthEndpoint: `http://${hostname}:${port}/health`,
-    enviornmentPort: process.env.PORT,
+    environmentPort: process.env.PORT,
     configPort: config.PORT,
   });
 
@@ -107,8 +107,8 @@ async function main() {
     
     try {
       // Close database connections
-      const { closeDatabaseConnections } = await import("@kibly/shared-db");
-      await closeDatabaseConnections();
+      const { closeDatabaseConnection } = await import("@kibly/shared-db");
+      await closeDatabaseConnection();
       logger.info('Database connections closed');
     } catch (error) {
       logger.error('Error during database cleanup', { error });

@@ -1,12 +1,12 @@
 import { upload, download, remove, signedUrl } from '@kibly/supabase-storage';
 import { stripSpecialCharacters } from '@kibly/utils';
 import { createLogger } from '@kibly/utils';
-import { eq, and, files } from '@kibly/shared-db';
+import { eq, and, sql, files, documentExtractions } from '@kibly/shared-db';
 import type { CreateFileInput, ProcessingStatus } from './types';
 import { getDb } from './db';
 import { getClient } from './client';
 import { tasks } from '@trigger.dev/sdk/v3';
-import type { CategorizeFilePayload } from '@kibly/jobs/schemas';
+import type { CategorizeFilePayload } from '@kibly/jobs';
 
 const logger = createLogger('file-manager');
 
@@ -219,4 +219,101 @@ export async function updateProcessingStatus(
     .where(eq(files.id, fileId));
 
   logger.info('Processing status updated', { fileId, status });
+}
+
+/**
+ * List files in a specific path
+ * @param tenantId - Tenant ID
+ * @param path - Path prefix to filter files
+ * @returns Promise resolving to array of files
+ */
+export async function listFilesByPath(
+  tenantId: string,
+  path: string
+): Promise<Array<{
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+  pathTokens: string[];
+}>> {
+  logger.info('Listing files by path', { tenantId, path });
+
+  const db = getDb();
+  const allFiles = await db
+    .select({
+      id: files.id,
+      fileName: files.fileName,
+      mimeType: files.mimeType,
+      size: files.size,
+      createdAt: files.createdAt,
+      pathTokens: files.pathTokens,
+    })
+    .from(files)
+    .where(eq(files.tenantId, tenantId));
+
+  // Filter files that match the path prefix
+  const matchingFiles = allFiles.filter(file => {
+    const filePath = file.pathTokens.join('/');
+    return filePath.includes(path);
+  });
+
+  logger.info('Files listed', { 
+    tenantId, 
+    path, 
+    count: matchingFiles.length 
+  });
+
+  return matchingFiles;
+}
+
+/**
+ * Get files that have been matched to a specific supplier
+ * @param supplierId - Supplier ID to get files for
+ * @returns Promise resolving to array of files with extraction metadata
+ */
+export async function getFilesBySupplier(
+  supplierId: string
+): Promise<Array<{
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+  pathTokens: string[];
+  metadata: any;
+  extractionId: string | null;
+  documentType: string | null;
+  extractionConfidence: string | null;
+  matchConfidence: string | null;
+}>> {
+  logger.info('Getting files for supplier', { supplierId });
+
+  const db = getDb();
+  const supplierFiles = await db
+    .select({
+      id: files.id,
+      fileName: files.fileName,
+      mimeType: files.mimeType,
+      size: files.size,
+      createdAt: files.createdAt,
+      pathTokens: files.pathTokens,
+      metadata: files.metadata,
+      extractionId: documentExtractions.id,
+      documentType: documentExtractions.documentType,
+      extractionConfidence: documentExtractions.overallConfidence,
+      matchConfidence: documentExtractions.matchConfidence,
+    })
+    .from(documentExtractions)
+    .innerJoin(files, eq(documentExtractions.fileId, files.id))
+    .where(eq(documentExtractions.matchedSupplierId, supplierId))
+    .orderBy(sql`${files.createdAt} DESC`);
+
+  logger.info('Found files for supplier', { 
+    supplierId, 
+    fileCount: supplierFiles.length 
+  });
+
+  return supplierFiles;
 }
