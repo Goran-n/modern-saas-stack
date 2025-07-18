@@ -10,14 +10,51 @@ export function createHonoApp() {
   const app = new Hono();
   const config = getConfig().getCore();
 
+  // Enhanced CORS configuration with logging
   app.use("*", cors({
     origin: config.NODE_ENV === "production" 
       ? ["https://app.kibly.com"] 
-      : ["http://localhost:3000", "http://localhost:4000"],
+      : ["http://localhost:3000", "http://localhost:4000", "http://localhost:4001"],
     credentials: true,
-    allowHeaders: ["Content-Type", "Authorization", "X-Tenant-Id"],
+    allowHeaders: ["Content-Type", "Authorization", "x-tenant-id"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }));
+
+  // Custom logging middleware that includes OPTIONS requests
+  app.use("*", async (c, next) => {
+    const start = Date.now();
+    const method = c.req.method;
+    const path = c.req.path;
+    
+    if (method === "OPTIONS") {
+      logger.info("OPTIONS request", {
+        method,
+        path,
+        origin: c.req.header("origin"),
+        userAgent: c.req.header("user-agent"),
+      });
+    }
+    
+    await next();
+    
+    const duration = Date.now() - start;
+    const status = c.res.status;
+    
+    // Log response for OPTIONS requests
+    if (method === "OPTIONS") {
+      logger.info("OPTIONS response", {
+        method,
+        path,
+        status,
+        duration,
+        corsHeaders: {
+          "access-control-allow-origin": c.res.headers.get("access-control-allow-origin"),
+          "access-control-allow-methods": c.res.headers.get("access-control-allow-methods"),
+          "access-control-allow-headers": c.res.headers.get("access-control-allow-headers"),
+        },
+      });
+    }
+  });
 
   app.use("*", honoLogger());
 
@@ -28,20 +65,44 @@ export function createHonoApp() {
       createContext: async (opts) => {
         return await createContext(opts) as any;
       },
-      onError({ error, path, type }) {
-        logger.error("tRPC error", {
-          error: error.message,
-          code: error.code,
+      onError({ error, path, type, ctx, input }) {
+        logger.error({
+          err: error,
           path,
           type,
-          stack: error.stack,
+          input: input,
+          userId: ctx?.user?.id,
+          tenantId: ctx?.tenantId,
+          requestId: ctx?.requestId,
+          msg: `tRPC error: ${error.message}`,
         });
       },
     })
   );
 
-  app.get("/health", (c) => {
-    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  app.get("/health", async (c) => {
+    const { checkDatabaseHealth, getConnectionStats } = await import("@kibly/shared-db");
+    
+    try {
+      const dbHealthy = await checkDatabaseHealth();
+      const connectionStats = getConnectionStats();
+      
+      return c.json({ 
+        status: dbHealthy ? "ok" : "degraded",
+        timestamp: new Date().toISOString(),
+        database: {
+          connected: dbHealthy,
+          stats: connectionStats,
+        },
+      });
+    } catch (error) {
+      logger.error("Health check failed", { error });
+      return c.json({ 
+        status: "error",
+        timestamp: new Date().toISOString(),
+        error: "Failed to check health status",
+      }, 503);
+    }
   });
 
   app.onError((err, c) => {
