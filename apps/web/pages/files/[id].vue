@@ -1,0 +1,316 @@
+<template>
+  <UContainer class="py-6">
+    <div class="mb-6">
+      <NuxtLink to="/suppliers" class="text-sky-600 hover:text-sky-700 flex items-center gap-2">
+        <UIcon name="i-heroicons-arrow-left" />
+        Back to suppliers
+      </NuxtLink>
+    </div>
+
+    <div v-if="fileLoading" class="space-y-4">
+      <USkeleton class="h-8 w-64" />
+      <USkeleton class="h-96 w-full" />
+    </div>
+
+    <div v-else-if="fileError" class="text-red-500">
+      Error loading file: {{ fileError.message }}
+    </div>
+
+    <div v-else-if="file" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <UIcon 
+            :name="getFileIcon(file.fileName)" 
+            class="text-2xl text-gray-500"
+          />
+          <div>
+            <h1 class="text-2xl font-semibold">{{ file.fileName }}</h1>
+            <p class="text-sm text-gray-500">{{ formatFileSize(file.size || 0) }} • {{ formatDate(file.createdAt) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <!-- File Display -->
+        <div class="space-y-4">
+          <UCard>
+            <template #header>
+              <h2 class="text-lg font-medium">File Preview</h2>
+            </template>
+            
+            <div class="min-h-[800px] flex items-center justify-center bg-gray-50 rounded-lg">
+              <div v-if="isPDF(file.fileName)" class="w-full h-full">
+                <div v-if="proxyUrl" class="w-full h-[800px]">
+                  <iframe 
+                    :src="proxyUrl"
+                    class="w-full h-full rounded-lg border-0"
+                    title="PDF Viewer"
+                  >
+                    <p class="text-center text-gray-500 p-8">
+                      Your browser doesn't support PDFs. 
+                      <UButton 
+                        :to="downloadUrl" 
+                        target="_blank" 
+                        variant="outline"
+                        class="ml-2"
+                      >
+                        Download PDF
+                      </UButton>
+                    </p>
+                  </iframe>
+                </div>
+                <div v-else class="flex items-center justify-center h-[800px]">
+                  <div class="text-center">
+                    <USkeleton class="h-8 w-32 mb-2" />
+                    <p class="text-sm text-gray-500">Loading PDF...</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-else-if="isImage(file.fileName)" class="w-full h-full">
+                <img 
+                  :src="proxyUrl || undefined" 
+                  :alt="file.fileName"
+                  class="max-w-full max-h-[800px] object-contain mx-auto"
+                />
+              </div>
+              
+              <div v-else class="text-center text-gray-500">
+                <UIcon name="i-heroicons-document" class="text-6xl mb-4" />
+                <p>Preview not available for this file type</p>
+                <UButton 
+                  v-if="downloadUrl" 
+                  :to="downloadUrl" 
+                  target="_blank" 
+                  class="mt-4"
+                >
+                  Download File
+                </UButton>
+              </div>
+            </div>
+          </UCard>
+        </div>
+
+        <!-- File Information & Extractions -->
+        <div class="space-y-4">
+          <UCard>
+            <template #header>
+              <h2 class="text-lg font-medium">File Information</h2>
+            </template>
+            
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">File Name:</span>
+                <span class="text-sm font-medium">{{ file.fileName }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Size:</span>
+                <span class="text-sm font-medium">{{ formatFileSize(file.size || 0) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Type:</span>
+                <span class="text-sm font-medium">{{ file.mimeType || 'Unknown' }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Uploaded:</span>
+                <span class="text-sm font-medium">{{ formatDate(file.createdAt) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Status:</span>
+                <span class="text-sm font-medium">{{ file.processingStatus || 'Unknown' }}</span>
+              </div>
+            </div>
+            
+            <div class="pt-4 border-t">
+              <UButton 
+                v-if="downloadUrl" 
+                :to="downloadUrl" 
+                target="_blank" 
+                variant="outline"
+                class="w-full"
+                icon="i-heroicons-arrow-down-tray"
+              >
+                Download File
+              </UButton>
+            </div>
+          </UCard>
+
+          <!-- Extracted Data -->
+          <UCard v-if="file.extraction">
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-medium">Extracted Data</h2>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-500">Confidence:</span>
+                  <span class="text-sm font-medium" :class="getConfidenceColor(file.extraction.overallConfidence)">
+                    {{ Math.round(file.extraction.overallConfidence) }}%
+                  </span>
+                </div>
+              </div>
+            </template>
+            
+            <div class="space-y-4">
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Document Type:</span>
+                <span class="text-sm font-medium capitalize">{{ file.extraction.documentType }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-500">Validation Status:</span>
+                <span class="text-sm font-medium capitalize" :class="getValidationColor(file.extraction.validationStatus)">
+                  {{ file.extraction.validationStatus.replace('_', ' ') }}
+                </span>
+              </div>
+
+              <!-- Key Extracted Fields -->
+              <div v-if="file.extraction.extractedFields" class="space-y-3 pt-3 border-t">
+                <h3 class="text-sm font-medium">Key Fields</h3>
+                
+                <div v-for="(field, key) in getDisplayFields(file.extraction.extractedFields)" :key="key" class="flex justify-between">
+                  <span class="text-sm text-gray-500">{{ formatFieldName(String(key)) }}:</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium">{{ field.value }}</span>
+                    <span class="text-xs px-2 py-1 rounded" :class="getConfidenceColor(field.confidence)">
+                      {{ Math.round(field.confidence) }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </UCard>
+
+          <!-- No Extraction Data -->
+          <UCard v-else>
+            <template #header>
+              <h2 class="text-lg font-medium">Extracted Data</h2>
+            </template>
+            
+            <div class="text-center py-8 text-gray-500">
+              <UIcon name="i-heroicons-document-magnifying-glass" class="text-4xl mb-2" />
+              <p>No extraction data available</p>
+              <p class="text-sm">File may still be processing</p>
+            </div>
+          </UCard>
+        </div>
+      </div>
+    </div>
+  </UContainer>
+</template>
+
+<script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query';
+
+const route = useRoute();
+const api = useApi();
+const tenantStore = useTenantStore();
+
+const fileId = route.params.id as string;
+const selectedTenantId = computed(() => tenantStore.selectedTenantId);
+
+// Get file details with extractions
+const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
+  queryKey: ['file-with-extractions', fileId, selectedTenantId],
+  queryFn: async () => {
+    const input = { json: { fileId } };
+    const response = await api.get<any>(`/trpc/files.getWithExtractions?input=${encodeURIComponent(JSON.stringify(input))}`);
+    return response.result.data.json;
+  },
+  enabled: computed(() => !!fileId && !!selectedTenantId.value),
+});
+
+// Get proxy URL for file display (inline viewing)
+const proxyUrl = computed(() => {
+  if (!fileId || !selectedTenantId.value) return null;
+  const config = useRuntimeConfig();
+  const apiUrl = config.public.apiUrl;
+  return `${apiUrl}/api/files/proxy/${fileId}?tenantId=${selectedTenantId.value}#toolbar=0`;
+});
+
+// Get signed URL for download
+const { data: downloadUrlData } = useQuery({
+  queryKey: ['file-download-url', fileId, selectedTenantId],
+  queryFn: async () => {
+    const input = { json: { fileId, download: true } };
+    const response = await api.get<any>(`/trpc/files.getSignedUrl?input=${encodeURIComponent(JSON.stringify(input))}`);
+    return response.result.data.json;
+  },
+  enabled: computed(() => !!fileId && !!selectedTenantId.value),
+});
+
+const downloadUrl = computed(() => downloadUrlData.value?.url);
+
+const getFileIcon = (filename: string) => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  if (['pdf'].includes(ext || '')) return 'i-heroicons-document-text';
+  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'i-heroicons-photo';
+  if (['xls', 'xlsx'].includes(ext || '')) return 'i-heroicons-table-cells';
+  if (['doc', 'docx'].includes(ext || '')) return 'i-heroicons-document';
+  return 'i-heroicons-document';
+};
+
+const isPDF = (filename: string) => {
+  return filename.toLowerCase().endsWith('.pdf');
+};
+
+const isImage = (filename: string) => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+};
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+  return Math.round(bytes / 1048576 * 10) / 10 + ' MB';
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString();
+};
+
+const getConfidenceColor = (confidence: number) => {
+  if (confidence >= 90) return 'text-green-600 bg-green-100';
+  if (confidence >= 70) return 'text-yellow-600 bg-yellow-100';
+  return 'text-red-600 bg-red-100';
+};
+
+const getValidationColor = (status: string) => {
+  if (status === 'valid') return 'text-green-600';
+  if (status === 'needs_review') return 'text-yellow-600';
+  return 'text-red-600';
+};
+
+const formatFieldName = (key: string) => {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+};
+
+const getDisplayFields = (extractedFields: any) => {
+  if (!extractedFields) return {};
+  
+  const importantFields = [
+    'vendorName',
+    'documentNumber',
+    'documentDate',
+    'totalAmount',
+    'subtotalAmount',
+    'taxAmount',
+    'currency',
+    'dueDate',
+    'customerName',
+    'vendorEmail'
+  ];
+  
+  const filtered: any = {};
+  importantFields.forEach(field => {
+    if (extractedFields[field]) {
+      filtered[field] = extractedFields[field];
+    }
+  });
+  
+  return filtered;
+};
+
+</script>

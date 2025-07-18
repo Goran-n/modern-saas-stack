@@ -3,9 +3,10 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter } from "../trpc";
 import { tenantProcedure } from "../trpc/procedures";
 import { logger } from "@kibly/utils";
-import { files as filesTable, eq, and, desc, inArray } from "@kibly/shared-db";
+import { files as filesTable, documentExtractions, eq, and, desc, inArray } from "@kibly/shared-db";
 import { tasks } from "@trigger.dev/sdk/v3";
-import type { CategorizeFilePayload } from "@kibly/jobs/schemas";
+import type { CategorizeFilePayload } from "@kibly/jobs";
+import { getConfig } from "@kibly/config";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = [
@@ -20,6 +21,17 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
+
+// Get storage bucket from config
+const getStorageBucket = () => {
+  try {
+    const config = getConfig().getForFileManager();
+    return config.STORAGE_BUCKET || 'vault';
+  } catch (error) {
+    // Fallback to default if config is not available
+    return 'vault';
+  }
+};
 
 export const filesRouter = createTRPCRouter({
   upload: tenantProcedure
@@ -57,8 +69,9 @@ export const filesRouter = createTRPCRouter({
         const fullPath = pathTokens.join("/");
 
         // Upload directly using Supabase client
+        const storageBucket = getStorageBucket();
         const { error: uploadError } = await ctx.supabase.storage
-          .from("files")
+          .from(storageBucket)
           .upload(fullPath, fileBuffer, {
             contentType: mimeType,
             upsert: false,
@@ -69,7 +82,7 @@ export const filesRouter = createTRPCRouter({
         }
 
         const { data: { publicUrl } } = ctx.supabase.storage
-          .from("files")
+          .from(storageBucket)
           .getPublicUrl(fullPath);
 
         const [fileRecord] = await ctx.db
@@ -148,10 +161,11 @@ export const filesRouter = createTRPCRouter({
       z.object({
         fileId: z.string().uuid(),
         expiresIn: z.number().min(60).max(3600).default(3600),
+        download: z.boolean().default(false), // Add option to control download behavior
       })
     )
     .query(async ({ ctx, input }) => {
-      const { fileId, expiresIn } = input;
+      const { fileId, expiresIn, download } = input;
 
       const file = await ctx.db
         .select()
@@ -173,13 +187,54 @@ export const filesRouter = createTRPCRouter({
 
       try {
         const filePath = file[0].pathTokens.join("/");
-        const { data, error: urlError } = await ctx.supabase.storage
-          .from(file[0].bucket)
-          .createSignedUrl(filePath, expiresIn);
+        const storageBucket = getStorageBucket();
+        
+        logger.info("Generating signed URL", {
+          fileId,
+          filePath,
+          storageBucket,
+          expiresIn,
+          download,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
 
-        if (urlError || !data) {
-          throw urlError || new Error("Failed to generate signed URL");
+        const { data, error: urlError } = await ctx.supabase.storage
+          .from(storageBucket)
+          .createSignedUrl(filePath, expiresIn, {
+            download: download // Use the download parameter from input
+          });
+
+        if (urlError) {
+          logger.error("Supabase storage error", {
+            error: urlError,
+            fileId,
+            filePath,
+            storageBucket,
+            tenantId: ctx.tenantId,
+            requestId: ctx.requestId,
+          });
+          throw urlError;
         }
+
+        if (!data) {
+          logger.error("No data returned from Supabase", {
+            fileId,
+            filePath,
+            storageBucket,
+            tenantId: ctx.tenantId,
+            requestId: ctx.requestId,
+          });
+          throw new Error("No data returned from Supabase storage");
+        }
+
+        logger.info("Signed URL generated successfully", {
+          fileId,
+          url: data.signedUrl,
+          expiresAt: new Date(Date.now() + expiresIn * 1000),
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
 
         return {
           url: data.signedUrl,
@@ -260,8 +315,9 @@ export const filesRouter = createTRPCRouter({
 
       try {
         const filePath = file[0].pathTokens.join("/");
+        const storageBucket = getStorageBucket();
         const { error: removeError } = await ctx.supabase.storage
-          .from(file[0].bucket)
+          .from(storageBucket)
           .remove([filePath]);
 
         if (removeError) {
@@ -293,6 +349,91 @@ export const filesRouter = createTRPCRouter({
           message: "Failed to delete file",
         });
       }
+    }),
+
+  getById: tenantProcedure
+    .input(
+      z.object({
+        fileId: z.string().uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { fileId } = input;
+
+      const file = await ctx.db
+        .select()
+        .from(filesTable)
+        .where(
+          and(
+            eq(filesTable.id, fileId),
+            eq(filesTable.tenantId, ctx.tenantId)
+          )
+        )
+        .limit(1);
+
+      if (!file[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "File not found",
+        });
+      }
+
+      return {
+        id: file[0].id,
+        fileName: file[0].fileName,
+        mimeType: file[0].mimeType,
+        size: file[0].size,
+        processingStatus: file[0].processingStatus,
+        createdAt: file[0].createdAt,
+        updatedAt: file[0].updatedAt,
+      };
+    }),
+
+  getWithExtractions: tenantProcedure
+    .input(
+      z.object({
+        fileId: z.string().uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { fileId } = input;
+
+      const file = await ctx.db
+        .select()
+        .from(filesTable)
+        .where(
+          and(
+            eq(filesTable.id, fileId),
+            eq(filesTable.tenantId, ctx.tenantId)
+          )
+        )
+        .limit(1);
+
+      if (!file[0]) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "File not found",
+        });
+      }
+
+      // Get document extractions for this file
+      const extractions = await ctx.db
+        .select()
+        .from(documentExtractions)
+        .where(eq(documentExtractions.fileId, fileId))
+        .orderBy(desc(documentExtractions.createdAt))
+        .limit(1);
+
+      return {
+        id: file[0].id,
+        fileName: file[0].fileName,
+        mimeType: file[0].mimeType,
+        size: file[0].size,
+        processingStatus: file[0].processingStatus,
+        createdAt: file[0].createdAt,
+        updatedAt: file[0].updatedAt,
+        extraction: extractions[0] || null,
+      };
     }),
 
   processBatch: tenantProcedure

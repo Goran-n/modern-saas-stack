@@ -5,6 +5,8 @@ import { trpcServer } from "@hono/trpc-server";
 import { appRouter, createContext } from "@kibly/trpc";
 import { getConfig } from "@kibly/config";
 import { logger } from "@kibly/utils";
+import { getDatabaseConnection, files, eq, and } from "@kibly/shared-db";
+import { createClient } from "@supabase/supabase-js";
 
 export function createHonoApp() {
   const app = new Hono();
@@ -57,6 +59,83 @@ export function createHonoApp() {
   });
 
   app.use("*", honoLogger());
+
+  // File proxy route for PDF inline display
+  app.get("/api/files/proxy/:fileId", async (c) => {
+    const fileId = c.req.param("fileId");
+    const tenantId = c.req.header("x-tenant-id") || c.req.query("tenantId");
+    
+    if (!tenantId) {
+      return c.json({ error: "Tenant ID required" }, 401);
+    }
+    
+    try {
+      const db = getDatabaseConnection(config.DATABASE_URL);
+      
+      // Get file from database and validate tenant access
+      const fileResult = await db
+        .select()
+        .from(files)
+        .where(
+          and(
+            eq(files.id, fileId),
+            eq(files.tenantId, tenantId)
+          )
+        )
+        .limit(1);
+      
+      if (!fileResult[0]) {
+        return c.json({ error: "File not found" }, 404);
+      }
+      
+      const file = fileResult[0];
+      
+      // Create Supabase client
+      const supabase = createClient(
+        config.SUPABASE_URL,
+        config.SUPABASE_SERVICE_KEY || config.SUPABASE_ANON_KEY
+      );
+      
+      // Get storage bucket from config
+      const storageBucket = config.STORAGE_BUCKET || 'vault';
+      
+      // Generate signed URL from Supabase
+      const filePath = file.pathTokens.join("/");
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from(storageBucket)
+        .createSignedUrl(filePath, 3600);
+      
+      if (signedError || !signedData) {
+        logger.error("Failed to generate signed URL", { error: signedError, fileId });
+        return c.json({ error: "Failed to access file" }, 500);
+      }
+      
+      // Fetch file from Supabase and stream with correct headers
+      const response = await fetch(signedData.signedUrl);
+      
+      if (!response.ok) {
+        logger.error("Failed to fetch file from storage", { 
+          status: response.status, 
+          fileId, 
+          filePath 
+        });
+        return c.json({ error: "Failed to fetch file" }, 500);
+      }
+      
+      // Return file with proper headers for inline display
+      return new Response(response.body, {
+        headers: {
+          "Content-Type": file.mimeType || "application/octet-stream",
+          "Content-Disposition": "inline",
+          "Cache-Control": "private, max-age=3600",
+        },
+      });
+      
+    } catch (error) {
+      logger.error("File proxy error", { error, fileId, tenantId });
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
 
   app.use(
     "/trpc/*",
