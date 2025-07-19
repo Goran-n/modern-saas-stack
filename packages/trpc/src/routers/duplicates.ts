@@ -1,9 +1,10 @@
 import { getConfig } from '@kibly/config';
 import { DeduplicationService } from '@kibly/deduplication';
 import { documentExtractions, files, getDatabaseConnection } from '@kibly/shared-db';
-import { and, eq, sql } from '@kibly/shared-db';
+import { eq, sql } from '@kibly/shared-db';
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { createTRPCRouter } from '../trpc';
+import { protectedProcedure } from '../trpc/procedures';
 
 export const duplicatesRouter = createTRPCRouter({
   /**
@@ -17,6 +18,10 @@ export const duplicatesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.tenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
       const deduplicationService = new DeduplicationService();
       
       const result = await deduplicationService.checkFileDuplicate(
@@ -42,6 +47,10 @@ export const duplicatesRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      if (!ctx.tenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -96,6 +105,10 @@ export const duplicatesRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      if (!ctx.tenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -138,10 +151,12 @@ export const duplicatesRouter = createTRPCRouter({
         WHERE ${whereClause}
       `;
 
-      const [duplicates, [{ total }]] = await Promise.all([
+      const [duplicates, countResult] = await Promise.all([
         db.execute(query),
         db.execute(countQuery),
       ]);
+
+      const total = (countResult[0] as any)?.total || 0;
 
       return {
         duplicates: duplicates.map((row: any) => ({
@@ -157,8 +172,8 @@ export const duplicatesRouter = createTRPCRouter({
           createdAt: row.created_at,
           keyFields: row.key_fields,
         })),
-        total: parseInt(total as string),
-        hasMore: input.offset + input.limit < parseInt(total as string),
+        total: parseInt(String(total)),
+        hasMore: input.offset + input.limit < parseInt(String(total)),
       };
     }),
 
@@ -174,6 +189,10 @@ export const duplicatesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.tenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -209,6 +228,10 @@ export const duplicatesRouter = createTRPCRouter({
    */
   getDuplicateStats: protectedProcedure
     .query(async ({ ctx }) => {
+      if (!ctx.tenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -241,6 +264,10 @@ export const duplicatesRouter = createTRPCRouter({
         db.execute(statsQuery),
         db.execute(duplicatesByTypeQuery),
       ]);
+
+      if (!stats) {
+        throw new Error('Unable to retrieve duplicate statistics');
+      }
 
       return {
         totalFiles: parseInt(stats.total_files as string),

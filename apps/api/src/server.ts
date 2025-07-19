@@ -5,11 +5,10 @@ import {
   handleWhatsAppVerification,
 } from "@kibly/communication";
 import { getConfig } from "@kibly/config";
-import { files, getDatabaseConnection } from "@kibly/shared-db";
+import { files, getDatabaseConnection, and, eq } from "@kibly/shared-db";
 import { appRouter, createContext } from "@kibly/trpc";
 import { logger } from "@kibly/utils";
 import { createClient } from "@supabase/supabase-js";
-import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
