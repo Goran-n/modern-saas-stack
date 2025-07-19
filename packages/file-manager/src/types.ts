@@ -5,12 +5,14 @@ export const FILE_SOURCES = {
   INTEGRATION: 'integration',
   USER_UPLOAD: 'user_upload',
   WHATSAPP: 'whatsapp',
+  SLACK: 'slack',
 } as const;
 
 export const fileSourceSchema = z.enum([
   FILE_SOURCES.INTEGRATION,
   FILE_SOURCES.USER_UPLOAD,
   FILE_SOURCES.WHATSAPP,
+  FILE_SOURCES.SLACK,
 ]);
 
 // Processing status constants

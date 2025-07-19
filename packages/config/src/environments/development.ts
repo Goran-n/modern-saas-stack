@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { triggerSchema } from '../schemas/trigger';
 import { portkeySchema } from '../schemas/portkey';
 import { twilioSchema } from '../schemas/twilio';
+import { slackSchema } from '../schemas/slack';
 
 /**
  * Development environment configuration
@@ -43,6 +44,7 @@ export const developmentConfigSchema = z.object({
 })
 .merge(triggerSchema)
 .merge(portkeySchema)
-.merge(twilioSchema.partial()); // Twilio is optional in development
+.merge(twilioSchema.partial()) // Twilio is optional in development
+.merge(slackSchema.partial()); // Slack is optional in development
 
 export type DevelopmentConfig = z.infer<typeof developmentConfigSchema>;

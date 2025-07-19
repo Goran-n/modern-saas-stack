@@ -2,6 +2,7 @@ import { createLogger } from '@kibly/utils';
 import { uploadFile, FILE_SOURCES, type FileSource } from '@kibly/file-manager';
 import { getConfig } from '@kibly/config';
 import { getTwilioService } from './services/twilio';
+import { getSlackService } from './services/slack';
 import type { 
   ParsedWhatsAppMessage, 
   ParsedSlackMessage, 
@@ -99,10 +100,31 @@ export async function processSlackFiles(
         continue;
       }
 
-      results.push({
-        success: false,
-        error: 'Slack file download not yet implemented'
-      });
+      try {
+        // Download the file from Slack
+        const slackService = getSlackService();
+        const fileBuffer = await slackService.downloadFile(file.downloadUrl);
+        
+        // Create a File object from the buffer
+        const fileObj = new File(
+          [fileBuffer],
+          file.name,
+          { type: file.mimeType }
+        );
+        
+        // Upload using the helper function
+        const result = await _createFileAndTriggerJob(fileObj, _tenantId, _userId, FILE_SOURCES.SLACK);
+        results.push(result);
+      } catch (downloadError) {
+        logger.error('Failed to download Slack file', {
+          fileId: file.id,
+          error: downloadError
+        });
+        results.push({
+          success: false,
+          error: `Failed to download file: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`
+        });
+      }
     } catch (error) {
       logger.error('Error processing Slack file', { fileId: file.id, error });
       results.push({
@@ -119,7 +141,7 @@ async function _createFileAndTriggerJob(
   file: File,
   tenantId: string,
   userId: string,
-  source: typeof FILE_SOURCES.WHATSAPP | typeof FILE_SOURCES.INTEGRATION
+  source: typeof FILE_SOURCES.WHATSAPP | typeof FILE_SOURCES.INTEGRATION | typeof FILE_SOURCES.SLACK
 ): Promise<ProcessingResult> {
   try {
     const fileId = await uploadFile(file, {

@@ -15,7 +15,7 @@ export const files = pgTable('files', {
   size: bigint('size', { mode: 'number' }).notNull(),
   metadata: jsonb('metadata'), // Flexible metadata storage
   source: text('source', {
-    enum: ['integration', 'user_upload', 'whatsapp']
+    enum: ['integration', 'user_upload', 'whatsapp', 'slack']
   }).notNull(),
   sourceId: text('source_id'), // Reference to source entity
   tenantId: uuid('tenant_id').notNull(),

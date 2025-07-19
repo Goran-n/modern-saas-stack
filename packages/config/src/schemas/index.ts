@@ -10,6 +10,7 @@ export * from './web';
 export * from './trigger';
 export * from './portkey';
 export * from './twilio';
+export * from './slack';
 export * from './communication';
 
 import { baseSchema } from './base';
@@ -21,6 +22,7 @@ import { webSchema } from './web';
 import { triggerSchema } from './trigger';
 import { portkeySchema } from './portkey';
 import { twilioSchema } from './twilio';
+import { slackSchema } from './slack';
 import { communicationServiceSchema } from './communication';
 
 /**
@@ -76,6 +78,7 @@ export const communicationConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(supabaseSchema)
   .merge(twilioSchema)
+  .merge(slackSchema)
   .merge(communicationServiceSchema);
 
 // Type exports
