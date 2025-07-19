@@ -147,7 +147,7 @@ export function createHonoApp() {
       const userId = "00000000-0000-0000-0000-000000000000"; // TODO: Get from phone number mapping
       
       const body = await c.req.parseBody();
-      logger.info("WhatsApp webhook received", { body });
+      logger.info("WhatsApp webhook received");
       
       const result = await handleTwilioWhatsAppWebhook(body, tenantId, userId);
       
@@ -158,7 +158,14 @@ export function createHonoApp() {
         return c.json({ status: "error", error: result.error }, 400);
       }
     } catch (error) {
-      logger.error("WhatsApp webhook error", { error });
+      // Use pino's built-in error serialization for better error handling
+      logger.error({ 
+        err: error, // This will use pino's error serializer
+        url: c.req.url,
+        method: c.req.method,
+        contentType: c.req.header("content-type"),
+        msg: "WhatsApp webhook error"
+      });
       return c.json({ status: "error", error: "Internal server error" }, 500);
     }
   });

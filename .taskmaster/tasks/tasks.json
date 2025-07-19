@@ -185,133 +185,104 @@
       {
         "id": 2,
         "title": "Implement Database Schema and Migrations",
-        "description": "Create database tables for WhatsApp verifications, Slack connections, and communication logs with proper indexes and constraints",
-        "details": "Using Supabase migrations, create tables: `verified_whatsapp_numbers`, `whatsapp_verifications`, `communication_logs`, `slack_connections`, and `slack_user_mappings` as specified in PRD. Use Drizzle ORM for type-safe database access. Implement row-level security (RLS) policies for multi-tenant isolation. Create indexes on frequently queried columns: (tenant_id, phone_number), (tenant_id, created_at), (workspace_id). Set up database triggers for updated_at timestamps. Implement soft delete for audit compliance. Create database functions for atomic verification code validation. Use pgcrypto extension for encrypting Slack bot tokens. Set up automatic cleanup job for expired verification codes (10 minutes TTL).",
-        "testStrategy": "Test migrations rollback and forward. Verify RLS policies prevent cross-tenant access. Test unique constraints and foreign key relationships. Benchmark query performance with sample data. Test encrypted field storage and retrieval. Verify automatic cleanup of expired codes. Test database triggers functionality.",
-        "priority": "high",
+        "description": "Create minimal database tables for WhatsApp verifications and Slack connections with proper indexes and constraints",
+        "status": "pending",
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "priority": "high",
+        "details": "Using Supabase migrations, create 4 minimal tables: `whatsapp_verifications` (for self-service verification flow), `whatsapp_mappings` (simple phone->user mapping), `slack_workspaces` (OAuth tokens and workspace mapping), and `slack_user_mappings` (user mappings within workspace). Use Drizzle ORM for type-safe database access. Implement basic RLS policies for tenant isolation. Create essential indexes on frequently queried columns: (tenant_id, phone_number), (workspace_id, tenant_id). Set up database triggers for updated_at timestamps. Focus on minimal working implementation without complex features.",
+        "testStrategy": "Test migrations rollback and forward. Verify basic RLS policies prevent cross-tenant access. Test unique constraints and foreign key relationships. Test database triggers functionality. Verify verification code expiry mechanism.",
         "subtasks": [
+          {
+            "id": 2,
+            "title": "Create Minimal Core Database Tables",
+            "description": "Implement only the 4 essential tables: whatsapp_verifications, whatsapp_mappings, slack_workspaces, and slack_user_mappings",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Create tables using Drizzle schema definitions with minimal fields. whatsapp_verifications: id, tenant_id, phone_number, verification_code, expires_at, created_at. whatsapp_mappings: id, tenant_id, phone_number, user_id, created_at, updated_at. slack_workspaces: id, tenant_id, workspace_id, team_name, bot_token, created_at, updated_at. slack_user_mappings: id, workspace_id, slack_user_id, kibly_user_id, created_at. Add necessary foreign keys and unique constraints only.",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Basic RLS Policies",
+            "description": "Create simple row-level security policies for tenant isolation",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Enable RLS on all 4 tables. Create basic SELECT, INSERT, UPDATE, DELETE policies checking auth.jwt() ->> 'tenant_id' matches record tenant_id. Keep policies simple without complex conditions. Test with different tenant contexts to ensure isolation works.",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Add Essential Indexes Only",
+            "description": "Create only the most critical indexes for query performance",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Create composite index on whatsapp_verifications (tenant_id, phone_number, expires_at) for verification lookups. Add index on whatsapp_mappings (tenant_id, phone_number) for user lookups. Create index on slack_workspaces (tenant_id, workspace_id). Add index on slack_user_mappings (workspace_id, slack_user_id). Skip complex partial indexes.",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Updated_at Timestamp Triggers",
+            "description": "Create simple PostgreSQL triggers for updated_at columns",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Create basic update_updated_at_column() function. Add BEFORE UPDATE triggers only on tables with updated_at columns (whatsapp_mappings and slack_workspaces). Keep implementation minimal without complex logic.",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Create Simple Verification Code Function",
+            "description": "Implement basic PostgreSQL function for verification code validation",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Create simple check_and_consume_verification_code() function that validates code and deletes it if valid. No rate limiting or complex logic. Function should return boolean for success/failure. Handle basic expiry check using expires_at column.",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Set Up Basic Cleanup for Expired Codes",
+            "description": "Create simple scheduled cleanup for expired verification codes",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Create basic pg_cron job or database function to delete expired verification codes older than expires_at. Run every hour to keep table clean. No complex retention policies or soft deletes needed.",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Create Basic Migration Tests",
+            "description": "Implement simple tests for the minimal schema",
+            "status": "pending",
+            "dependencies": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "details": "Test migrations can run forward and rollback cleanly. Verify foreign key constraints work. Test basic RLS policies with 2 different tenants. Verify verification code function works correctly. Test that expired codes get cleaned up. Keep tests focused on core functionality only.",
+            "testStrategy": ""
+          },
           {
             "id": 1,
             "title": "Initial Supabase Setup and Drizzle Configuration",
             "description": "Set up Supabase project, configure environment variables, and initialize Drizzle ORM with proper TypeScript configuration",
             "dependencies": [],
             "details": "Create new Supabase project and obtain connection strings. Install @supabase/supabase-js (v2.45+) and drizzle-orm with drizzle-kit. Configure drizzle.config.ts with Supabase PostgreSQL connection. Set up environment variables for DATABASE_URL, SUPABASE_URL, and SUPABASE_ANON_KEY. Create base migration structure and test connection. Configure SSL settings for production database connection.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 2,
-            "title": "Create Core Database Tables with Schemas",
-            "description": "Implement all required tables including verified_whatsapp_numbers, whatsapp_verifications, communication_logs, slack_connections, and slack_user_mappings",
-            "dependencies": [
-              1
-            ],
-            "details": "Create tables using Drizzle schema definitions with proper data types and constraints. Define primary keys, foreign keys, and unique constraints. Add tenant_id to all tables for multi-tenancy. Include created_at, updated_at timestamps, and deleted_at for soft deletes. Set up proper CASCADE rules for foreign key relationships. Ensure all phone numbers use E.164 format validation.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 3,
-            "title": "Implement RLS Policies for Multi-Tenancy",
-            "description": "Create row-level security policies to ensure tenant isolation and prevent cross-tenant data access",
-            "dependencies": [
-              2
-            ],
-            "details": "Enable RLS on all tables using ALTER TABLE ENABLE ROW LEVEL SECURITY. Create policies for SELECT, INSERT, UPDATE, DELETE operations checking auth.jwt() ->> 'tenant_id'. Implement service role bypass for system operations. Add policies for workspace-level isolation in Slack tables. Test policies with different tenant contexts to ensure complete isolation.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 4,
-            "title": "Set Up Index Optimization",
-            "description": "Create database indexes on frequently queried columns to optimize query performance",
-            "dependencies": [
-              2
-            ],
-            "details": "Create composite indexes on (tenant_id, phone_number) for whatsapp tables. Add index on (tenant_id, created_at) for time-based queries. Create index on (workspace_id) for Slack tables. Add partial indexes for non-deleted records using WHERE deleted_at IS NULL. Create GIN indexes for JSONB metadata columns. Analyze query plans to validate index usage.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 5,
-            "title": "Implement Database Triggers for Timestamps",
-            "description": "Create PostgreSQL triggers to automatically manage updated_at timestamps across all tables",
-            "dependencies": [
-              2
-            ],
-            "details": "Create update_updated_at_column() function in PostgreSQL. Add BEFORE UPDATE triggers on all tables to call the function. Ensure triggers work correctly with bulk updates. Add triggers for audit log creation on sensitive operations. Test trigger behavior with concurrent updates. Create trigger for automatic verification code expiry.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 6,
-            "title": "Implement Soft Delete Functionality",
-            "description": "Add soft delete capabilities with proper constraints and query modifications",
-            "dependencies": [
-              2,
-              3
-            ],
-            "details": "Add deleted_at timestamp column to all tables with default NULL. Create Drizzle query helpers that automatically filter out soft-deleted records. Implement restore functionality for accidentally deleted records. Update RLS policies to respect soft deletes. Create scheduled job to hard delete old soft-deleted records after retention period. Add unique partial indexes excluding deleted records.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 7,
-            "title": "Set Up Encrypted Fields with pgcrypto",
-            "description": "Implement field-level encryption for sensitive data using PostgreSQL pgcrypto extension",
-            "dependencies": [
-              2
-            ],
-            "details": "Enable pgcrypto extension in Supabase. Create encryption/decryption functions using AES-256. Encrypt sensitive fields: Slack bot tokens, phone numbers in logs, webhook signatures. Store encryption keys in Supabase Vault. Create views that automatically decrypt data for authorized access. Implement key rotation strategy with versioning.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 8,
-            "title": "Create Database Functions for Verification Logic",
-            "description": "Implement PostgreSQL functions for complex verification workflows and business logic",
-            "dependencies": [
-              2,
-              7
-            ],
-            "details": "Create function to generate secure verification codes with customizable length. Implement check_verification_code() function with rate limiting logic. Create function for automatic code expiry after 10 minutes. Add function to check verification attempts and lock after 5 failures. Create aggregate functions for usage statistics. Implement functions for GDPR data export compilation.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 9,
-            "title": "Configure Automated Cleanup Jobs",
-            "description": "Set up pg_cron jobs for data retention, expired verification cleanup, and maintenance tasks",
-            "dependencies": [
-              2,
-              5,
-              6
-            ],
-            "details": "Install pg_cron extension in Supabase. Create job to delete expired verification codes older than 24 hours. Set up job to hard delete soft-deleted records after 90 days. Implement communication log cleanup based on retention policy (default 180 days). Create job for database statistics update. Add job for webhook failure retry cleanup. Monitor job execution with logging.",
-            "status": "pending",
-            "testStrategy": ""
-          },
-          {
-            "id": 10,
-            "title": "Create Migration Testing Suite",
-            "description": "Implement comprehensive testing framework for database migrations and schema changes",
-            "dependencies": [
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              8,
-              9
-            ],
-            "details": "Create test fixtures with sample data for all tables. Implement migration rollback tests using transactions. Test RLS policies with multiple tenant contexts. Verify foreign key constraints and cascade behaviors. Test encrypted field storage and retrieval. Benchmark query performance with realistic data volumes. Create integration tests for all database functions. Test cleanup jobs with time manipulation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -729,162 +700,162 @@
         "id": 7,
         "title": "Implement Unified Message Processing Pipeline",
         "description": "Create platform-agnostic message router that processes files from any source and triggers existing ingestion pipeline",
-        "details": "Create MessageProcessor class that handles messages from any platform. Implement file upload to existing file-manager using streams for memory efficiency. Map platform-specific user IDs to Kibly users using database lookups. Create unified file validation (PDF only, max 50MB) using file-type (v19.5+) for magic byte detection. Implement audit logging for all messages with structured metadata. Trigger existing job queue for document processing using existing packages/jobs infrastructure. Handle command messages (/status, /help) with platform-specific responses. Implement backpressure handling when job queue is full. Create metrics collection using OpenTelemetry for monitoring. Add circuit breaker pattern for downstream service failures. Implement idempotency using message IDs to prevent duplicate processing.",
-        "testStrategy": "Unit test message routing logic with different message types. Test file validation with various file formats. Test user mapping with missing/multiple matches. Integration test with existing job pipeline. Test idempotency with duplicate messages. Load test with concurrent messages. Test circuit breaker activation and recovery.",
-        "priority": "high",
+        "status": "pending",
         "dependencies": [
           3,
           4
         ],
-        "status": "pending",
+        "priority": "high",
+        "details": "Create MessageProcessor class that handles messages from any platform. Implement file upload to existing file-manager using streams for memory efficiency. Map platform-specific user IDs to Kibly users using simple database lookups without caching. Create unified file validation (PDF only, max 50MB) using file-type (v19.5+) for magic byte detection. Implement audit logging for all messages with structured metadata. Trigger existing job queue for document processing using existing packages/jobs infrastructure. Handle command messages (/status, /help) with platform-specific responses. Implement backpressure handling when job queue is full. Create metrics collection using OpenTelemetry for monitoring. Add circuit breaker pattern for downstream service failures. Implement idempotency using message IDs to prevent duplicate processing.",
+        "testStrategy": "Unit test message routing logic with different message types. Test file validation with various file formats. Test user mapping with missing/multiple matches. Integration test with existing job pipeline. Test idempotency with duplicate messages. Load test with concurrent messages. Test circuit breaker activation and recovery.",
         "subtasks": [
           {
             "id": 1,
             "title": "Design Base MessageProcessor Class Architecture",
             "description": "Create abstract MessageProcessor base class with interfaces for platform-specific implementations",
+            "status": "pending",
             "dependencies": [],
             "details": "Define abstract methods for message parsing, validation, and processing. Create TypeScript interfaces for MessageSource, ProcessedMessage, and MessageMetadata. Implement base error handling and logging methods. Design plugin architecture for platform-specific processors",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 2,
             "title": "Implement Platform Abstraction Layer",
             "description": "Build abstraction layer to normalize messages from different platforms into unified format",
+            "status": "pending",
             "dependencies": [
               1
             ],
             "details": "Create PlatformAdapter interface with methods for extracting sender ID, message content, and attachments. Implement WhatsAppAdapter and SlackAdapter classes. Build message normalization logic to convert platform-specific formats to unified schema. Handle platform-specific metadata extraction",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 3,
             "title": "Build File Streaming Upload Implementation",
             "description": "Implement memory-efficient file upload system using Node.js streams",
+            "status": "pending",
             "dependencies": [
               2
             ],
             "details": "Use Node.js streams API to handle large file uploads without loading into memory. Implement chunked upload to file-manager service. Add progress tracking and resumable upload support. Handle network interruptions with automatic retry logic. Integrate with existing S3/storage backend",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 4,
             "title": "Create User ID Mapping System",
-            "description": "Build system to map platform-specific user identifiers to Kibly user accounts",
+            "description": "Build simple database lookup system to map platform-specific user identifiers to Kibly user accounts",
+            "status": "pending",
             "dependencies": [
               2
             ],
-            "details": "Implement UserMapper service with database lookups for phone numbers and Slack IDs. Handle cases where multiple Kibly users share same phone number. Create fallback logic for unmapped users. Cache user mappings in Redis for performance. Add admin interface for manual mapping corrections",
-            "status": "pending",
+            "details": "Implement UserMapper service with direct database queries to whatsapp_mappings table for phone number lookups and slack_user_mappings table for workspace+user ID lookups. No caching layer initially. Reject unmapped users with clear error messages (no guest account support). Admin mapping handled directly via database operations. Create simple service class with methods for WhatsApp and Slack user resolution",
             "testStrategy": ""
           },
           {
             "id": 5,
             "title": "Implement Unified File Validation",
             "description": "Create comprehensive file validation system with magic byte detection",
+            "status": "pending",
             "dependencies": [
               3
             ],
             "details": "Use file-type library v19.5+ for accurate MIME type detection via magic bytes. Implement PDF-only validation with detailed error messages. Add file size validation (max 50MB) with early stream termination. Validate PDF structure and readability. Add virus scanning integration point",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 6,
             "title": "Build Audit Logging Infrastructure",
             "description": "Implement structured audit logging for all message processing activities",
+            "status": "pending",
             "dependencies": [
               4,
               5
             ],
             "details": "Create AuditLogger service with structured JSON logging format. Log all message receipts, processing steps, and outcomes. Include platform metadata, user mappings, and file details. Implement log rotation and archival strategy. Add privacy controls for sensitive data logging",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 7,
             "title": "Integrate with Job Queue System",
             "description": "Connect message processor to existing job queue infrastructure",
+            "status": "pending",
             "dependencies": [
               5,
               6
             ],
             "details": "Create job payloads for document processing pipeline. Implement priority queuing based on message source. Add job deduplication to prevent duplicate processing. Handle job failure callbacks to notify users. Integrate with existing packages/jobs Bull queue setup",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 8,
             "title": "Implement Command Message Handling",
             "description": "Build system to process command messages for bot interactions",
+            "status": "pending",
             "dependencies": [
               2,
               4
             ],
             "details": "Create CommandParser to extract commands from messages (e.g., /help, /status). Implement command routing to appropriate handlers. Build response formatter for platform-specific reply formats. Add command authorization based on user permissions. Create extensible command plugin system",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 9,
             "title": "Build Backpressure Implementation",
             "description": "Implement flow control to prevent system overload during high message volumes",
+            "status": "pending",
             "dependencies": [
               7
             ],
             "details": "Implement token bucket algorithm for rate limiting per tenant. Add queue depth monitoring with automatic throttling. Create backpressure signals to upstream services. Implement graceful degradation under load. Add priority lanes for critical messages",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 10,
             "title": "Setup OpenTelemetry Metrics Collection",
             "description": "Implement comprehensive metrics and tracing for message processing pipeline",
+            "status": "pending",
             "dependencies": [
               7,
               9
             ],
             "details": "Configure OpenTelemetry SDK with custom metrics for message volume, processing time, and error rates. Add distributed tracing across service boundaries. Create custom metrics for platform-specific insights. Set up metric aggregation and alerting rules. Export to monitoring backend (Prometheus/Grafana)",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 11,
             "title": "Implement Circuit Breaker Pattern",
             "description": "Add circuit breaker for external service calls to prevent cascade failures",
+            "status": "pending",
             "dependencies": [
               7,
               10
             ],
             "details": "Implement circuit breaker using opossum library for file uploads and API calls. Configure failure thresholds and timeout settings per service. Add half-open state testing logic. Implement fallback strategies for open circuits. Create circuit state monitoring dashboard",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 12,
             "title": "Build Idempotency Mechanism",
             "description": "Ensure message processing is idempotent to handle retries safely",
+            "status": "pending",
             "dependencies": [
               6,
               7
             ],
             "details": "Generate unique message IDs using platform ID + timestamp + hash. Store processed message IDs in Redis with TTL. Implement idempotency keys for file uploads. Handle duplicate detection at multiple pipeline stages. Create cleanup job for expired idempotency records",
-            "status": "pending",
             "testStrategy": ""
           },
           {
             "id": 13,
             "title": "Implement Comprehensive Error Handling",
             "description": "Create robust error handling with recovery strategies and user notifications",
+            "status": "pending",
             "dependencies": [
               8,
               11,
               12
             ],
             "details": "Build error classification system (retryable vs permanent). Implement exponential backoff for transient errors. Create dead letter queue for unprocessable messages. Add user notification system for processing failures. Implement error reporting dashboard with drill-down capabilities",
-            "status": "pending",
             "testStrategy": ""
           }
         ]
@@ -1084,7 +1055,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T16:00:12.502Z",
-      "updated": "2025-07-19T10:41:19.324Z",
+      "updated": "2025-07-19T11:01:11.487Z",
       "description": "Tasks for master context"
     }
   }

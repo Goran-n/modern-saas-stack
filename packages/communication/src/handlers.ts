@@ -38,6 +38,12 @@ export async function handleTwilioWhatsAppWebhook(
     const messagePayload = WhatsAppMessageHandler.parseWebhookPayload(payload);
     
     if (!messagePayload) {
+      logger.error({
+        payload: JSON.stringify(payload, null, 2),
+        payloadType: typeof payload,
+        payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload) : undefined,
+        msg: 'Failed to parse WhatsApp webhook payload - parseWebhookPayload returned null'
+      });
       return {
         success: false,
         error: 'Invalid Twilio WhatsApp payload'

@@ -12,7 +12,8 @@ export const slackSchema = z.object({
    */
   SLACK_BOT_TOKEN: z.string()
     .regex(/^xoxb-/)
-    .describe('Slack Bot User OAuth Token'),
+    .optional()
+    .describe('Slack Bot User OAuth Token (required for Slack integration)'),
   
   /**
    * Slack App OAuth Token (optional)
@@ -30,7 +31,8 @@ export const slackSchema = z.object({
    */
   SLACK_SIGNING_SECRET: z.string()
     .min(1)
-    .describe('Slack Signing Secret for webhook verification'),
+    .optional()
+    .describe('Slack Signing Secret for webhook verification (required for Slack integration)'),
   
   /**
    * Slack App ID (optional)
