@@ -1,6 +1,6 @@
 import { tenantMembers, tenants } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq } from "@kibly/shared-db";
 import { getDb } from "../db";
 import type { Tenant, TenantMember, TenantStatus } from "../types";
 

@@ -1,6 +1,6 @@
 import { tenantMembers, tenants } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils/logger";
-import { eq } from "drizzle-orm";
+import { eq } from "@kibly/shared-db";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";
 import type {

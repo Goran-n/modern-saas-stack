@@ -5,7 +5,7 @@ import {
   slackWorkspaces,
   whatsappMappings,
 } from "@kibly/shared-db";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
 
 export interface UserMappingResult {

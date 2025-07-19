@@ -1,7 +1,7 @@
 import { getConfig } from '@kibly/config';
 import { DeduplicationService } from '@kibly/deduplication';
 import { documentExtractions, files, getDatabaseConnection } from '@kibly/shared-db';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from '@kibly/shared-db';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 

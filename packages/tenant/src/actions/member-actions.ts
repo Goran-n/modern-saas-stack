@@ -1,7 +1,7 @@
 import { invitations, tenantMembers, users } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils/logger";
 import { addDays } from "date-fns";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "@kibly/shared-db";
 import { nanoid } from "nanoid";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";

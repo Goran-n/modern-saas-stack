@@ -1,7 +1,7 @@
 import { getConfig } from "@kibly/config";
 import { tenantMembers, users } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils/logger";
-import { eq } from "drizzle-orm";
+import { eq } from "@kibly/shared-db";
 import jwt from "jsonwebtoken";
 import { getDb } from "../db";
 import type { AuthToken, TenantMember, User } from "../types";

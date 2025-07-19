@@ -3,7 +3,7 @@ import {
   whatsappVerifications,
 } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils";
-import { and, desc, eq, gt, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, sql } from "@kibly/shared-db";
 import { getDb } from "../db";
 
 const logger = createLogger("communication-stats");

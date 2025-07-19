@@ -1,6 +1,6 @@
 import { slackUserMappings, slackWorkspaces } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "@kibly/shared-db";
 import { getDb } from "../db";
 
 const logger = createLogger("slack-operations");

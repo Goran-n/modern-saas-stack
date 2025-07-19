@@ -1,6 +1,6 @@
 import { whatsappMappings, whatsappVerifications } from "@kibly/shared-db";
 import { createLogger } from "@kibly/utils";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "@kibly/shared-db";
 import { getDb } from "../db";
 import { getTwilioService } from "../services/twilio";
 

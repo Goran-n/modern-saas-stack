@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
 
 import { getConfig } from "@kibly/config";
-import { files, getDatabaseConnection } from "@kibly/shared-db";
-import { eq } from "drizzle-orm";
+import { files, getDatabaseConnection, eq } from "@kibly/shared-db";
 
 async function main() {
   const fileId = process.argv[2];
