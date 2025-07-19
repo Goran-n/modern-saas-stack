@@ -52,12 +52,8 @@ export function parseTwilioWhatsAppPayload(payload: unknown): ParsedWhatsAppMess
     
     return parsed;
   } catch (error) {
-    // Use pino's standard error format for better visibility
     logger.error({
       err: error,
-      payload: JSON.stringify(payload, null, 2),
-      payloadType: typeof payload,
-      payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload) : undefined,
       msg: 'Failed to parse Twilio WhatsApp payload'
     });
     return null;
