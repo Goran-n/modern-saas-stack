@@ -1,0 +1,67 @@
+# Task ID: 5
+# Title: Develop WhatsApp Verification Frontend Components
+# Status: pending
+# Dependencies: 3
+# Priority: medium
+# Description: Build Vue/Nuxt components for WhatsApp phone verification flow with country code selector and OTP input
+# Details:
+Create WhatsAppVerification.vue component using Nuxt 3 composition API. Integrate vue-tel-input (v9.1+) for international phone input with country flags. Implement OTP input using separate digit inputs with auto-focus navigation. Add vue-countdown (v2.1+) for code expiry timer (10 minutes). Use Pinia store for verification state management. Implement real-time validation with VeeValidate (v4.13+). Add loading states with NuxtLoadingIndicator. Create toast notifications for success/error using vue-toastification. Implement resend code functionality with 60-second cooldown. Add remove number confirmation modal. Style with Tailwind CSS following existing design system. Support keyboard navigation and screen readers. Add animations with @vueuse/motion for smooth transitions.
+
+# Test Strategy:
+Unit test component with Vue Test Utils. Test phone number formatting for different countries. Test OTP input focus behavior. Test countdown timer accuracy. E2E test with Playwright for complete flow. Test error states and edge cases. Test accessibility with axe-core. Test responsive design on mobile viewports.
+
+# Subtasks:
+## 1. Set up base Vue component structure with Nuxt 3 composition API [pending]
+### Dependencies: None
+### Description: Create WhatsAppVerification.vue component using Nuxt 3 composition API with TypeScript support, proper component structure, and base layout
+### Details:
+Create WhatsAppVerification.vue in components/verification/ directory. Set up <script setup lang="ts"> with proper imports. Define component props for tenantId and optional defaultCountry. Create base template structure with semantic HTML. Set up composables for API calls using useFetch. Configure auto-imports in nuxt.config.ts for the component. Add proper TypeScript interfaces for component data. Set up component state using ref() and reactive(). Implement base error boundary for component failures.
+
+## 2. Integrate vue-tel-input for international phone number input [pending]
+### Dependencies: None
+### Description: Add vue-tel-input (v9.1+) component with country selector, flags, and proper formatting for international phone numbers
+### Details:
+Install vue-tel-input@^9.1.0 and configure in nuxt.config.ts plugins. Create VueTelInput wrapper component with custom styling. Configure dropdown with country flags and search functionality. Set preferredCountries based on user location. Implement phone number validation on input. Handle country change events and update validation rules. Set up E.164 formatting for API submission. Configure input masks for different countries. Add loading state while fetching country data. Style component to match design system.
+
+## 3. Build OTP input component with auto-focus navigation [pending]
+### Dependencies: None
+### Description: Create custom OTP input component with 6 separate digit inputs, auto-focus behavior, and paste support
+### Details:
+Create OTPInput.vue component with 6 separate input fields. Implement auto-focus to next input on digit entry using refs array. Handle backspace to focus previous input. Add paste event handler to distribute digits across inputs. Restrict input to numeric only using inputmode="numeric". Add visual feedback for focused input. Implement v-model support for parent component binding. Handle edge cases like rapid typing and mobile keyboards. Add ARIA labels for accessibility. Style inputs with consistent spacing and borders.
+
+## 4. Implement countdown timer with vue-countdown [pending]
+### Dependencies: None
+### Description: Add vue-countdown (v2.1+) component to show OTP expiry time with visual feedback when time is running out
+### Details:
+Install vue-countdown@^2.1.0 and register component. Create CountdownTimer.vue wrapper with 10-minute default. Add visual warning when < 1 minute remains (red text/background). Format display as MM:SS with leading zeros. Emit events for timer expiry to parent component. Add smooth countdown animation using CSS transitions. Handle timer pause/resume for tab visibility changes. Store timer state in Pinia to persist across navigation. Add accessibility announcements for time remaining. Reset timer on successful verification or resend.
+
+## 5. Set up Pinia store for verification state management [pending]
+### Dependencies: None
+### Description: Create Pinia store to manage WhatsApp verification flow state, API calls, and data persistence
+### Details:
+Create stores/whatsappVerification.ts with Pinia setup. Define state for phone number, verification status, attempts count, and timer data. Implement actions for initiating verification, verifying code, and resending OTP. Add getters for formatted phone display and remaining attempts. Handle API error responses with proper typing. Persist critical state to sessionStorage for page refreshes. Add mutation logging in development mode. Implement state reset on successful verification. Add computed properties for UI state flags. Set up store hydration for SSR compatibility.
+
+## 6. Configure VeeValidate for form validation [pending]
+### Dependencies: 5.5, 5.5
+### Description: Integrate VeeValidate (v4.13+) for real-time validation of phone numbers and OTP codes with custom rules
+### Details:
+Install vee-validate@^4.13.0 and @vee-validate/rules. Create validation schema using yup for type safety. Add custom rule for international phone validation using libphonenumber-js. Implement OTP validation rule (6 digits, numeric only). Set up form-level validation with useForm composable. Add field-level validation with useField for inputs. Configure validation triggers (blur, change, submit). Display inline error messages with proper styling. Add i18n support for error messages. Implement async validation for phone uniqueness check.
+
+## 7. Create notification system integration [pending]
+### Dependencies: 5.5
+### Description: Implement toast notifications for success, error, and warning messages throughout the verification flow
+### Details:
+Install @nuxtjs/toast or vue-toastification for notifications. Create composable useNotification for centralized messaging. Configure toast positions, duration, and styling. Add success notification for code sent and verification complete. Implement error toasts with actionable messages. Add warning toast for expiry approaching. Create custom toast component for complex messages. Handle notification queuing for multiple messages. Add notification history in Pinia store. Configure different styles for notification types.
+
+## 8. Build resend functionality with cooldown period [pending]
+### Dependencies: 5.5, 5.5, 5.5
+### Description: Implement OTP resend feature with progressive cooldown periods and attempt limiting
+### Details:
+Add resend button with disabled state during cooldown. Implement cooldown periods: 30s, 60s, 120s for attempts 1-3. Show countdown timer on resend button when disabled. Track resend attempts in Pinia store with max limit of 3. Display remaining attempts to user clearly. Implement exponential backoff for API calls. Add rate limiting on frontend to prevent spam. Show alternative verification methods after max attempts. Store attempt timestamps for abuse prevention. Add analytics tracking for resend usage patterns.
+
+## 9. Implement accessibility and responsive design [pending]
+### Dependencies: 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5
+### Description: Ensure full accessibility compliance and responsive design across all device sizes
+### Details:
+Add ARIA labels and roles to all interactive elements. Implement keyboard navigation for entire flow. Add screen reader announcements for state changes. Ensure WCAG 2.1 AA color contrast compliance. Test with axe-core for accessibility violations. Implement responsive design with Tailwind breakpoints. Optimize touch targets for mobile (min 44x44px). Add focus indicators for keyboard navigation. Test on various devices using BrowserStack. Implement RTL support for international users. Add high contrast mode support.
+

@@ -1,0 +1,115 @@
+# Task ID: 1
+# Title: Set up Communication Service Foundation
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create the core communication service package as a pure business logic library for parsing webhook payloads, processing documents, and triggering jobs via the existing infrastructure
+# Details:
+Create a new package at `packages/communication` as a TypeScript library focused on business logic for message processing. Set up TypeScript with strict mode configuration. Create message parsers for WhatsApp and Slack webhook payloads that extract message content and attachments. Implement document processing logic that uploads files to file-manager service using its client interface. Create job payload builders for the existing job queue infrastructure. Design abstract MessageHandler interface for platform-agnostic processing. Configure structured logging with @vepler/logger for tracking message processing. Use zod (v3.23+) for payload validation schemas. Focus purely on business logic - no HTTP concerns, middleware, or server functionality.
+
+# Test Strategy:
+Unit tests for message parsing logic using Jest. Test payload validation with various webhook formats. Test file upload integration with file-manager mocks. Verify job payload construction. Test error handling for malformed payloads. Integration tests with existing job pipeline. Test message processing idempotency.
+
+# Subtasks:
+## 1. Set up TypeScript library package structure [done]
+### Dependencies: None
+### Description: Initialize packages/communication as a TypeScript library that exports handlers and utilities for the main API
+### Details:
+Create package.json with necessary dependencies (no Hono server). TypeScript config with strict mode, build configuration for library output. Set up exports for webhook handlers, middleware, and utilities. Configure path aliases for cleaner imports. Set up build scripts with esbuild for CommonJS and ESM outputs. Create index.ts with proper exports structure.
+<info added on 2025-07-18T16:56:25.874Z>
+The communication package architecture should follow the same pattern as the file-manager package - a modular library that exports functions and interfaces to be consumed by the main API server. Remove any references to standalone server functionality or server.ts files. The package should provide webhook handler functions, request verification middleware, and message processing utilities as exportable modules. Structure the exports to allow the main API to selectively import and mount only the needed functionality on its routes.
+</info added on 2025-07-18T16:56:25.874Z>
+<info added on 2025-07-18T17:00:02.000Z>
+The communication package should operate as a pure business logic layer without any web framework concerns. All middleware functionality (request signature verification, rate limiting, CORS) should be removed from this package as they belong in the API server layer. The package's responsibility is strictly limited to: parsing incoming message payloads from WhatsApp and Slack webhooks, extracting and validating message content and attachments, uploading files to the file-manager service using its client interface, constructing job payloads for document processing, and triggering jobs through the existing job queue infrastructure. This separation ensures the communication package remains focused on message processing logic while the API server handles all HTTP-specific concerns like authentication, rate limiting, and request validation.
+</info added on 2025-07-18T17:00:02.000Z>
+
+## 2. Create message parsers for WhatsApp and Slack payloads [done]
+### Dependencies: 1.1
+### Description: Build parsers that extract message content and attachments from webhook payloads
+### Details:
+Create WhatsAppMessageParser and SlackMessageParser classes. Extract message text, sender information, and attachment URLs from payloads. Handle different message types (text, media, documents). Parse platform-specific metadata (message IDs, timestamps). Return normalized message objects with consistent structure. Handle webhook verification challenges for both platforms.
+
+## 3. Implement file upload integration with file-manager [done]
+### Dependencies: 1.2
+### Description: Create logic to upload message attachments to file-manager service
+### Details:
+Import and use file-manager client interface for uploads. Download attachments from platform URLs using streams. Validate file types (PDF only) and size limits (50MB). Handle authentication tokens for platform APIs. Implement retry logic for failed downloads. Return file-manager file IDs for processed uploads. Handle temporary file cleanup.
+
+## 4. Design abstract MessageHandler interface [done]
+### Dependencies: 1.1
+### Description: Create platform-agnostic interfaces for message processing
+### Details:
+Create IMessageHandler interface with process() and validate() methods. Define MessagePayload type with platform, sender, content, attachments. Create ProcessingResult type for outcomes. Define error types for processing failures. Provide base implementation with common logic. Support async processing patterns.
+
+## 5. Configure logging with @vepler/logger [done]
+### Dependencies: 1.1
+### Description: Set up structured logging for message processing operations
+### Details:
+Configure @vepler/logger for the package. Create log contexts for message processing (platform, messageId, userId). Log message parsing operations and outcomes. Track file upload progress and results. Log job creation and submission. Implement log sanitization for sensitive data.
+
+## 6. Create job payload builders [done]
+### Dependencies: 1.3, 1.4
+### Description: Build functions to construct job payloads for the existing job queue
+### Details:
+Create job payload builders for document processing tasks. Map file-manager IDs to job input format. Include metadata from message context (platform, sender). Set appropriate job priorities and queues. Handle batch job creation for multiple attachments. Return job IDs for tracking.
+
+## 7. Implement payload validation schemas with Zod [done]
+### Dependencies: 1.4
+### Description: Create validation schemas for webhook payloads
+### Details:
+Create WhatsAppPayloadSchema and SlackPayloadSchema using Zod. Define nested schemas for message types and attachments. Implement strict validation with clear error messages. Export typed payload interfaces from schemas. Create validation helper functions. Support schema versioning for API changes.
+
+## 8. Build message processing coordinator [done]
+### Dependencies: 1.2, 1.3, 1.6
+### Description: Create main coordinator that orchestrates the processing pipeline
+### Details:
+Create MessageCoordinator class that uses parsers, uploaders, and job builders. Implement process flow: parse → validate → upload → create job. Handle errors at each stage with appropriate logging. Support batch processing for efficiency. Implement idempotency checks using message IDs. Return processing results with job references.
+
+## 9. Create processing error handlers [pending]
+### Dependencies: 1.5, 1.8
+### Description: Implement comprehensive error handling for processing failures
+### Details:
+Define custom error classes for different failure types. Implement error recovery strategies where possible. Create error reporting with structured context. Handle platform API errors gracefully. Implement circuit breaker pattern for external services. Provide error metrics for monitoring.
+
+## 10. Set up testing utilities and fixtures [pending]
+### Dependencies: 1.7, 1.8
+### Description: Create testing helpers for the communication package
+### Details:
+Create fixture generators for WhatsApp and Slack payloads. Build mock implementations of external dependencies. Create test helpers for common scenarios. Provide payload builders for different message types. Export test configuration utilities. Include example test implementations.
+
+## 11. Create package documentation [pending]
+### Dependencies: 1.10
+### Description: Document the communication package API and usage
+### Details:
+Create README with package overview and architecture. Document all exported functions and classes. Provide integration examples for API server. Include payload format documentation. Document error types and handling. Create migration guide from HTTP-based approach.
+
+## 12. Create ResponseService interface for acknowledgments [pending]
+### Dependencies: None
+### Description: Design and implement a service interface for sending message acknowledgments back to WhatsApp and Slack
+### Details:
+
+
+## 13. Implement message batching for bulk file notifications [pending]
+### Dependencies: None
+### Description: Create batching logic to efficiently group multiple file processing results for sending back to users
+### Details:
+
+
+## 14. Add message sending capabilities to platform services [pending]
+### Dependencies: None
+### Description: Extend WhatsApp and Slack service classes with methods to send messages back to users
+### Details:
+
+
+## 15. Implement ResponseService with platform adapters [pending]
+### Dependencies: None
+### Description: Create the main ResponseService that uses platform-specific adapters to send messages through WhatsApp and Slack
+### Details:
+
+
+## 16. Integrate response system with webhook handlers [pending]
+### Dependencies: None
+### Description: Connect the ResponseService to webhook handlers to send acknowledgments and notifications after processing messages
+### Details:
+
+

@@ -1,0 +1,91 @@
+# Task ID: 7
+# Title: Implement Unified Message Processing Pipeline
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Create platform-agnostic message router that processes files from any source and triggers existing ingestion pipeline
+# Details:
+Create MessageProcessor class that handles messages from any platform. Implement file upload to existing file-manager using streams for memory efficiency. Map platform-specific user IDs to Kibly users using database lookups. Create unified file validation (PDF only, max 50MB) using file-type (v19.5+) for magic byte detection. Implement audit logging for all messages with structured metadata. Trigger existing job queue for document processing using existing packages/jobs infrastructure. Handle command messages (/status, /help) with platform-specific responses. Implement backpressure handling when job queue is full. Create metrics collection using OpenTelemetry for monitoring. Add circuit breaker pattern for downstream service failures. Implement idempotency using message IDs to prevent duplicate processing.
+
+# Test Strategy:
+Unit test message routing logic with different message types. Test file validation with various file formats. Test user mapping with missing/multiple matches. Integration test with existing job pipeline. Test idempotency with duplicate messages. Load test with concurrent messages. Test circuit breaker activation and recovery.
+
+# Subtasks:
+## 1. Design Base MessageProcessor Class Architecture [pending]
+### Dependencies: None
+### Description: Create abstract MessageProcessor base class with interfaces for platform-specific implementations
+### Details:
+Define abstract methods for message parsing, validation, and processing. Create TypeScript interfaces for MessageSource, ProcessedMessage, and MessageMetadata. Implement base error handling and logging methods. Design plugin architecture for platform-specific processors
+
+## 2. Implement Platform Abstraction Layer [pending]
+### Dependencies: 7.1
+### Description: Build abstraction layer to normalize messages from different platforms into unified format
+### Details:
+Create PlatformAdapter interface with methods for extracting sender ID, message content, and attachments. Implement WhatsAppAdapter and SlackAdapter classes. Build message normalization logic to convert platform-specific formats to unified schema. Handle platform-specific metadata extraction
+
+## 3. Build File Streaming Upload Implementation [pending]
+### Dependencies: 7.2
+### Description: Implement memory-efficient file upload system using Node.js streams
+### Details:
+Use Node.js streams API to handle large file uploads without loading into memory. Implement chunked upload to file-manager service. Add progress tracking and resumable upload support. Handle network interruptions with automatic retry logic. Integrate with existing S3/storage backend
+
+## 4. Create User ID Mapping System [pending]
+### Dependencies: 7.2
+### Description: Build system to map platform-specific user identifiers to Kibly user accounts
+### Details:
+Implement UserMapper service with database lookups for phone numbers and Slack IDs. Handle cases where multiple Kibly users share same phone number. Create fallback logic for unmapped users. Cache user mappings in Redis for performance. Add admin interface for manual mapping corrections
+
+## 5. Implement Unified File Validation [pending]
+### Dependencies: 7.3
+### Description: Create comprehensive file validation system with magic byte detection
+### Details:
+Use file-type library v19.5+ for accurate MIME type detection via magic bytes. Implement PDF-only validation with detailed error messages. Add file size validation (max 50MB) with early stream termination. Validate PDF structure and readability. Add virus scanning integration point
+
+## 6. Build Audit Logging Infrastructure [pending]
+### Dependencies: 7.4, 7.5
+### Description: Implement structured audit logging for all message processing activities
+### Details:
+Create AuditLogger service with structured JSON logging format. Log all message receipts, processing steps, and outcomes. Include platform metadata, user mappings, and file details. Implement log rotation and archival strategy. Add privacy controls for sensitive data logging
+
+## 7. Integrate with Job Queue System [pending]
+### Dependencies: 7.5, 7.6
+### Description: Connect message processor to existing job queue infrastructure
+### Details:
+Create job payloads for document processing pipeline. Implement priority queuing based on message source. Add job deduplication to prevent duplicate processing. Handle job failure callbacks to notify users. Integrate with existing packages/jobs Bull queue setup
+
+## 8. Implement Command Message Handling [pending]
+### Dependencies: 7.2, 7.4
+### Description: Build system to process command messages for bot interactions
+### Details:
+Create CommandParser to extract commands from messages (e.g., /help, /status). Implement command routing to appropriate handlers. Build response formatter for platform-specific reply formats. Add command authorization based on user permissions. Create extensible command plugin system
+
+## 9. Build Backpressure Implementation [pending]
+### Dependencies: 7.7
+### Description: Implement flow control to prevent system overload during high message volumes
+### Details:
+Implement token bucket algorithm for rate limiting per tenant. Add queue depth monitoring with automatic throttling. Create backpressure signals to upstream services. Implement graceful degradation under load. Add priority lanes for critical messages
+
+## 10. Setup OpenTelemetry Metrics Collection [pending]
+### Dependencies: 7.7, 7.9
+### Description: Implement comprehensive metrics and tracing for message processing pipeline
+### Details:
+Configure OpenTelemetry SDK with custom metrics for message volume, processing time, and error rates. Add distributed tracing across service boundaries. Create custom metrics for platform-specific insights. Set up metric aggregation and alerting rules. Export to monitoring backend (Prometheus/Grafana)
+
+## 11. Implement Circuit Breaker Pattern [pending]
+### Dependencies: 7.7, 7.10
+### Description: Add circuit breaker for external service calls to prevent cascade failures
+### Details:
+Implement circuit breaker using opossum library for file uploads and API calls. Configure failure thresholds and timeout settings per service. Add half-open state testing logic. Implement fallback strategies for open circuits. Create circuit state monitoring dashboard
+
+## 12. Build Idempotency Mechanism [pending]
+### Dependencies: 7.6, 7.7
+### Description: Ensure message processing is idempotent to handle retries safely
+### Details:
+Generate unique message IDs using platform ID + timestamp + hash. Store processed message IDs in Redis with TTL. Implement idempotency keys for file uploads. Handle duplicate detection at multiple pipeline stages. Create cleanup job for expired idempotency records
+
+## 13. Implement Comprehensive Error Handling [pending]
+### Dependencies: 7.8, 7.11, 7.12
+### Description: Create robust error handling with recovery strategies and user notifications
+### Details:
+Build error classification system (retryable vs permanent). Implement exponential backoff for transient errors. Create dead letter queue for unprocessable messages. Add user notification system for processing failures. Implement error reporting dashboard with drill-down capabilities
+

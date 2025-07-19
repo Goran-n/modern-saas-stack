@@ -1,0 +1,85 @@
+# Task ID: 4
+# Title: Create Slack OAuth2 Integration Module
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Implement Slack app with OAuth2 flow, workspace connection, and file event handling using Slack SDK
+# Details:
+Install @slack/bolt (v3.22+) and @slack/web-api. Create Slack app manifest with required scopes: channels:history, files:read, chat:write, users:read. Implement OAuth2 flow with state parameter for CSRF protection. Store bot tokens encrypted using AES-256-GCM with key from environment. Implement SlackEventHandler for file_shared events. Set up Socket Mode for local development, Events API for production. Create channel selector using conversations.list API. Implement user mapping by matching Slack email with Kibly accounts. Handle Slack file downloads with streaming to prevent memory issues. Set up retry logic for Slack API rate limits (tier 3: 50+ per minute). Implement graceful disconnection with token revocation. Cache workspace data with 5-minute TTL using Redis.
+
+# Test Strategy:
+Mock Slack client for unit tests. Test OAuth flow with various error scenarios. Test token encryption/decryption. Integration test with Slack sandbox workspace. Test file event handling with different file types. Test user mapping logic. Load test event handling throughput. Security test OAuth state validation.
+
+# Subtasks:
+## 1. Create Slack App Manifest and Configure OAuth Scopes [pending]
+### Dependencies: None
+### Description: Design and create Slack app manifest with required OAuth scopes for channels, files, users, and chat operations
+### Details:
+Create app manifest YAML/JSON with scopes: channels:history, channels:read, files:read, files:write, chat:write, users:read, users:read.email. Configure redirect URLs for OAuth flow. Set up app display information including name, description, and icons. Configure event subscriptions for file_shared, file_deleted, and file_change events. Enable Socket Mode for development with app-level token generation. Set up slash commands if needed. Configure interactivity and shortcuts. Document all required scopes and their purposes for future reference.
+
+## 2. Implement OAuth2 Authorization Flow with PKCE [pending]
+### Dependencies: 4.1
+### Description: Build secure OAuth2 flow with PKCE extension for enhanced security and state parameter for CSRF protection
+### Details:
+Implement OAuth2 flow using @slack/oauth package with PKCE (Proof Key for Code Exchange) extension. Generate cryptographically secure state parameter using crypto.randomBytes(32). Create authorization URL with proper scopes and state. Handle OAuth callback with code verification and token exchange. Implement token refresh mechanism for long-lived access. Store state temporarily in Redis with 10-minute TTL. Validate state parameter on callback to prevent CSRF attacks. Handle OAuth errors gracefully with proper error messages. Create middleware for OAuth route protection.
+
+## 3. Design and Implement Token Encryption System [pending]
+### Dependencies: 4.2
+### Description: Create secure token storage system using AES-256-GCM encryption with proper key management
+### Details:
+Implement encryption service using Node.js crypto module with AES-256-GCM algorithm. Generate encryption key from environment variable using PBKDF2 with salt. Create encrypt/decrypt functions with IV (Initialization Vector) generation for each token. Store encrypted tokens with auth tag for integrity verification. Implement key rotation mechanism with versioning support. Create database schema for storing encrypted tokens with metadata. Add automatic token cleanup for expired tokens. Implement secure key storage recommendations for production. Create audit logging for token access.
+
+## 4. Configure Socket Mode and Events API Setup [pending]
+### Dependencies: 4.1
+### Description: Set up dual configuration for Socket Mode (development) and Events API (production) with proper fallback
+### Details:
+Configure Socket Mode using @slack/bolt SocketModeReceiver for local development. Generate app-level token with connections:write scope. Implement Events API HTTP endpoint for production with request verification. Create middleware for Slack signature verification using HMAC-SHA256. Implement 3-second response requirement for Events API. Set up request queuing for event processing. Configure environment-based receiver selection (Socket Mode vs Events API). Implement retry logic for failed event processing. Create health check endpoint for Events API URL verification.
+
+## 5. Build File Event Handler for Multiple File Types [pending]
+### Dependencies: 4.4
+### Description: Implement comprehensive file event handling for file_shared events supporting various document types
+### Details:
+Create SlackFileEventHandler class implementing event listener for file_shared events. Extract file metadata including type, size, name, and shared channels. Implement file type validation for supported formats (PDF, DOC, DOCX, images). Create file download service using files.info and private download URL. Implement streaming download to avoid memory issues with large files. Add virus scanning integration point for downloaded files. Create temporary file storage with automatic cleanup. Implement file processing queue for async handling. Add support for file_deleted and file_change events.
+
+## 6. Implement Channel Listing and Selection API [pending]
+### Dependencies: 4.3
+### Description: Build channel discovery and selection interface using Slack conversations API with pagination
+### Details:
+Implement conversations.list API call with pagination support (limit: 100). Filter channels by type (public_channel, private_channel) based on bot membership. Create channel search functionality with name and purpose matching. Implement cursor-based pagination for large workspace handling. Cache channel list in Redis with 5-minute TTL for performance. Build channel selector UI component with search and filters. Handle archived channels appropriately. Implement conversations.members to verify bot access. Create permission checking for private channels.
+
+## 7. Create User Mapping and Identity Resolution Logic [pending]
+### Dependencies: 4.3
+### Description: Build system to map Slack users to internal users using email and profile matching
+### Details:
+Implement users.list API call to fetch all workspace users with pagination. Extract user emails using users.info with users:read.email scope. Create matching algorithm using email as primary identifier. Build fallback matching using display name and real name. Store user mappings in slack_user_mappings table with confidence scores. Implement periodic sync job to update user information. Handle user deactivation and deletion events. Create manual mapping interface for unmatched users. Add support for guest users and multi-channel guests.
+
+## 8. Implement File Download Streaming Pipeline [pending]
+### Dependencies: 4.5
+### Description: Build efficient file download system with streaming to handle large files without memory issues
+### Details:
+Create streaming download using Node.js streams and axios streaming mode. Implement progress tracking for large file downloads. Add resume capability for interrupted downloads using Range headers. Create download queue with concurrency control (max 5 concurrent). Implement bandwidth throttling to avoid rate limits. Add file integrity verification using checksums. Create temporary file management with automatic cleanup after processing. Implement download retry with exponential backoff. Add support for downloading file thumbnails for previews.
+
+## 9. Build Rate Limit Handling with Backoff Strategy [pending]
+### Dependencies: 4.6, 4.7, 4.8
+### Description: Implement comprehensive rate limit handling for all Slack API endpoints with intelligent retry
+### Details:
+Parse Retry-After headers from Slack API responses. Implement exponential backoff with jitter for 429 responses. Create rate limit bucket tracking per API method. Implement pre-emptive rate limiting using token bucket algorithm. Queue API calls when approaching rate limits. Add method-specific rate limit configuration. Create monitoring for rate limit approaching warnings. Implement circuit breaker pattern for repeated failures. Add rate limit metrics to monitoring dashboard. Configure different strategies for tier 1-4 rate limits.
+
+## 10. Implement Workspace Data Caching with Redis [pending]
+### Dependencies: 4.6, 4.7
+### Description: Design and build Redis caching layer for Slack workspace data to improve performance
+### Details:
+Design Redis key structure for workspace data (channels, users, files). Implement cache warming on workspace connection. Create TTL strategy: 5 minutes for channels, 15 minutes for users. Build cache invalidation on relevant Slack events. Implement Redis connection pooling with proper configuration. Create fallback mechanism when cache misses occur. Add cache hit/miss metrics for monitoring. Implement partial cache updates for changed data. Create cache preloading for frequently accessed workspaces. Add Redis Sentinel support for high availability.
+
+## 11. Create Graceful Disconnection and Cleanup Flow [pending]
+### Dependencies: 4.3, 4.10
+### Description: Build proper workspace disconnection handling with data cleanup and token revocation
+### Details:
+Implement auth.revoke API call to revoke access tokens properly. Create soft delete for workspace data with 30-day retention. Clear all cached data from Redis for disconnected workspace. Cancel any pending file downloads or processing jobs. Archive communication logs for compliance requirements. Send notification to workspace about disconnection. Implement reconnection flow preserving previous configurations. Create audit log entry for disconnection with reason. Handle partial disconnection failures gracefully. Implement data export option before disconnection.
+
+## 12. Build Comprehensive Error Handling and Recovery [pending]
+### Dependencies: 4.9, 4.11
+### Description: Implement robust error handling for all Slack integration scenarios with automatic recovery
+### Details:
+Create SlackError class hierarchy for different error types. Implement error categorization (auth, network, rate limit, API). Build automatic retry for transient errors with backoff. Create dead letter queue for failed events after max retries. Implement error aggregation for pattern detection. Add context preservation for debugging failed operations. Create error recovery strategies per error type. Implement user notification for critical errors. Build error metrics and alerting integration. Create runbook documentation for common error scenarios.
+

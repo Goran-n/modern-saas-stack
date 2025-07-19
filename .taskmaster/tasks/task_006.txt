@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Build Slack Connection Frontend Components
+# Status: pending
+# Dependencies: 4
+# Priority: medium
+# Description: Create Vue/Nuxt components for Slack workspace connection with OAuth flow and channel selection
+# Details:
+Create SlackConnection.vue component with 'Add to Slack' button using official Slack button guidelines. Implement OAuth redirect handler in middleware/slack-oauth.ts. Create channel selector dropdown with search functionality using @headlessui/vue. Show connection status with workspace name and selected channel. Build disconnection flow with confirmation dialog. Use Nuxt's useFetch composable for API calls with automatic error handling. Implement loading skeletons during data fetching. Add connection management table showing all Slack connections for the tenant. Create activity indicator showing recent Slack submissions. Style following Slack's visual guidelines where appropriate. Support multiple workspace connections per tenant. Add help tooltips explaining permissions requested.
+
+# Test Strategy:
+Test OAuth redirect handling with various callback scenarios. Mock API responses for channel listing. Test connection/disconnection flows. Test multi-workspace scenarios. E2E test OAuth flow with test Slack app. Test error handling for revoked tokens. Verify proper cleanup on disconnection.

@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Create Integration Dashboard and Monitoring
+# Status: pending
+# Dependencies: 5, 6
+# Priority: medium
+# Description: Build comprehensive dashboard showing all active integrations, usage statistics, and communication logs
+# Details:
+Create IntegrationDashboard.vue page with tab navigation for different platforms. Build usage statistics charts using Chart.js (v4.4+) showing daily submission volumes. Implement real-time updates using Supabase Realtime for new submissions. Create communication logs table with filtering by platform, status, date range. Add export functionality for logs (CSV, JSON) using Papa Parse. Implement search across phone numbers and Slack users. Show integration health status with uptime monitoring. Create cost tracking for Twilio usage. Add webhook status indicators with last successful delivery time. Build alert configuration for failures. Use vue-good-table-next for sortable, paginated log display. Implement log retention settings (90 days default). Add quick actions for common tasks (resend, retry, investigate).
+
+# Test Strategy:
+Test dashboard data aggregation accuracy. Test real-time updates with mock events. Test log filtering and search functionality. Test export formats and data integrity. E2E test dashboard interactions. Performance test with large datasets. Test responsive layout on various devices.
