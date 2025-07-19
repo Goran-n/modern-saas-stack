@@ -1,8 +1,32 @@
 import { z } from 'zod';
 
-export const fileSourceSchema = z.enum(['integration', 'user_upload', 'whatsapp']);
+// File source constants
+export const FILE_SOURCES = {
+  INTEGRATION: 'integration',
+  USER_UPLOAD: 'user_upload',
+  WHATSAPP: 'whatsapp',
+} as const;
 
-export const processingStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed']);
+export const fileSourceSchema = z.enum([
+  FILE_SOURCES.INTEGRATION,
+  FILE_SOURCES.USER_UPLOAD,
+  FILE_SOURCES.WHATSAPP,
+]);
+
+// Processing status constants
+export const PROCESSING_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const;
+
+export const processingStatusSchema = z.enum([
+  PROCESSING_STATUS.PENDING,
+  PROCESSING_STATUS.PROCESSING,
+  PROCESSING_STATUS.COMPLETED,
+  PROCESSING_STATUS.FAILED,
+]);
 
 export const createFileSchema = z.object({
   fileName: z.string(),
@@ -14,7 +38,7 @@ export const createFileSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
   tenantId: z.string().uuid(),
   uploadedBy: z.string().uuid(),
-  bucket: z.string().default('files'),
+  bucket: z.string().optional(),
 });
 
 export type FileSource = z.infer<typeof fileSourceSchema>;

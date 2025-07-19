@@ -7,6 +7,7 @@ import { getConfig } from "@kibly/config";
 import { logger } from "@kibly/utils";
 import { getDatabaseConnection, files, eq, and } from "@kibly/shared-db";
 import { createClient } from "@supabase/supabase-js";
+import { handleTwilioWhatsAppWebhook, handleWhatsAppVerification, handleSlackEventWebhook } from "@kibly/communication";
 
 export function createHonoApp() {
   const app = new Hono();
@@ -134,6 +135,110 @@ export function createHonoApp() {
     } catch (error) {
       logger.error("File proxy error", { error, fileId, tenantId });
       return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  // WhatsApp webhook endpoints
+  app.post("/webhooks/whatsapp", async (c) => {
+    try {
+      // For now, using hardcoded tenant/user - in production, this should come from webhook data
+      // or a mapping table based on the phone number
+      const tenantId = "00000000-0000-0000-0000-000000000000"; // TODO: Get from phone number mapping
+      const userId = "00000000-0000-0000-0000-000000000000"; // TODO: Get from phone number mapping
+      
+      const body = await c.req.parseBody();
+      logger.info("WhatsApp webhook received", { body });
+      
+      const result = await handleTwilioWhatsAppWebhook(body, tenantId, userId);
+      
+      if (result.success) {
+        return c.json({ status: "success", fileId: result.fileId, jobId: result.jobId });
+      } else {
+        logger.warn("WhatsApp webhook processing failed", { error: result.error });
+        return c.json({ status: "error", error: result.error }, 400);
+      }
+    } catch (error) {
+      logger.error("WhatsApp webhook error", { error });
+      return c.json({ status: "error", error: "Internal server error" }, 500);
+    }
+  });
+
+  // WhatsApp webhook verification (GET request from Twilio)
+  app.get("/webhooks/whatsapp", (c) => {
+    const mode = c.req.query("hub.mode");
+    const token = c.req.query("hub.verify_token");
+    const challenge = c.req.query("hub.challenge");
+    
+    const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "kibly-whatsapp-verify";
+    
+    const result = handleWhatsAppVerification(mode, token, challenge, verifyToken);
+    
+    if (result.verified && result.challenge) {
+      logger.info("WhatsApp webhook verified");
+      return c.text(result.challenge);
+    }
+    
+    logger.warn("WhatsApp webhook verification failed", { mode, token });
+    return c.text("Forbidden", 403);
+  });
+
+  // Twilio status callback webhook endpoint
+  app.post("/webhooks/twilio/status", async (c) => {
+    try {
+      const body = await c.req.parseBody();
+      
+      // Log the status update
+      logger.info("Twilio status callback received", {
+        messageSid: body.MessageSid,
+        messageStatus: body.MessageStatus,
+        to: body.To,
+        from: body.From,
+        errorCode: body.ErrorCode,
+        errorMessage: body.ErrorMessage
+      });
+      
+      // TODO: Implement status tracking in database
+      // You could update a messages table with delivery status
+      
+      // Acknowledge receipt
+      return c.text("", 200);
+    } catch (error) {
+      logger.error("Twilio status webhook error", { error });
+      return c.text("", 500);
+    }
+  });
+
+  // Slack event webhook endpoint
+  app.post("/webhooks/slack", async (c) => {
+    try {
+      const body = await c.req.json();
+      logger.info("Slack webhook received", { 
+        type: body.type,
+        event: body.event?.type 
+      });
+      
+      // TODO: Implement proper tenant/user identification based on workspace
+      // For now, using hardcoded values for testing
+      const tenantId = "00000000-0000-0000-0000-000000000000";
+      const userId = "00000000-0000-0000-0000-000000000000";
+      
+      const result = await handleSlackEventWebhook(body, tenantId, userId);
+      
+      // Handle URL verification challenge
+      if ('challenge' in result) {
+        return c.json(result);
+      }
+      
+      // Return success for normal events
+      if (result.success) {
+        return c.json({ ok: true });
+      } else {
+        logger.warn("Slack webhook processing failed", { error: result.error });
+        return c.json({ ok: false, error: result.error }, 400);
+      }
+    } catch (error) {
+      logger.error("Slack webhook error", { error });
+      return c.json({ ok: false, error: "Internal server error" }, 500);
     }
   });
 

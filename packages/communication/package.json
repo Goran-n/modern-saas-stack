@@ -1,0 +1,28 @@
+{
+  "name": "@kibly/communication",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo",
+    "test": "bun test",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@kibly/config": "workspace:*",
+    "@kibly/file-manager": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "twilio": "^5.7.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2"
+  }
+}

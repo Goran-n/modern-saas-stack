@@ -13,6 +13,7 @@
   "dependencies": {
     "@hono/node-server": "^1.14.0",
     "@hono/trpc-server": "^0.3.2",
+    "@kibly/communication": "workspace:*",
     "@kibly/config": "workspace:*",
     "@kibly/shared-db": "workspace:*",
     "@kibly/supabase-storage": "workspace:*",

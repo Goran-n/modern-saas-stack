@@ -7,6 +7,7 @@ import { getDb } from './db';
 import { getClient } from './client';
 import { tasks } from '@trigger.dev/sdk/v3';
 import type { CategorizeFilePayload } from '@kibly/jobs';
+import { getConfig } from '@kibly/config';
 
 const logger = createLogger('file-manager');
 
@@ -22,12 +23,17 @@ export async function uploadFile(
 ): Promise<string> {
   const sanitisedFileName = stripSpecialCharacters(file.name);
   const fullPath = [...input.pathTokens, sanitisedFileName];
+  
+  // Get bucket from input or config
+  const config = getConfig().getForFileManager();
+  const bucket = input.bucket || config.STORAGE_BUCKET;
 
   logger.info('Uploading file', { 
     fileName: file.name,
     sanitisedFileName,
     tenantId: input.tenantId,
-    source: input.source 
+    source: input.source,
+    bucket 
   });
 
   // Upload to Supabase Storage
@@ -35,7 +41,7 @@ export async function uploadFile(
   const publicUrl = await upload(client, {
     file,
     path: fullPath,
-    bucket: input.bucket,
+    bucket,
   });
 
   // Save to database
@@ -45,6 +51,7 @@ export async function uploadFile(
     sourceId: input.sourceId || null,
     fileName: sanitisedFileName,
     pathTokens: fullPath,
+    bucket,
   }).returning();
 
   if (!record) {

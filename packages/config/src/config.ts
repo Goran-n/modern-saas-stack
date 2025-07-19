@@ -6,11 +6,13 @@ import {
   fileManagerConfigSchema,
   webAppConfigSchema,
   tenantConfigSchema,
+  communicationConfigSchema,
   type FullConfig,
   type CoreConfig,
   type FileManagerConfig,
   type WebAppConfig,
-  type TenantConfig
+  type TenantConfig,
+  type CommunicationConfig
 } from './schemas';
 
 const logger = createLogger('config');
@@ -126,6 +128,11 @@ export class Config {
     return tenantConfigSchema.parse(config);
   }
 
+  public getForCommunication(): CommunicationConfig {
+    const config = this.get();
+    return communicationConfigSchema.parse(config);
+  }
+
   /**
    * Check if configuration is valid without throwing
    */
@@ -169,4 +176,4 @@ export function validateConfig(customEnv?: Record<string, string>): EnvironmentC
 }
 
 // Type exports for convenience
-export type { EnvironmentConfig, FullConfig, CoreConfig, FileManagerConfig, WebAppConfig, TenantConfig };
+export type { EnvironmentConfig, FullConfig, CoreConfig, FileManagerConfig, WebAppConfig, TenantConfig, CommunicationConfig };

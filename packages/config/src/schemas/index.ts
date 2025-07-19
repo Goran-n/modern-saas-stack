@@ -9,6 +9,8 @@ export * from './redis';
 export * from './web';
 export * from './trigger';
 export * from './portkey';
+export * from './twilio';
+export * from './communication';
 
 import { baseSchema } from './base';
 import { databaseSchema } from './database';
@@ -18,6 +20,8 @@ import { redisSchema } from './redis';
 import { webSchema } from './web';
 import { triggerSchema } from './trigger';
 import { portkeySchema } from './portkey';
+import { twilioSchema } from './twilio';
+import { communicationServiceSchema } from './communication';
 
 /**
  * Complete application configuration schema
@@ -30,7 +34,8 @@ export const fullConfigSchema = baseSchema
   .merge(redisSchema)
   .merge(webSchema)
   .merge(triggerSchema)
-  .merge(portkeySchema);
+  .merge(portkeySchema)
+  .merge(twilioSchema);
 
 /**
  * Core required configuration schema
@@ -64,9 +69,19 @@ export const tenantConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(authSchema);
 
+/**
+ * Communication service specific configuration schema
+ */
+export const communicationConfigSchema = baseSchema
+  .merge(databaseSchema)
+  .merge(supabaseSchema)
+  .merge(twilioSchema)
+  .merge(communicationServiceSchema);
+
 // Type exports
 export type FullConfig = z.infer<typeof fullConfigSchema>;
 export type CoreConfig = z.infer<typeof coreConfigSchema>;
 export type FileManagerConfig = z.infer<typeof fileManagerConfigSchema>;
 export type WebAppConfig = z.infer<typeof webAppConfigSchema>;
 export type TenantConfig = z.infer<typeof tenantConfigSchema>;
+export type CommunicationConfig = z.infer<typeof communicationConfigSchema>;

@@ -30,13 +30,16 @@ export const CONFIDENCE_SCORES = {
  */
 export const CONFIDENCE_THRESHOLDS = {
   /** Minimum confidence to auto-accept a match */
-  AUTO_ACCEPT: 90,
+  AUTO_ACCEPT: 80,
   
   /** Minimum confidence to suggest a match for review */
-  SUGGEST_MATCH: 50,
+  SUGGEST_MATCH: 40,
   
   /** Below this, don't even suggest as a possible match */
-  IGNORE_MATCH: 30,
+  IGNORE_MATCH: 20,
+  
+  /** Minimum confidence to create a new supplier */
+  CREATE_SUPPLIER: 60,
 } as const;
 
 /**
@@ -69,4 +72,41 @@ export const DEFAULT_CONFIDENCE = {
   
   /** Maximum confidence from repeat observations */
   MAX_CONFIDENCE: 100,
+} as const;
+
+/**
+ * Scoring weights for supplier matching
+ */
+export const MATCH_SCORES = {
+  /** Name matching scores */
+  NAME: {
+    EXACT: 30,
+    FUZZY_HIGH: 25,  // 90%+ similarity
+    FUZZY_MEDIUM: 20, // 70%+ similarity
+    FUZZY_LOW: 10,   // 50%+ similarity
+  },
+  
+  /** Address matching scores */
+  ADDRESS: {
+    FULL_MATCH: 25,     // All components match
+    CITY_COUNTRY: 15,   // City and country match
+    COUNTRY_ONLY: 10,   // Country only
+  },
+  
+  /** Email/domain matching scores */
+  DOMAIN: {
+    EXACT_MATCH: 20,    // Domain matches exactly
+  },
+  
+  /** Tax identifier scores */
+  IDENTIFIERS: {
+    COMPANY_NUMBER: 15,
+    VAT_NUMBER: 10,
+  },
+  
+  /** Contact matching scores */
+  CONTACTS: {
+    PHONE: 5,
+    EMAIL: 5,
+  },
 } as const;

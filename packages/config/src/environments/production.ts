@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { triggerSchema } from '../schemas/trigger';
+import { portkeySchema } from '../schemas/portkey';
+import { twilioSchema } from '../schemas/twilio';
 
 /**
  * Production environment configuration
@@ -37,6 +40,9 @@ export const productionConfigSchema = z.object({
   WEB_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   API_URL: z.string().url(), // Must be provided in production
   DEV_MODE: z.coerce.boolean().default(false),
-});
+})
+.merge(triggerSchema)
+.merge(portkeySchema)
+.merge(twilioSchema.partial()); // Twilio is optional but recommended in production
 
 export type ProductionConfig = z.infer<typeof productionConfigSchema>;

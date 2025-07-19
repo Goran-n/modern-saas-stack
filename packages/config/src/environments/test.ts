@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { triggerSchema } from '../schemas/trigger';
+import { portkeySchema } from '../schemas/portkey';
+import { twilioSchema } from '../schemas/twilio';
 
 /**
  * Test environment configuration
@@ -37,6 +40,9 @@ export const testConfigSchema = z.object({
   WEB_PORT: z.coerce.number().int().min(1).max(65535).default(0), // Random port
   API_URL: z.string().url().default('http://localhost:0'), // Will be set dynamically
   DEV_MODE: z.coerce.boolean().default(false),
-});
+})
+.merge(triggerSchema.partial()) // Optional for tests
+.merge(portkeySchema.partial()) // Optional for tests
+.merge(twilioSchema.partial()); // Optional for tests
 
 export type TestConfig = z.infer<typeof testConfigSchema>;

@@ -40,24 +40,25 @@
             
             <div class="min-h-[800px] flex items-center justify-center bg-gray-50 rounded-lg">
               <div v-if="isPDF(file.fileName)" class="w-full h-full">
-                <div v-if="proxyUrl" class="w-full h-[800px]">
+                <div v-if="proxyUrl && !iframeError" class="w-full h-[800px]">
                   <iframe 
                     :src="proxyUrl"
                     class="w-full h-full rounded-lg border-0"
                     title="PDF Viewer"
-                  >
-                    <p class="text-center text-gray-500 p-8">
-                      Your browser doesn't support PDFs. 
-                      <UButton 
-                        :to="downloadUrl" 
-                        target="_blank" 
-                        variant="outline"
-                        class="ml-2"
-                      >
-                        Download PDF
-                      </UButton>
-                    </p>
-                  </iframe>
+                    @error="iframeError = true"
+                  />
+                </div>
+                <div v-else-if="proxyUrl && iframeError" class="flex items-center justify-center h-[800px]">
+                  <div class="text-center text-gray-500 p-8">
+                    <p class="mb-4">Your browser doesn't support PDFs or the file couldn't be loaded.</p>
+                    <UButton 
+                      :to="downloadUrl" 
+                      target="_blank" 
+                      variant="outline"
+                    >
+                      Download PDF
+                    </UButton>
+                  </div>
                 </div>
                 <div v-else class="flex items-center justify-center h-[800px]">
                   <div class="text-center">
@@ -210,6 +211,7 @@ const tenantStore = useTenantStore();
 
 const fileId = route.params.id as string;
 const selectedTenantId = computed(() => tenantStore.selectedTenantId);
+const iframeError = ref(false);
 
 // Get file details with extractions
 const { data: file, isLoading: fileLoading, error: fileError } = useQuery({

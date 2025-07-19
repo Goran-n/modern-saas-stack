@@ -104,8 +104,31 @@ export class SupplierIngestionService {
         // High confidence match - update existing
         return await this.updateExistingSupplier(validated, matchResult.supplierId!);
       } else if (!matchResult.matched) {
-        // No match - create new
-        return await this.createNewSupplier(validated);
+        // No match - check if we have enough data to create new supplier
+        const supplierMatchData = {
+          identifiers: validated.data.identifiers,
+          name: validated.data.name,
+          addresses: validated.data.addresses,
+          contacts: validated.data.contacts,
+        };
+        
+        const creationScore = SupplierMatcher.calculateCreationScore(supplierMatchData);
+        
+        if (creationScore >= CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER) {
+          return await this.createNewSupplier(validated);
+        } else {
+          logger.warn('Insufficient data for supplier creation', {
+            name: validated.data.name,
+            creationScore,
+            requiredScore: CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER,
+            matchData: supplierMatchData,
+          });
+          return {
+            success: false,
+            action: 'skipped',
+            error: `Insufficient data for supplier creation (score: ${creationScore}/${CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER})`,
+          };
+        }
       } else {
         // Low confidence match - skip for manual review
         logger.info('Low confidence match, skipping', {
@@ -152,9 +175,16 @@ export class SupplierIngestionService {
       .from(suppliers)
       .where(eq(suppliers.tenantId, tenantId));
     
-    return SupplierMatcher.match(
-      data.identifiers,
-      data.name,
+    // Use enhanced matching with scoring
+    const supplierMatchData = {
+      identifiers: data.identifiers,
+      name: data.name,
+      addresses: data.addresses,
+      contacts: data.contacts,
+    };
+    
+    return SupplierMatcher.matchWithScoring(
+      supplierMatchData,
       existingSuppliers.map((s: any) => ({
         id: s.id,
         companyNumber: s.companyNumber,

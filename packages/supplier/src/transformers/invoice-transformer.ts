@@ -29,10 +29,7 @@ export function transformInvoiceToSupplier(
   const vatNumber = vendorData.vatNumber || 
     invoice.companyProfile?.taxIdentifiers?.vatNumber || null;
 
-  // Must have at least one identifier
-  if (!companyNumber && !vatNumber) {
-    return null;
-  }
+  // No longer require tax identifiers - scoring system will handle validation
 
   const request: SupplierIngestionRequest = {
     source: DataSource.INVOICE,

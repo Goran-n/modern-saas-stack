@@ -21,7 +21,7 @@ export const files = pgTable('files', {
   tenantId: uuid('tenant_id').notNull(),
   uploadedBy: uuid('uploaded_by').notNull(),
   processingStatus: fileProcessingStatusEnum('processing_status').default('pending'),
-  bucket: text('bucket').notNull().default('files'),
+  bucket: text('bucket').notNull().default('vault'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
