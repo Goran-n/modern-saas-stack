@@ -1,12 +1,7 @@
-import {
-  suppliers,
-  supplierAttributes,
-  eq,
-  and,
-  sql,
-} from '@kibly/shared-db';
-import { SupplierErrors } from '../errors';
-import { getDb } from '../db';
+import { supplierAttributes, suppliers } from "@kibly/shared-db";
+import { and, eq, sql } from "drizzle-orm";
+import { getDb } from "../db";
+import { SupplierErrors } from "../errors";
 
 export class SupplierQueries {
   private get db() {
@@ -21,10 +16,7 @@ export class SupplierQueries {
       .select()
       .from(suppliers)
       .where(
-        and(
-          eq(suppliers.id, supplierId),
-          eq(suppliers.tenantId, tenantId)
-        )
+        and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId)),
       );
 
     if (!supplier) {
@@ -48,17 +40,19 @@ export class SupplierQueries {
       .where(
         and(
           eq(supplierAttributes.supplierId, supplierId),
-          eq(supplierAttributes.isActive, true)
-        )
+          eq(supplierAttributes.isActive, true),
+        ),
       );
 
     // Group attributes by type
     const groupedAttributes = {
-      addresses: attributes.filter(a => a.attributeType === 'address'),
-      phones: attributes.filter(a => a.attributeType === 'phone'),
-      emails: attributes.filter(a => a.attributeType === 'email'),
-      websites: attributes.filter(a => a.attributeType === 'website'),
-      bankAccounts: attributes.filter(a => a.attributeType === 'bank_account'),
+      addresses: attributes.filter((a) => a.attributeType === "address"),
+      phones: attributes.filter((a) => a.attributeType === "phone"),
+      emails: attributes.filter((a) => a.attributeType === "email"),
+      websites: attributes.filter((a) => a.attributeType === "website"),
+      bankAccounts: attributes.filter(
+        (a) => a.attributeType === "bank_account",
+      ),
     };
 
     return {
@@ -70,17 +64,20 @@ export class SupplierQueries {
   /**
    * List suppliers for tenant with pagination
    */
-  async list(tenantId: string, options: {
-    limit?: number;
-    offset?: number;
-    includeDeleted?: boolean;
-  } = {}) {
+  async list(
+    tenantId: string,
+    options: {
+      limit?: number;
+      offset?: number;
+      includeDeleted?: boolean;
+    } = {},
+  ) {
     const { limit = 50, offset = 0, includeDeleted = false } = options;
 
     const whereConditions = [eq(suppliers.tenantId, tenantId)];
-    
+
     if (!includeDeleted) {
-      whereConditions.push(eq(suppliers.status, 'active'));
+      whereConditions.push(eq(suppliers.status, "active"));
     }
 
     const results = await this.db
@@ -106,8 +103,8 @@ export class SupplierQueries {
           sql`(
             ${suppliers.displayName} ILIKE ${`%${searchTerm}%`} OR
             ${suppliers.legalName} ILIKE ${`%${searchTerm}%`}
-          )`
-        )
+          )`,
+        ),
       )
       .limit(20);
 
@@ -124,8 +121,8 @@ export class SupplierQueries {
       .where(
         and(
           eq(suppliers.companyNumber, companyNumber),
-          eq(suppliers.tenantId, tenantId)
-        )
+          eq(suppliers.tenantId, tenantId),
+        ),
       );
 
     return supplier;
@@ -141,8 +138,8 @@ export class SupplierQueries {
       .where(
         and(
           eq(suppliers.vatNumber, vatNumber),
-          eq(suppliers.tenantId, tenantId)
-        )
+          eq(suppliers.tenantId, tenantId),
+        ),
       );
 
     return supplier;

@@ -33,10 +33,5 @@
   ],
   "files": [],
   "include": [],
-  "exclude": [
-    "node_modules",
-    "**/dist",
-    "**/build",
-    "**/.next"
-  ]
+  "exclude": ["node_modules", "**/dist", "**/build", "**/.next"]
 }

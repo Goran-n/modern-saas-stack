@@ -1,8 +1,8 @@
+import { logger } from "@kibly/utils";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
-import type { Context } from "./context";
-import { logger } from "@kibly/utils";
 import { errorTracker } from "../services/error-tracker";
+import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
@@ -14,7 +14,7 @@ const t = initTRPC.context<Context>().create({
       tenantId: ctx?.tenantId || undefined,
       requestId: ctx?.requestId,
     });
-    
+
     logger.error({
       err: error,
       errorId,
@@ -24,7 +24,7 @@ const t = initTRPC.context<Context>().create({
       path: shape.data.path,
       msg: `TRPC Error: ${error.message}`,
     });
-    
+
     return {
       ...shape,
       data: {

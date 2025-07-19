@@ -1,4 +1,4 @@
-import { TRPCLink, type TRPCClientError } from "@trpc/client";
+import type { TRPCClientError, TRPCLink } from "@trpc/client";
 import type { AnyRouter } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 
@@ -15,7 +15,7 @@ export interface LoggingLinkOptions {
 }
 
 export function createLoggingLink<TRouter extends AnyRouter>(
-  options: LoggingLinkOptions = {}
+  options: LoggingLinkOptions = {},
 ): TRPCLink<TRouter> {
   const {
     enabled = true,
@@ -57,14 +57,17 @@ export function createLoggingLink<TRouter extends AnyRouter>(
             if (logSlowRequests && duration > slowRequestThreshold) {
               logger.warn(`[TRPC] ${type} ${path} - Slow request`, logData);
             } else {
-              logger.info(`[TRPC] ${type} ${path} - Request completed`, logData);
+              logger.info(
+                `[TRPC] ${type} ${path} - Request completed`,
+                logData,
+              );
             }
 
             observer.next(value);
           },
           error(err: TRPCClientError<TRouter>) {
             const duration = Date.now() - startTime;
-            
+
             if (logErrors) {
               logger.error(`[TRPC] ${type} ${path} - Request failed`, {
                 type,
@@ -100,13 +103,7 @@ function sanitiseClientInput(input: unknown): unknown {
     return input;
   }
 
-  const sensitiveKeys = [
-    "password",
-    "token",
-    "secret",
-    "apiKey",
-    "base64Data",
-  ];
+  const sensitiveKeys = ["password", "token", "secret", "apiKey", "base64Data"];
 
   const sanitised = { ...input } as Record<string, unknown>;
 

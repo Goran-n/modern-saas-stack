@@ -1,36 +1,37 @@
 // Export all schemas
-export * from './tenants'
-export * from './files'
-export { 
-  documentExtractions, 
-  documentTypeEnum, 
-  validationStatusEnum, 
-  extractionMethodEnum,
-  type DocumentExtraction,
-  type NewDocumentExtraction
-} from './document-extractions'
+
 export {
-  suppliers,
-  supplierDataSources,
-  supplierAttributes,
-  supplierStatusEnum,
-  dataSourceEnum,
-  attributeTypeEnum,
-  suppliersRelations,
-  supplierDataSourcesRelations,
-  supplierAttributesRelations
-} from './suppliers'
-export {
-  whatsappVerifications,
-  whatsappMappings,
-  slackWorkspaces,
-  slackUserMappings,
-  type WhatsappVerification,
-  type NewWhatsappVerification,
-  type WhatsappMapping,
-  type NewWhatsappMapping,
-  type SlackWorkspace,
+  type NewSlackUserMapping,
   type NewSlackWorkspace,
+  type NewWhatsappMapping,
+  type NewWhatsappVerification,
   type SlackUserMapping,
-  type NewSlackUserMapping
-} from './communication'
+  type SlackWorkspace,
+  slackUserMappings,
+  slackWorkspaces,
+  type WhatsappMapping,
+  type WhatsappVerification,
+  whatsappMappings,
+  whatsappVerifications,
+} from "./communication";
+export {
+  type DocumentExtraction,
+  documentExtractions,
+  documentTypeEnum,
+  extractionMethodEnum,
+  type NewDocumentExtraction,
+  validationStatusEnum,
+} from "./document-extractions";
+export * from "./files";
+export {
+  attributeTypeEnum,
+  dataSourceEnum,
+  supplierAttributes,
+  supplierAttributesRelations,
+  supplierDataSources,
+  supplierDataSourcesRelations,
+  supplierStatusEnum,
+  suppliers,
+  suppliersRelations,
+} from "./suppliers";
+export * from "./tenants";

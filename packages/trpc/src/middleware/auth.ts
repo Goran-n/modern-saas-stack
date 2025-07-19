@@ -1,7 +1,8 @@
-import { TRPCError } from "@trpc/server";
-import { middleware } from "../trpc";
+import { getConfig } from "@kibly/config";
 import { TenantService } from "@kibly/tenant";
 import { logger } from "@kibly/utils";
+import { TRPCError } from "@trpc/server";
+import { middleware } from "../trpc";
 
 export const isAuthenticated = middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
@@ -34,8 +35,9 @@ export const hasTenantAccess = middleware(async ({ ctx, next }) => {
   }
 
   try {
-    const tenantService = new TenantService(ctx.db);
-    
+    const config = getConfig().getForTenant();
+    const tenantService = new TenantService(ctx.db, config.JWT_SECRET);
+
     // Check if user is a member of the tenant
     const hasAccess = await tenantService.checkPermission({
       tenantId: ctx.tenantId,

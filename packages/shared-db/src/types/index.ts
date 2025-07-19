@@ -1,1 +1,1 @@
-export * from './document-extraction';
+export * from "./document-extraction";

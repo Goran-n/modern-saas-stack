@@ -25,9 +25,7 @@
             "title": "Create message parsers for WhatsApp and Slack payloads",
             "description": "Build parsers that extract message content and attachments from webhook payloads",
             "status": "done",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create WhatsAppMessageParser and SlackMessageParser classes. Extract message text, sender information, and attachment URLs from payloads. Handle different message types (text, media, documents). Parse platform-specific metadata (message IDs, timestamps). Return normalized message objects with consistent structure. Handle webhook verification challenges for both platforms.",
             "testStrategy": ""
           },
@@ -36,9 +34,7 @@
             "title": "Implement file upload integration with file-manager",
             "description": "Create logic to upload message attachments to file-manager service",
             "status": "done",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Import and use file-manager client interface for uploads. Download attachments from platform URLs using streams. Validate file types (PDF only) and size limits (50MB). Handle authentication tokens for platform APIs. Implement retry logic for failed downloads. Return file-manager file IDs for processed uploads. Handle temporary file cleanup.",
             "testStrategy": ""
           },
@@ -47,9 +43,7 @@
             "title": "Design abstract MessageHandler interface",
             "description": "Create platform-agnostic interfaces for message processing",
             "status": "done",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create IMessageHandler interface with process() and validate() methods. Define MessagePayload type with platform, sender, content, attachments. Create ProcessingResult type for outcomes. Define error types for processing failures. Provide base implementation with common logic. Support async processing patterns.",
             "testStrategy": ""
           },
@@ -58,9 +52,7 @@
             "title": "Configure logging with @vepler/logger",
             "description": "Set up structured logging for message processing operations",
             "status": "done",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure @vepler/logger for the package. Create log contexts for message processing (platform, messageId, userId). Log message parsing operations and outcomes. Track file upload progress and results. Log job creation and submission. Implement log sanitization for sensitive data.",
             "testStrategy": ""
           },
@@ -69,10 +61,7 @@
             "title": "Create job payload builders",
             "description": "Build functions to construct job payloads for the existing job queue",
             "status": "done",
-            "dependencies": [
-              3,
-              4
-            ],
+            "dependencies": [3, 4],
             "details": "Create job payload builders for document processing tasks. Map file-manager IDs to job input format. Include metadata from message context (platform, sender). Set appropriate job priorities and queues. Handle batch job creation for multiple attachments. Return job IDs for tracking.",
             "testStrategy": ""
           },
@@ -81,9 +70,7 @@
             "title": "Implement payload validation schemas with Zod",
             "description": "Create validation schemas for webhook payloads",
             "status": "done",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create WhatsAppPayloadSchema and SlackPayloadSchema using Zod. Define nested schemas for message types and attachments. Implement strict validation with clear error messages. Export typed payload interfaces from schemas. Create validation helper functions. Support schema versioning for API changes.",
             "testStrategy": ""
           },
@@ -92,11 +79,7 @@
             "title": "Build message processing coordinator",
             "description": "Create main coordinator that orchestrates the processing pipeline",
             "status": "done",
-            "dependencies": [
-              2,
-              3,
-              6
-            ],
+            "dependencies": [2, 3, 6],
             "details": "Create MessageCoordinator class that uses parsers, uploaders, and job builders. Implement process flow: parse → validate → upload → create job. Handle errors at each stage with appropriate logging. Support batch processing for efficiency. Implement idempotency checks using message IDs. Return processing results with job references.",
             "testStrategy": ""
           },
@@ -105,10 +88,7 @@
             "title": "Create processing error handlers",
             "description": "Implement comprehensive error handling for processing failures",
             "status": "pending",
-            "dependencies": [
-              5,
-              8
-            ],
+            "dependencies": [5, 8],
             "details": "Define custom error classes for different failure types. Implement error recovery strategies where possible. Create error reporting with structured context. Handle platform API errors gracefully. Implement circuit breaker pattern for external services. Provide error metrics for monitoring.",
             "testStrategy": ""
           },
@@ -117,10 +97,7 @@
             "title": "Set up testing utilities and fixtures",
             "description": "Create testing helpers for the communication package",
             "status": "pending",
-            "dependencies": [
-              7,
-              8
-            ],
+            "dependencies": [7, 8],
             "details": "Create fixture generators for WhatsApp and Slack payloads. Build mock implementations of external dependencies. Create test helpers for common scenarios. Provide payload builders for different message types. Export test configuration utilities. Include example test implementations.",
             "testStrategy": ""
           },
@@ -129,9 +106,7 @@
             "title": "Create package documentation",
             "description": "Document the communication package API and usage",
             "status": "pending",
-            "dependencies": [
-              10
-            ],
+            "dependencies": [10],
             "details": "Create README with package overview and architecture. Document all exported functions and classes. Provide integration examples for API server. Include payload format documentation. Document error types and handling. Create migration guide from HTTP-based approach.",
             "testStrategy": ""
           },
@@ -187,9 +162,7 @@
         "title": "Implement Database Schema and Migrations",
         "description": "Create minimal database tables for WhatsApp verifications and Slack connections with proper indexes and constraints",
         "status": "pending",
-        "dependencies": [
-          1
-        ],
+        "dependencies": [1],
         "priority": "high",
         "details": "Using Supabase migrations, create 4 minimal tables: `whatsapp_verifications` (for self-service verification flow), `whatsapp_mappings` (simple phone->user mapping), `slack_workspaces` (OAuth tokens and workspace mapping), and `slack_user_mappings` (user mappings within workspace). Use Drizzle ORM for type-safe database access. Implement basic RLS policies for tenant isolation. Create essential indexes on frequently queried columns: (tenant_id, phone_number), (workspace_id, tenant_id). Set up database triggers for updated_at timestamps. Focus on minimal working implementation without complex features.",
         "testStrategy": "Test migrations rollback and forward. Verify basic RLS policies prevent cross-tenant access. Test unique constraints and foreign key relationships. Test database triggers functionality. Verify verification code expiry mechanism.",
@@ -199,9 +172,7 @@
             "title": "Create Minimal Core Database Tables",
             "description": "Implement only the 4 essential tables: whatsapp_verifications, whatsapp_mappings, slack_workspaces, and slack_user_mappings",
             "status": "done",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create tables using Drizzle schema definitions with minimal fields. whatsapp_verifications: id, tenant_id, phone_number, verification_code, expires_at, created_at. whatsapp_mappings: id, tenant_id, phone_number, user_id, created_at, updated_at. slack_workspaces: id, tenant_id, workspace_id, team_name, bot_token, created_at, updated_at. slack_user_mappings: id, workspace_id, slack_user_id, kibly_user_id, created_at. Add necessary foreign keys and unique constraints only.",
             "testStrategy": ""
           },
@@ -210,9 +181,7 @@
             "title": "Implement Basic RLS Policies",
             "description": "Create simple row-level security policies for tenant isolation",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Enable RLS on all 4 tables. Create basic SELECT, INSERT, UPDATE, DELETE policies checking auth.jwt() ->> 'tenant_id' matches record tenant_id. Keep policies simple without complex conditions. Test with different tenant contexts to ensure isolation works.",
             "testStrategy": ""
           },
@@ -221,9 +190,7 @@
             "title": "Add Essential Indexes Only",
             "description": "Create only the most critical indexes for query performance",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create composite index on whatsapp_verifications (tenant_id, phone_number, expires_at) for verification lookups. Add index on whatsapp_mappings (tenant_id, phone_number) for user lookups. Create index on slack_workspaces (tenant_id, workspace_id). Add index on slack_user_mappings (workspace_id, slack_user_id). Skip complex partial indexes.",
             "testStrategy": ""
           },
@@ -232,9 +199,7 @@
             "title": "Implement Updated_at Timestamp Triggers",
             "description": "Create simple PostgreSQL triggers for updated_at columns",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create basic update_updated_at_column() function. Add BEFORE UPDATE triggers only on tables with updated_at columns (whatsapp_mappings and slack_workspaces). Keep implementation minimal without complex logic.",
             "testStrategy": ""
           },
@@ -243,9 +208,7 @@
             "title": "Create Simple Verification Code Function",
             "description": "Implement basic PostgreSQL function for verification code validation",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create simple check_and_consume_verification_code() function that validates code and deletes it if valid. No rate limiting or complex logic. Function should return boolean for success/failure. Handle basic expiry check using expires_at column.",
             "testStrategy": ""
           },
@@ -254,9 +217,7 @@
             "title": "Set Up Basic Cleanup for Expired Codes",
             "description": "Create simple scheduled cleanup for expired verification codes",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create basic pg_cron job or database function to delete expired verification codes older than expires_at. Run every hour to keep table clean. No complex retention policies or soft deletes needed.",
             "testStrategy": ""
           },
@@ -265,14 +226,7 @@
             "title": "Create Basic Migration Tests",
             "description": "Implement simple tests for the minimal schema",
             "status": "pending",
-            "dependencies": [
-              2,
-              3,
-              4,
-              5,
-              6,
-              7
-            ],
+            "dependencies": [2, 3, 4, 5, 6, 7],
             "details": "Test migrations can run forward and rollback cleanly. Verify foreign key constraints work. Test basic RLS policies with 2 different tenants. Verify verification code function works correctly. Test that expired codes get cleaned up. Keep tests focused on core functionality only.",
             "testStrategy": ""
           },
@@ -294,9 +248,7 @@
         "details": "Install twilio SDK (v5.3+) and implement TwilioService class. Configure Twilio webhook URL with ngrok for local development. Implement phone number validation using libphonenumber-js for E.164 formatting. Create verification code generator using crypto.randomInt (6 digits). Implement WhatsAppMessageHandler extending MessageHandler interface. Handle incoming message types: text, document (PDF), image. Validate PDF files using pdf-parse (max 50MB). Store Twilio credentials in environment variables via Doppler. Implement retry logic with exponential backoff for Twilio API calls. Set up Twilio webhook signature validation using X-Twilio-Signature header. Create message templates for verification codes and status updates. Handle WhatsApp Business API rate limits (1000 messages/second).",
         "testStrategy": "Mock Twilio client for unit tests. Test E.164 phone formatting with various international formats. Test verification code uniqueness and randomness. Integration test with Twilio test credentials. Test file size validation and PDF detection. Test webhook signature validation with valid/invalid signatures. Test rate limit handling with mock responses.",
         "priority": "high",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "status": "pending",
         "subtasks": [
           {
@@ -312,9 +264,7 @@
             "id": 2,
             "title": "Configure webhook endpoints with ngrok",
             "description": "Set up Twilio webhook configuration for local development using ngrok tunnel",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure ngrok to expose local webhook endpoint at /webhooks/whatsapp. Update Twilio console or use API to set webhook URL. Create webhook handler that logs incoming requests. Document ngrok setup process for team members.",
             "status": "pending",
             "testStrategy": ""
@@ -323,9 +273,7 @@
             "id": 3,
             "title": "Implement phone number validation with libphonenumber-js",
             "description": "Add phone number validation and E.164 formatting using libphonenumber-js library",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Install libphonenumber-js and create validatePhoneNumber function. Support international formats with country code detection. Return formatted E.164 number or validation error. Handle edge cases like extensions and special characters.",
             "status": "pending",
             "testStrategy": ""
@@ -334,9 +282,7 @@
             "id": 4,
             "title": "Create verification code generation system",
             "description": "Build secure 6-digit verification code generator using crypto.randomInt",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement generateVerificationCode function using crypto.randomInt for cryptographically secure random numbers. Ensure codes are exactly 6 digits with leading zeros if needed. Create code storage mechanism with TTL of 10 minutes.",
             "status": "pending",
             "testStrategy": ""
@@ -345,10 +291,7 @@
             "id": 5,
             "title": "Implement WhatsAppMessageHandler for different message types",
             "description": "Create message handler implementation supporting text, document, and image message types",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Extend abstract MessageHandler interface for WhatsApp. Parse incoming webhook payloads for different message types. Route messages to appropriate handlers based on type. Extract metadata like sender, timestamp, and message ID.",
             "status": "pending",
             "testStrategy": ""
@@ -357,9 +300,7 @@
             "id": 6,
             "title": "Add PDF validation and size checking",
             "description": "Implement PDF file validation using pdf-parse with 50MB size limit",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Install pdf-parse library for PDF validation. Check file MIME type and magic bytes for PDF verification. Enforce 50MB maximum file size. Extract PDF metadata like page count and creation date. Handle corrupted or password-protected PDFs gracefully.",
             "status": "pending",
             "testStrategy": ""
@@ -368,9 +309,7 @@
             "id": 7,
             "title": "Configure environment variables with Doppler",
             "description": "Set up Doppler integration for secure environment variable management",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure Doppler CLI and project setup. Create environment variables for TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER. Set up different configs for dev, staging, and production. Document Doppler setup process and access controls.",
             "status": "pending",
             "testStrategy": ""
@@ -379,9 +318,7 @@
             "id": 8,
             "title": "Implement retry logic with exponential backoff",
             "description": "Create robust retry mechanism for Twilio API calls with exponential backoff",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement retry wrapper for Twilio API calls. Use exponential backoff starting at 1 second up to 32 seconds. Retry on network errors and 5xx status codes. Maximum 5 retry attempts. Log retry attempts with @vepler/logger.",
             "status": "pending",
             "testStrategy": ""
@@ -390,9 +327,7 @@
             "id": 9,
             "title": "Add webhook signature validation",
             "description": "Implement Twilio webhook signature validation for security",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create middleware to validate X-Twilio-Signature header. Use Twilio auth token to compute expected signature. Compare signatures in constant time to prevent timing attacks. Return 403 for invalid signatures. Log validation failures for monitoring.",
             "status": "pending",
             "testStrategy": ""
@@ -401,9 +336,7 @@
             "id": 10,
             "title": "Create message template system",
             "description": "Build template system for WhatsApp message formatting with variable substitution",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create message template engine supporting WhatsApp approved templates. Implement variable substitution with {{variable}} syntax. Support multiple languages and template versioning. Validate templates against WhatsApp requirements. Cache compiled templates for performance.",
             "status": "pending",
             "testStrategy": ""
@@ -412,10 +345,7 @@
             "id": 11,
             "title": "Implement rate limiting and quota management",
             "description": "Add rate limiting for WhatsApp API calls respecting Twilio's limits",
-            "dependencies": [
-              1,
-              8
-            ],
+            "dependencies": [1, 8],
             "details": "Implement token bucket algorithm for rate limiting. Respect Twilio's per-second and per-day limits. Queue messages when rate limit is reached. Monitor quota usage and alert when approaching limits. Implement graceful degradation when limits are exceeded.",
             "status": "pending",
             "testStrategy": ""
@@ -429,9 +359,7 @@
         "details": "Install @slack/bolt (v3.22+) and @slack/web-api. Create Slack app manifest with required scopes: channels:history, files:read, chat:write, users:read. Implement OAuth2 flow with state parameter for CSRF protection. Store bot tokens encrypted using AES-256-GCM with key from environment. Implement SlackEventHandler for file_shared events. Set up Socket Mode for local development, Events API for production. Create channel selector using conversations.list API. Implement user mapping by matching Slack email with Kibly accounts. Handle Slack file downloads with streaming to prevent memory issues. Set up retry logic for Slack API rate limits (tier 3: 50+ per minute). Implement graceful disconnection with token revocation. Cache workspace data with 5-minute TTL using Redis.",
         "testStrategy": "Mock Slack client for unit tests. Test OAuth flow with various error scenarios. Test token encryption/decryption. Integration test with Slack sandbox workspace. Test file event handling with different file types. Test user mapping logic. Load test event handling throughput. Security test OAuth state validation.",
         "priority": "high",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "status": "pending",
         "subtasks": [
           {
@@ -447,9 +375,7 @@
             "id": 2,
             "title": "Implement OAuth2 Authorization Flow with PKCE",
             "description": "Build secure OAuth2 flow with PKCE extension for enhanced security and state parameter for CSRF protection",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement OAuth2 flow using @slack/oauth package with PKCE (Proof Key for Code Exchange) extension. Generate cryptographically secure state parameter using crypto.randomBytes(32). Create authorization URL with proper scopes and state. Handle OAuth callback with code verification and token exchange. Implement token refresh mechanism for long-lived access. Store state temporarily in Redis with 10-minute TTL. Validate state parameter on callback to prevent CSRF attacks. Handle OAuth errors gracefully with proper error messages. Create middleware for OAuth route protection.",
             "status": "pending",
             "testStrategy": ""
@@ -458,9 +384,7 @@
             "id": 3,
             "title": "Design and Implement Token Encryption System",
             "description": "Create secure token storage system using AES-256-GCM encryption with proper key management",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement encryption service using Node.js crypto module with AES-256-GCM algorithm. Generate encryption key from environment variable using PBKDF2 with salt. Create encrypt/decrypt functions with IV (Initialization Vector) generation for each token. Store encrypted tokens with auth tag for integrity verification. Implement key rotation mechanism with versioning support. Create database schema for storing encrypted tokens with metadata. Add automatic token cleanup for expired tokens. Implement secure key storage recommendations for production. Create audit logging for token access.",
             "status": "pending",
             "testStrategy": ""
@@ -469,9 +393,7 @@
             "id": 4,
             "title": "Configure Socket Mode and Events API Setup",
             "description": "Set up dual configuration for Socket Mode (development) and Events API (production) with proper fallback",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure Socket Mode using @slack/bolt SocketModeReceiver for local development. Generate app-level token with connections:write scope. Implement Events API HTTP endpoint for production with request verification. Create middleware for Slack signature verification using HMAC-SHA256. Implement 3-second response requirement for Events API. Set up request queuing for event processing. Configure environment-based receiver selection (Socket Mode vs Events API). Implement retry logic for failed event processing. Create health check endpoint for Events API URL verification.",
             "status": "pending",
             "testStrategy": ""
@@ -480,9 +402,7 @@
             "id": 5,
             "title": "Build File Event Handler for Multiple File Types",
             "description": "Implement comprehensive file event handling for file_shared events supporting various document types",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create SlackFileEventHandler class implementing event listener for file_shared events. Extract file metadata including type, size, name, and shared channels. Implement file type validation for supported formats (PDF, DOC, DOCX, images). Create file download service using files.info and private download URL. Implement streaming download to avoid memory issues with large files. Add virus scanning integration point for downloaded files. Create temporary file storage with automatic cleanup. Implement file processing queue for async handling. Add support for file_deleted and file_change events.",
             "status": "pending",
             "testStrategy": ""
@@ -491,9 +411,7 @@
             "id": 6,
             "title": "Implement Channel Listing and Selection API",
             "description": "Build channel discovery and selection interface using Slack conversations API with pagination",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement conversations.list API call with pagination support (limit: 100). Filter channels by type (public_channel, private_channel) based on bot membership. Create channel search functionality with name and purpose matching. Implement cursor-based pagination for large workspace handling. Cache channel list in Redis with 5-minute TTL for performance. Build channel selector UI component with search and filters. Handle archived channels appropriately. Implement conversations.members to verify bot access. Create permission checking for private channels.",
             "status": "pending",
             "testStrategy": ""
@@ -502,9 +420,7 @@
             "id": 7,
             "title": "Create User Mapping and Identity Resolution Logic",
             "description": "Build system to map Slack users to internal users using email and profile matching",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement users.list API call to fetch all workspace users with pagination. Extract user emails using users.info with users:read.email scope. Create matching algorithm using email as primary identifier. Build fallback matching using display name and real name. Store user mappings in slack_user_mappings table with confidence scores. Implement periodic sync job to update user information. Handle user deactivation and deletion events. Create manual mapping interface for unmatched users. Add support for guest users and multi-channel guests.",
             "status": "pending",
             "testStrategy": ""
@@ -513,9 +429,7 @@
             "id": 8,
             "title": "Implement File Download Streaming Pipeline",
             "description": "Build efficient file download system with streaming to handle large files without memory issues",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Create streaming download using Node.js streams and axios streaming mode. Implement progress tracking for large file downloads. Add resume capability for interrupted downloads using Range headers. Create download queue with concurrency control (max 5 concurrent). Implement bandwidth throttling to avoid rate limits. Add file integrity verification using checksums. Create temporary file management with automatic cleanup after processing. Implement download retry with exponential backoff. Add support for downloading file thumbnails for previews.",
             "status": "pending",
             "testStrategy": ""
@@ -524,11 +438,7 @@
             "id": 9,
             "title": "Build Rate Limit Handling with Backoff Strategy",
             "description": "Implement comprehensive rate limit handling for all Slack API endpoints with intelligent retry",
-            "dependencies": [
-              6,
-              7,
-              8
-            ],
+            "dependencies": [6, 7, 8],
             "details": "Parse Retry-After headers from Slack API responses. Implement exponential backoff with jitter for 429 responses. Create rate limit bucket tracking per API method. Implement pre-emptive rate limiting using token bucket algorithm. Queue API calls when approaching rate limits. Add method-specific rate limit configuration. Create monitoring for rate limit approaching warnings. Implement circuit breaker pattern for repeated failures. Add rate limit metrics to monitoring dashboard. Configure different strategies for tier 1-4 rate limits.",
             "status": "pending",
             "testStrategy": ""
@@ -537,10 +447,7 @@
             "id": 10,
             "title": "Implement Workspace Data Caching with Redis",
             "description": "Design and build Redis caching layer for Slack workspace data to improve performance",
-            "dependencies": [
-              6,
-              7
-            ],
+            "dependencies": [6, 7],
             "details": "Design Redis key structure for workspace data (channels, users, files). Implement cache warming on workspace connection. Create TTL strategy: 5 minutes for channels, 15 minutes for users. Build cache invalidation on relevant Slack events. Implement Redis connection pooling with proper configuration. Create fallback mechanism when cache misses occur. Add cache hit/miss metrics for monitoring. Implement partial cache updates for changed data. Create cache preloading for frequently accessed workspaces. Add Redis Sentinel support for high availability.",
             "status": "pending",
             "testStrategy": ""
@@ -549,10 +456,7 @@
             "id": 11,
             "title": "Create Graceful Disconnection and Cleanup Flow",
             "description": "Build proper workspace disconnection handling with data cleanup and token revocation",
-            "dependencies": [
-              3,
-              10
-            ],
+            "dependencies": [3, 10],
             "details": "Implement auth.revoke API call to revoke access tokens properly. Create soft delete for workspace data with 30-day retention. Clear all cached data from Redis for disconnected workspace. Cancel any pending file downloads or processing jobs. Archive communication logs for compliance requirements. Send notification to workspace about disconnection. Implement reconnection flow preserving previous configurations. Create audit log entry for disconnection with reason. Handle partial disconnection failures gracefully. Implement data export option before disconnection.",
             "status": "pending",
             "testStrategy": ""
@@ -561,10 +465,7 @@
             "id": 12,
             "title": "Build Comprehensive Error Handling and Recovery",
             "description": "Implement robust error handling for all Slack integration scenarios with automatic recovery",
-            "dependencies": [
-              9,
-              11
-            ],
+            "dependencies": [9, 11],
             "details": "Create SlackError class hierarchy for different error types. Implement error categorization (auth, network, rate limit, API). Build automatic retry for transient errors with backoff. Create dead letter queue for failed events after max retries. Implement error aggregation for pattern detection. Add context preservation for debugging failed operations. Create error recovery strategies per error type. Implement user notification for critical errors. Build error metrics and alerting integration. Create runbook documentation for common error scenarios.",
             "status": "pending",
             "testStrategy": ""
@@ -578,9 +479,7 @@
         "details": "Create WhatsAppVerification.vue component using Nuxt 3 composition API. Integrate vue-tel-input (v9.1+) for international phone input with country flags. Implement OTP input using separate digit inputs with auto-focus navigation. Add vue-countdown (v2.1+) for code expiry timer (10 minutes). Use Pinia store for verification state management. Implement real-time validation with VeeValidate (v4.13+). Add loading states with NuxtLoadingIndicator. Create toast notifications for success/error using vue-toastification. Implement resend code functionality with 60-second cooldown. Add remove number confirmation modal. Style with Tailwind CSS following existing design system. Support keyboard navigation and screen readers. Add animations with @vueuse/motion for smooth transitions.",
         "testStrategy": "Unit test component with Vue Test Utils. Test phone number formatting for different countries. Test OTP input focus behavior. Test countdown timer accuracy. E2E test with Playwright for complete flow. Test error states and edge cases. Test accessibility with axe-core. Test responsive design on mobile viewports.",
         "priority": "medium",
-        "dependencies": [
-          3
-        ],
+        "dependencies": [3],
         "status": "pending",
         "subtasks": [
           {
@@ -632,10 +531,7 @@
             "id": 6,
             "title": "Configure VeeValidate for form validation",
             "description": "Integrate VeeValidate (v4.13+) for real-time validation of phone numbers and OTP codes with custom rules",
-            "dependencies": [
-              5,
-              5
-            ],
+            "dependencies": [5, 5],
             "details": "Install vee-validate@^4.13.0 and @vee-validate/rules. Create validation schema using yup for type safety. Add custom rule for international phone validation using libphonenumber-js. Implement OTP validation rule (6 digits, numeric only). Set up form-level validation with useForm composable. Add field-level validation with useField for inputs. Configure validation triggers (blur, change, submit). Display inline error messages with proper styling. Add i18n support for error messages. Implement async validation for phone uniqueness check.",
             "status": "pending",
             "testStrategy": ""
@@ -644,9 +540,7 @@
             "id": 7,
             "title": "Create notification system integration",
             "description": "Implement toast notifications for success, error, and warning messages throughout the verification flow",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Install @nuxtjs/toast or vue-toastification for notifications. Create composable useNotification for centralized messaging. Configure toast positions, duration, and styling. Add success notification for code sent and verification complete. Implement error toasts with actionable messages. Add warning toast for expiry approaching. Create custom toast component for complex messages. Handle notification queuing for multiple messages. Add notification history in Pinia store. Configure different styles for notification types.",
             "status": "pending",
             "testStrategy": ""
@@ -655,11 +549,7 @@
             "id": 8,
             "title": "Build resend functionality with cooldown period",
             "description": "Implement OTP resend feature with progressive cooldown periods and attempt limiting",
-            "dependencies": [
-              5,
-              5,
-              5
-            ],
+            "dependencies": [5, 5, 5],
             "details": "Add resend button with disabled state during cooldown. Implement cooldown periods: 30s, 60s, 120s for attempts 1-3. Show countdown timer on resend button when disabled. Track resend attempts in Pinia store with max limit of 3. Display remaining attempts to user clearly. Implement exponential backoff for API calls. Add rate limiting on frontend to prevent spam. Show alternative verification methods after max attempts. Store attempt timestamps for abuse prevention. Add analytics tracking for resend usage patterns.",
             "status": "pending",
             "testStrategy": ""
@@ -668,15 +558,7 @@
             "id": 9,
             "title": "Implement accessibility and responsive design",
             "description": "Ensure full accessibility compliance and responsive design across all device sizes",
-            "dependencies": [
-              5,
-              5,
-              5,
-              5,
-              5,
-              5,
-              5
-            ],
+            "dependencies": [5, 5, 5, 5, 5, 5, 5],
             "details": "Add ARIA labels and roles to all interactive elements. Implement keyboard navigation for entire flow. Add screen reader announcements for state changes. Ensure WCAG 2.1 AA color contrast compliance. Test with axe-core for accessibility violations. Implement responsive design with Tailwind breakpoints. Optimize touch targets for mobile (min 44x44px). Add focus indicators for keyboard navigation. Test on various devices using BrowserStack. Implement RTL support for international users. Add high contrast mode support.",
             "status": "pending",
             "testStrategy": ""
@@ -690,9 +572,7 @@
         "details": "Create SlackConnection.vue component with 'Add to Slack' button using official Slack button guidelines. Implement OAuth redirect handler in middleware/slack-oauth.ts. Create channel selector dropdown with search functionality using @headlessui/vue. Show connection status with workspace name and selected channel. Build disconnection flow with confirmation dialog. Use Nuxt's useFetch composable for API calls with automatic error handling. Implement loading skeletons during data fetching. Add connection management table showing all Slack connections for the tenant. Create activity indicator showing recent Slack submissions. Style following Slack's visual guidelines where appropriate. Support multiple workspace connections per tenant. Add help tooltips explaining permissions requested.",
         "testStrategy": "Test OAuth redirect handling with various callback scenarios. Mock API responses for channel listing. Test connection/disconnection flows. Test multi-workspace scenarios. E2E test OAuth flow with test Slack app. Test error handling for revoked tokens. Verify proper cleanup on disconnection.",
         "priority": "medium",
-        "dependencies": [
-          4
-        ],
+        "dependencies": [4],
         "status": "pending",
         "subtasks": []
       },
@@ -701,10 +581,7 @@
         "title": "Implement Unified Message Processing Pipeline",
         "description": "Create platform-agnostic message router that processes files from any source and triggers existing ingestion pipeline",
         "status": "pending",
-        "dependencies": [
-          3,
-          4
-        ],
+        "dependencies": [3, 4],
         "priority": "high",
         "details": "Create MessageProcessor class that handles messages from any platform. Implement file upload to existing file-manager using streams for memory efficiency. Map platform-specific user IDs to Kibly users using simple database lookups without caching. Create unified file validation (PDF only, max 50MB) using file-type (v19.5+) for magic byte detection. Implement audit logging for all messages with structured metadata. Trigger existing job queue for document processing using existing packages/jobs infrastructure. Handle command messages (/status, /help) with platform-specific responses. Implement backpressure handling when job queue is full. Create metrics collection using OpenTelemetry for monitoring. Add circuit breaker pattern for downstream service failures. Implement idempotency using message IDs to prevent duplicate processing.",
         "testStrategy": "Unit test message routing logic with different message types. Test file validation with various file formats. Test user mapping with missing/multiple matches. Integration test with existing job pipeline. Test idempotency with duplicate messages. Load test with concurrent messages. Test circuit breaker activation and recovery.",
@@ -723,9 +600,7 @@
             "title": "Implement Platform Abstraction Layer",
             "description": "Build abstraction layer to normalize messages from different platforms into unified format",
             "status": "pending",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create PlatformAdapter interface with methods for extracting sender ID, message content, and attachments. Implement WhatsAppAdapter and SlackAdapter classes. Build message normalization logic to convert platform-specific formats to unified schema. Handle platform-specific metadata extraction",
             "testStrategy": ""
           },
@@ -734,9 +609,7 @@
             "title": "Build File Streaming Upload Implementation",
             "description": "Implement memory-efficient file upload system using Node.js streams",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Use Node.js streams API to handle large file uploads without loading into memory. Implement chunked upload to file-manager service. Add progress tracking and resumable upload support. Handle network interruptions with automatic retry logic. Integrate with existing S3/storage backend",
             "testStrategy": ""
           },
@@ -745,9 +618,7 @@
             "title": "Create User ID Mapping System",
             "description": "Build simple database lookup system to map platform-specific user identifiers to Kibly user accounts",
             "status": "done",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement UserMapper service with direct database queries to whatsapp_mappings table for phone number lookups and slack_user_mappings table for workspace+user ID lookups. No caching layer initially. Reject unmapped users with clear error messages (no guest account support). Admin mapping handled directly via database operations. Create simple service class with methods for WhatsApp and Slack user resolution",
             "testStrategy": ""
           },
@@ -756,9 +627,7 @@
             "title": "Implement Unified File Validation",
             "description": "Create comprehensive file validation system with magic byte detection",
             "status": "pending",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Use file-type library v19.5+ for accurate MIME type detection via magic bytes. Implement PDF-only validation with detailed error messages. Add file size validation (max 50MB) with early stream termination. Validate PDF structure and readability. Add virus scanning integration point",
             "testStrategy": ""
           },
@@ -767,10 +636,7 @@
             "title": "Build Audit Logging Infrastructure",
             "description": "Implement structured audit logging for all message processing activities",
             "status": "pending",
-            "dependencies": [
-              4,
-              5
-            ],
+            "dependencies": [4, 5],
             "details": "Create AuditLogger service with structured JSON logging format. Log all message receipts, processing steps, and outcomes. Include platform metadata, user mappings, and file details. Implement log rotation and archival strategy. Add privacy controls for sensitive data logging",
             "testStrategy": ""
           },
@@ -779,10 +645,7 @@
             "title": "Integrate with Job Queue System",
             "description": "Connect message processor to existing job queue infrastructure",
             "status": "pending",
-            "dependencies": [
-              5,
-              6
-            ],
+            "dependencies": [5, 6],
             "details": "Create job payloads for document processing pipeline. Implement priority queuing based on message source. Add job deduplication to prevent duplicate processing. Handle job failure callbacks to notify users. Integrate with existing packages/jobs Bull queue setup",
             "testStrategy": ""
           },
@@ -791,10 +654,7 @@
             "title": "Implement Command Message Handling",
             "description": "Build system to process command messages for bot interactions",
             "status": "pending",
-            "dependencies": [
-              2,
-              4
-            ],
+            "dependencies": [2, 4],
             "details": "Create CommandParser to extract commands from messages (e.g., /help, /status). Implement command routing to appropriate handlers. Build response formatter for platform-specific reply formats. Add command authorization based on user permissions. Create extensible command plugin system",
             "testStrategy": ""
           },
@@ -803,9 +663,7 @@
             "title": "Build Backpressure Implementation",
             "description": "Implement flow control to prevent system overload during high message volumes",
             "status": "pending",
-            "dependencies": [
-              7
-            ],
+            "dependencies": [7],
             "details": "Implement token bucket algorithm for rate limiting per tenant. Add queue depth monitoring with automatic throttling. Create backpressure signals to upstream services. Implement graceful degradation under load. Add priority lanes for critical messages",
             "testStrategy": ""
           },
@@ -814,10 +672,7 @@
             "title": "Setup OpenTelemetry Metrics Collection",
             "description": "Implement comprehensive metrics and tracing for message processing pipeline",
             "status": "pending",
-            "dependencies": [
-              7,
-              9
-            ],
+            "dependencies": [7, 9],
             "details": "Configure OpenTelemetry SDK with custom metrics for message volume, processing time, and error rates. Add distributed tracing across service boundaries. Create custom metrics for platform-specific insights. Set up metric aggregation and alerting rules. Export to monitoring backend (Prometheus/Grafana)",
             "testStrategy": ""
           },
@@ -826,10 +681,7 @@
             "title": "Implement Circuit Breaker Pattern",
             "description": "Add circuit breaker for external service calls to prevent cascade failures",
             "status": "pending",
-            "dependencies": [
-              7,
-              10
-            ],
+            "dependencies": [7, 10],
             "details": "Implement circuit breaker using opossum library for file uploads and API calls. Configure failure thresholds and timeout settings per service. Add half-open state testing logic. Implement fallback strategies for open circuits. Create circuit state monitoring dashboard",
             "testStrategy": ""
           },
@@ -838,10 +690,7 @@
             "title": "Build Idempotency Mechanism",
             "description": "Ensure message processing is idempotent to handle retries safely",
             "status": "pending",
-            "dependencies": [
-              6,
-              7
-            ],
+            "dependencies": [6, 7],
             "details": "Generate unique message IDs using platform ID + timestamp + hash. Store processed message IDs in Redis with TTL. Implement idempotency keys for file uploads. Handle duplicate detection at multiple pipeline stages. Create cleanup job for expired idempotency records",
             "testStrategy": ""
           },
@@ -850,11 +699,7 @@
             "title": "Implement Comprehensive Error Handling",
             "description": "Create robust error handling with recovery strategies and user notifications",
             "status": "pending",
-            "dependencies": [
-              8,
-              11,
-              12
-            ],
+            "dependencies": [8, 11, 12],
             "details": "Build error classification system (retryable vs permanent). Implement exponential backoff for transient errors. Create dead letter queue for unprocessable messages. Add user notification system for processing failures. Implement error reporting dashboard with drill-down capabilities",
             "testStrategy": ""
           }
@@ -867,10 +712,7 @@
         "details": "Create IntegrationDashboard.vue page with tab navigation for different platforms. Build usage statistics charts using Chart.js (v4.4+) showing daily submission volumes. Implement real-time updates using Supabase Realtime for new submissions. Create communication logs table with filtering by platform, status, date range. Add export functionality for logs (CSV, JSON) using Papa Parse. Implement search across phone numbers and Slack users. Show integration health status with uptime monitoring. Create cost tracking for Twilio usage. Add webhook status indicators with last successful delivery time. Build alert configuration for failures. Use vue-good-table-next for sortable, paginated log display. Implement log retention settings (90 days default). Add quick actions for common tasks (resend, retry, investigate).",
         "testStrategy": "Test dashboard data aggregation accuracy. Test real-time updates with mock events. Test log filtering and search functionality. Test export formats and data integrity. E2E test dashboard interactions. Performance test with large datasets. Test responsive layout on various devices.",
         "priority": "medium",
-        "dependencies": [
-          5,
-          6
-        ],
+        "dependencies": [5, 6],
         "status": "pending",
         "subtasks": []
       },
@@ -881,9 +723,7 @@
         "details": "Implement webhook signature verification for both Twilio (HMAC-SHA1) and Slack (HMAC-SHA256). Add request body size limits (10MB) to prevent DoS attacks. Implement IP allowlisting for webhook endpoints using Express middleware. Add GDPR data export functionality for phone numbers and logs. Create data retention policies with automatic cleanup jobs using pg_cron. Implement phone number hashing for logs while maintaining searchability. Add abuse detection using Redis sliding window for verification attempts (max 5 per hour). Create security headers middleware (CSP, HSTS, X-Frame-Options). Implement API key rotation mechanism for external services. Add PII detection in logs using regex patterns. Create compliance report generation (data inventory, access logs). Set up AWS KMS for encryption key management. Implement zero-trust verification for all platform messages.",
         "testStrategy": "Penetration test webhook endpoints. Test signature verification with tampered requests. Test rate limiting effectiveness. Verify GDPR export completeness. Test data retention cleanup. Security audit with OWASP guidelines. Test PII detection accuracy. Verify encryption at rest and in transit.",
         "priority": "high",
-        "dependencies": [
-          7
-        ],
+        "dependencies": [7],
         "status": "pending",
         "subtasks": [
           {
@@ -917,9 +757,7 @@
             "id": 4,
             "title": "Build GDPR data export functionality",
             "description": "Implement system to export all personal data associated with a phone number or user ID in machine-readable format",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create /api/gdpr/export endpoint accepting phone number or user ID. Query all tables containing personal data: verified_whatsapp_numbers, communication_logs, slack_user_mappings. Generate comprehensive JSON export including all associated records. Implement authentication and authorization checks. Add rate limiting to prevent abuse. Include metadata about data collection purposes and retention periods",
             "status": "pending",
             "testStrategy": ""
@@ -928,9 +766,7 @@
             "id": 5,
             "title": "Implement data retention policy with automated cleanup",
             "description": "Create system to automatically delete old data based on configurable retention periods using pg_cron or Node.js scheduled jobs",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Define retention periods: 90 days for logs, 180 days for verification data. Create cleanup job to run daily at 3 AM UTC using node-cron or pg_cron. Implement soft delete first, then hard delete after grace period. Archive critical audit logs to cold storage before deletion. Send notifications before data deletion. Create restore mechanism for accidentally deleted data within grace period",
             "status": "pending",
             "testStrategy": ""
@@ -948,9 +784,7 @@
             "id": 7,
             "title": "Build Redis-based abuse detection system",
             "description": "Implement sliding window rate limiting and abuse detection using Redis to prevent spam and attacks",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create Redis sliding window counters for: verification attempts per phone (5/hour), webhook calls per IP (100/minute), API calls per tenant (1000/hour). Implement exponential backoff for repeat offenders. Add configurable thresholds per endpoint. Create abuse score calculation based on multiple factors. Implement automatic blocking and unblocking logic. Send alerts for suspected abuse patterns",
             "status": "pending",
             "testStrategy": ""
@@ -968,9 +802,7 @@
             "id": 9,
             "title": "Create API key rotation mechanism",
             "description": "Build system for rotating API keys and webhook secrets without downtime",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Support multiple active keys during rotation period. Create key versioning system with expiration dates. Implement graceful key rotation with overlap period. Add automated rotation reminders and scheduling. Create audit log for all key operations. Build CLI tool for emergency key rotation. Implement key revocation list for compromised keys",
             "status": "pending",
             "testStrategy": ""
@@ -979,9 +811,7 @@
             "id": 10,
             "title": "Implement PII detection in application logs",
             "description": "Create system to automatically detect and redact personally identifiable information from logs",
-            "dependencies": [
-              6
-            ],
+            "dependencies": [6],
             "details": "Build regex patterns for detecting phone numbers, emails, names, addresses. Create log interceptor to scan all log outputs before writing. Implement configurable redaction levels (full, partial, hash). Whitelist specific log contexts where PII is allowed. Add detection for credit cards, SSNs, and other sensitive data. Create compliance report showing PII detection effectiveness",
             "status": "pending",
             "testStrategy": ""
@@ -990,11 +820,7 @@
             "id": 11,
             "title": "Build compliance report generation system",
             "description": "Create automated reports for security compliance including GDPR, data processing, and audit trails",
-            "dependencies": [
-              4,
-              5,
-              10
-            ],
+            "dependencies": [4, 5, 10],
             "details": "Generate monthly GDPR compliance reports showing data processing activities. Create security audit reports with access logs and permission changes. Build data retention compliance reports showing deletion activities. Implement automated vulnerability scanning integration. Add regulatory requirement tracking and gap analysis. Create executive dashboard for compliance metrics",
             "status": "pending",
             "testStrategy": ""
@@ -1003,9 +829,7 @@
             "id": 12,
             "title": "Integrate AWS KMS for encryption key management",
             "description": "Implement AWS Key Management Service for managing encryption keys for sensitive data",
-            "dependencies": [
-              6
-            ],
+            "dependencies": [6],
             "details": "Create KMS master key for application encryption. Implement envelope encryption for database fields. Rotate data encryption keys automatically using KMS. Add key usage audit logging to CloudTrail. Implement least-privilege IAM policies for KMS access. Create disaster recovery plan for key loss scenarios. Build local key caching with TTL for performance",
             "status": "pending",
             "testStrategy": ""
@@ -1014,9 +838,7 @@
             "id": 13,
             "title": "Implement zero-trust verification for internal APIs",
             "description": "Add authentication and authorization to all internal API calls between services",
-            "dependencies": [
-              9
-            ],
+            "dependencies": [9],
             "details": "Implement mTLS for service-to-service communication. Add JWT tokens with short expiration for internal calls. Create service identity verification using certificates. Implement principle of least privilege for service accounts. Add request signing for critical operations. Create service mesh configuration for traffic policies. Monitor and alert on unauthorized access attempts",
             "status": "pending",
             "testStrategy": ""
@@ -1025,13 +847,7 @@
             "id": 14,
             "title": "Create comprehensive security testing suite",
             "description": "Build automated security tests covering all implemented security measures",
-            "dependencies": [
-              1,
-              3,
-              7,
-              8,
-              13
-            ],
+            "dependencies": [1, 3, 7, 8, 13],
             "details": "Write penetration tests for webhook endpoints using invalid signatures. Create fuzzing tests for input validation vulnerabilities. Test rate limiting effectiveness under load. Verify OWASP Top 10 protections. Add dependency vulnerability scanning with npm audit. Implement automated security regression tests. Create security benchmark tests for performance impact. Build continuous security monitoring dashboard",
             "status": "pending",
             "testStrategy": ""
@@ -1045,10 +861,7 @@
         "details": "Set up production Twilio configuration with dedicated phone number and approved message templates. Configure Slack app for production with public distribution. Implement Blue-Green deployment strategy using environment variables for gradual rollout (25%, 50%, 100%). Set up DataDog APM for distributed tracing across services. Configure PagerDuty alerts for webhook failures, high error rates, job queue backlog. Implement custom CloudWatch metrics for business KPIs. Create Grafana dashboards for real-time monitoring. Set up log aggregation with proper indexing in CloudWatch Logs. Implement feature flags using LaunchDarkly for controlled rollout. Create runbooks for common operational tasks. Set up automated backups for communication data. Configure auto-scaling for webhook endpoints based on request rate. Implement canary deployments with automatic rollback on error threshold. Create comprehensive documentation including API docs, troubleshooting guide, and admin manual.",
         "testStrategy": "Load test production endpoints with expected traffic. Test monitoring alerts with simulated failures. Verify rollback procedures. Test backup and restore processes. Chaos engineering tests for resilience. Performance baseline testing. Test feature flag controls. Validate runbook procedures with team.",
         "priority": "medium",
-        "dependencies": [
-          8,
-          9
-        ],
+        "dependencies": [8, 9],
         "status": "pending",
         "subtasks": []
       }

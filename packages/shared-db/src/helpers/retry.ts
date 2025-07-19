@@ -1,4 +1,4 @@
-import { logger } from '@kibly/utils';
+import { logger } from "@kibly/utils";
 
 export interface RetryOptions {
   maxRetries?: number;
@@ -15,15 +15,15 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   backoffMultiplier: 2,
   shouldRetry: (error: any) => {
     // Retry on connection errors or specific database errors
-    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorMessage = error?.message?.toLowerCase() || "";
     return (
-      errorMessage.includes('connection') ||
-      errorMessage.includes('timeout') ||
-      errorMessage.includes('econnrefused') ||
-      errorMessage.includes('no resource with given identifier') ||
-      error?.code === 'ECONNREFUSED' ||
-      error?.code === 'ETIMEDOUT' ||
-      error?.code === 'ENOTFOUND'
+      errorMessage.includes("connection") ||
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("econnrefused") ||
+      errorMessage.includes("no resource with given identifier") ||
+      error?.code === "ECONNREFUSED" ||
+      error?.code === "ETIMEDOUT" ||
+      error?.code === "ENOTFOUND"
     );
   },
 };
@@ -33,7 +33,7 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): Promise<T> {
   const opts = { ...DEFAULT_RETRY_OPTIONS, ...options };
   let lastError: any;
@@ -56,7 +56,7 @@ export async function withRetry<T>(
         error: error instanceof Error ? error.message : error,
       });
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
       delay = Math.min(delay * opts.backoffMultiplier, opts.maxDelay);
     }
   }

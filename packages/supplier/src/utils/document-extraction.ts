@@ -1,4 +1,4 @@
-import type { ExtractedFields, ExtractedFieldValue } from '@kibly/shared-db';
+import type { ExtractedFields, ExtractedFieldValue } from "@kibly/shared-db";
 
 /**
  * Simplified vendor data extracted from documents
@@ -32,7 +32,9 @@ export interface ExtractedVendorData {
 /**
  * Extract vendor data from ExtractedFields JSONB
  */
-export function extractVendorData(fields: ExtractedFields | null | undefined): ExtractedVendorData {
+export function extractVendorData(
+  fields: ExtractedFields | null | undefined,
+): ExtractedVendorData {
   if (!fields) {
     return {
       name: null,
@@ -76,36 +78,36 @@ export function extractVendorData(fields: ExtractedFields | null | undefined): E
 
 /**
  * Extract vendor data with confidence scores
- * 
+ *
  * This function extracts vendor information from document fields and includes
  * confidence scores for each field that was extracted by the AI model.
- * 
+ *
  * @param fields - The extracted fields from document analysis (can be null/undefined)
  * @returns ExtractedVendorData with confidence scores for available fields
  */
 export function extractVendorDataWithConfidence(
-  fields: ExtractedFields | null | undefined
+  fields: ExtractedFields | null | undefined,
 ): ExtractedVendorData {
   // Start with basic vendor data extraction
   const vendorData = extractVendorData(fields);
-  
+
   // Early return if no fields available
   if (!fields) {
     return vendorData;
   }
 
-  const confidence: ExtractedVendorData['confidence'] = {};
-  
+  const confidence: ExtractedVendorData["confidence"] = {};
+
   // Map ExtractedFields to ExtractedVendorData confidence structure
   // This mapping handles the field name differences between the two interfaces
   const fieldMapping = {
-    name: fields.vendorName,                    // vendorName -> name
-    companyNumber: fields.vendorCompanyNumber,  // vendorCompanyNumber -> companyNumber
-    vatNumber: fields.vendorTaxId,              // vendorTaxId -> vatNumber
-    address: fields.vendorAddress,              // vendorAddress -> address
-    email: fields.vendorEmail,                  // vendorEmail -> email
-    phone: fields.vendorPhone,                  // vendorPhone -> phone
-    website: fields.vendorWebsite,              // vendorWebsite -> website
+    name: fields.vendorName, // vendorName -> name
+    companyNumber: fields.vendorCompanyNumber, // vendorCompanyNumber -> companyNumber
+    vatNumber: fields.vendorTaxId, // vendorTaxId -> vatNumber
+    address: fields.vendorAddress, // vendorAddress -> address
+    email: fields.vendorEmail, // vendorEmail -> email
+    phone: fields.vendorPhone, // vendorPhone -> phone
+    website: fields.vendorWebsite, // vendorWebsite -> website
   };
 
   // Extract confidence scores for each field that has a value
@@ -125,18 +127,22 @@ export function extractVendorDataWithConfidence(
 /**
  * Extract structured address from vendor fields
  */
-export function extractVendorAddress(fields: ExtractedFields | null | undefined): ExtractedVendorData['address'] {
+export function extractVendorAddress(
+  fields: ExtractedFields | null | undefined,
+): ExtractedVendorData["address"] {
   return extractVendorData(fields).address;
 }
 
 /**
  * Check if vendor data meets minimum requirements for supplier creation
  */
-export function hasMinimumVendorData(fields: ExtractedFields | null | undefined): boolean {
+export function hasMinimumVendorData(
+  fields: ExtractedFields | null | undefined,
+): boolean {
   if (!fields) return false;
-  
+
   const data = extractVendorData(fields);
-  
+
   // Need name and at least one identifier
   return !!data.name && (!!data.vatNumber || !!data.companyNumber);
 }
@@ -144,9 +150,11 @@ export function hasMinimumVendorData(fields: ExtractedFields | null | undefined)
 /**
  * Get confidence score for vendor data completeness
  */
-export function getVendorDataCompleteness(fields: ExtractedFields | null | undefined): number {
+export function getVendorDataCompleteness(
+  fields: ExtractedFields | null | undefined,
+): number {
   if (!fields) return 0;
-  
+
   const fieldValues = [
     fields.vendorName,
     fields.vendorTaxId,
@@ -158,28 +166,27 @@ export function getVendorDataCompleteness(fields: ExtractedFields | null | undef
     fields.vendorEmail,
     fields.vendorPhone,
   ];
-  
+
   let filledFields = 0;
   let totalConfidence = 0;
-  
+
   for (const field of fieldValues) {
     if (field?.value) {
       filledFields++;
       totalConfidence += field.confidence || 0;
     }
   }
-  
+
   if (filledFields === 0) return 0;
-  
+
   // Weight by both completeness and average confidence
   const completeness = (filledFields / fieldValues.length) * 100;
   const avgConfidence = totalConfidence / filledFields;
-  
-  return Math.round((completeness * 0.5) + (avgConfidence * 0.5));
+
+  return Math.round(completeness * 0.5 + avgConfidence * 0.5);
 }
 
 // Helper functions
 function getFieldValue(field: ExtractedFieldValue | undefined): string | null {
   return field?.value ? String(field.value) : null;
 }
-

@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
-import { createLoggingLink } from "./logging-link";
-import type { AppRouter } from "../routers";
 import superjson from "superjson";
+import type { AppRouter } from "../routers";
+import { createLoggingLink } from "./logging-link";
 
 // Example of how to create a TRPC client with logging enabled
 export const trpcClient = createTRPCProxyClient<AppRouter>({

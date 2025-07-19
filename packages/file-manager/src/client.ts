@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createLogger } from '@kibly/utils';
-import { getConfig } from '@kibly/config';
+import { getConfig } from "@kibly/config";
+import { createLogger } from "@kibly/utils";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-const logger = createLogger('file-manager-client');
+const logger = createLogger("file-manager-client");
 
 let clientInstance: SupabaseClient | null = null;
 
@@ -14,26 +14,26 @@ let clientInstance: SupabaseClient | null = null;
 export function getClient(): SupabaseClient {
   if (!clientInstance) {
     const config = getConfig().getCore();
-    
+
     // Use service key if available for elevated permissions
     const authKey = config.SUPABASE_SERVICE_KEY || config.SUPABASE_ANON_KEY;
     const isServiceKey = !!config.SUPABASE_SERVICE_KEY;
-    
+
     clientInstance = createClient(config.SUPABASE_URL, authKey, {
       auth: {
         autoRefreshToken: !isServiceKey,
         persistSession: !isServiceKey,
-        detectSessionInUrl: false
-      }
+        detectSessionInUrl: false,
+      },
     });
-    
-    logger.info('Supabase client created successfully', {
+
+    logger.info("Supabase client created successfully", {
       usingServiceKey: isServiceKey,
       hasServiceKey: !!config.SUPABASE_SERVICE_KEY,
-      authKeyLength: authKey?.length
+      authKeyLength: authKey?.length,
     });
   }
-  
+
   return clientInstance;
 }
 
@@ -42,7 +42,7 @@ export function getClient(): SupabaseClient {
  */
 export function setClient(client: SupabaseClient): void {
   clientInstance = client;
-  logger.info('Custom Supabase client set');
+  logger.info("Custom Supabase client set");
 }
 
 /**
@@ -50,5 +50,5 @@ export function setClient(client: SupabaseClient): void {
  */
 export function resetClient(): void {
   clientInstance = null;
-  logger.info('Supabase client reset');
+  logger.info("Supabase client reset");
 }

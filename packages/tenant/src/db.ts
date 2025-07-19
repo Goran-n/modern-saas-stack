@@ -1,6 +1,6 @@
-import { getDatabaseConnection, type DrizzleClient } from '@kibly/shared-db';
-import { getConfig } from '@kibly/config';
-import { logger } from '@kibly/utils';
+import { getConfig } from "@kibly/config";
+import { type DrizzleClient, getDatabaseConnection } from "@kibly/shared-db";
+import { logger } from "@kibly/utils";
 
 let dbInstance: DrizzleClient | null = null;
 
@@ -12,11 +12,11 @@ export function getDb(): DrizzleClient {
   if (!dbInstance) {
     // For tests, use TEST_DATABASE_URL directly if available
     if (process.env.TEST_DATABASE_URL) {
-      logger.debug('Using TEST_DATABASE_URL for database connection');
+      logger.debug("Using TEST_DATABASE_URL for database connection");
       dbInstance = getDatabaseConnection(process.env.TEST_DATABASE_URL);
     } else {
       const config = getConfig().getForTenant();
-      logger.debug('Using configured DATABASE_URL for database connection');
+      logger.debug("Using configured DATABASE_URL for database connection");
       dbInstance = getDatabaseConnection(config.DATABASE_URL);
     }
   }
@@ -45,5 +45,5 @@ export const db = new Proxy({} as DrizzleClient, {
   get(_, prop, receiver) {
     const dbInstance = getDb();
     return Reflect.get(dbInstance, prop, receiver);
-  }
+  },
 });

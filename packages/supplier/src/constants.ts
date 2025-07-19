@@ -4,25 +4,25 @@
  */
 export const CONFIDENCE_SCORES = {
   /** Perfect match - supplier was just created from this data */
-  SUPPLIER_CREATED: '100',
-  
+  SUPPLIER_CREATED: "100",
+
   /** High confidence - matched to existing supplier */
-  SUPPLIER_MATCHED: '95',
-  
+  SUPPLIER_MATCHED: "95",
+
   /** Good confidence - multiple signals match */
-  GOOD_MATCH: '85',
-  
+  GOOD_MATCH: "85",
+
   /** Medium confidence - needs review */
-  MEDIUM_MATCH: '70',
-  
+  MEDIUM_MATCH: "70",
+
   /** Low confidence match */
-  LOW_MATCH: '50',
-  
+  LOW_MATCH: "50",
+
   /** No supplier match found */
-  NO_MATCH: '0',
-  
+  NO_MATCH: "0",
+
   /** Insufficient data to attempt matching */
-  INSUFFICIENT_DATA: '0',
+  INSUFFICIENT_DATA: "0",
 } as const;
 
 /**
@@ -31,13 +31,13 @@ export const CONFIDENCE_SCORES = {
 export const CONFIDENCE_THRESHOLDS = {
   /** Minimum confidence to auto-accept a match */
   AUTO_ACCEPT: 80,
-  
+
   /** Minimum confidence to suggest a match for review */
   SUGGEST_MATCH: 40,
-  
+
   /** Below this, don't even suggest as a possible match */
   IGNORE_MATCH: 20,
-  
+
   /** Minimum confidence to create a new supplier */
   CREATE_SUPPLIER: 60,
 } as const;
@@ -46,12 +46,12 @@ export const CONFIDENCE_THRESHOLDS = {
  * Processing note templates
  */
 export const PROCESSING_NOTES = {
-  SUPPLIER_CREATED: 'Supplier created',
-  SUPPLIER_UPDATED: 'Supplier updated',
-  SUPPLIER_MATCHED: 'Matched to existing supplier',
-  INSUFFICIENT_DATA: 'Insufficient data for supplier creation',
-  VALIDATION_FAILED: 'Supplier validation failed',
-  ERROR: 'Error processing supplier',
+  SUPPLIER_CREATED: "Supplier created",
+  SUPPLIER_UPDATED: "Supplier updated",
+  SUPPLIER_MATCHED: "Matched to existing supplier",
+  INSUFFICIENT_DATA: "Insufficient data for supplier creation",
+  VALIDATION_FAILED: "Supplier validation failed",
+  ERROR: "Error processing supplier",
 } as const;
 
 /**
@@ -60,16 +60,16 @@ export const PROCESSING_NOTES = {
 export const DEFAULT_CONFIDENCE = {
   /** Confidence for attributes extracted from documents */
   DOCUMENT_EXTRACTED: 70,
-  
+
   /** Confidence for manually entered data */
   MANUAL_ENTRY: 80,
-  
+
   /** Confidence for data from verified sources */
   VERIFIED_SOURCE: 90,
-  
+
   /** Confidence increment when data is seen multiple times */
   REPEAT_OBSERVATION_INCREMENT: 5,
-  
+
   /** Maximum confidence from repeat observations */
   MAX_CONFIDENCE: 100,
 } as const;
@@ -81,29 +81,29 @@ export const MATCH_SCORES = {
   /** Name matching scores */
   NAME: {
     EXACT: 30,
-    FUZZY_HIGH: 25,  // 90%+ similarity
+    FUZZY_HIGH: 25, // 90%+ similarity
     FUZZY_MEDIUM: 20, // 70%+ similarity
-    FUZZY_LOW: 10,   // 50%+ similarity
+    FUZZY_LOW: 10, // 50%+ similarity
   },
-  
+
   /** Address matching scores */
   ADDRESS: {
-    FULL_MATCH: 25,     // All components match
-    CITY_COUNTRY: 15,   // City and country match
-    COUNTRY_ONLY: 10,   // Country only
+    FULL_MATCH: 25, // All components match
+    CITY_COUNTRY: 15, // City and country match
+    COUNTRY_ONLY: 10, // Country only
   },
-  
+
   /** Email/domain matching scores */
   DOMAIN: {
-    EXACT_MATCH: 20,    // Domain matches exactly
+    EXACT_MATCH: 20, // Domain matches exactly
   },
-  
+
   /** Tax identifier scores */
   IDENTIFIERS: {
     COMPANY_NUMBER: 15,
     VAT_NUMBER: 10,
   },
-  
+
   /** Contact matching scores */
   CONTACTS: {
     PHONE: 5,

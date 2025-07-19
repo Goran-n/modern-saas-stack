@@ -1,26 +1,26 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // ============================================
 // Base Types
 // ============================================
 
 export const SupplierStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  DELETED: 'deleted',
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+  DELETED: "deleted",
 } as const;
 
 export const DataSource = {
-  INVOICE: 'invoice',
-  MANUAL: 'manual',
+  INVOICE: "invoice",
+  MANUAL: "manual",
 } as const;
 
 export const AttributeType = {
-  ADDRESS: 'address',
-  PHONE: 'phone',
-  EMAIL: 'email',
-  WEBSITE: 'website',
-  BANK_ACCOUNT: 'bank_account',
+  ADDRESS: "address",
+  PHONE: "phone",
+  EMAIL: "email",
+  WEBSITE: "website",
+  BANK_ACCOUNT: "bank_account",
 } as const;
 
 // ============================================
@@ -31,10 +31,7 @@ export const AttributeType = {
 export const identifierSchema = z.object({
   companyNumber: z.string().optional().nullable(),
   vatNumber: z.string().optional().nullable(),
-}).refine(
-  data => data.companyNumber || data.vatNumber,
-  { message: 'At least one identifier (companyNumber or vatNumber) is required' }
-);
+});
 
 // Address schema
 export const addressSchema = z.object({
@@ -47,22 +44,23 @@ export const addressSchema = z.object({
 
 // Contact information
 export const contactSchema = z.object({
-  type: z.enum(['phone', 'email', 'website']),
+  type: z.enum(["phone", "email", "website"]),
   value: z.string().min(1),
   isPrimary: z.boolean().default(false),
 });
 
 // Bank account
-export const bankAccountSchema = z.object({
-  accountName: z.string().optional().nullable(),
-  accountNumber: z.string().optional().nullable(),
-  sortCode: z.string().optional().nullable(),
-  iban: z.string().optional().nullable(),
-  bankName: z.string().optional().nullable(),
-}).refine(
-  data => data.accountNumber || data.iban,
-  { message: 'Either accountNumber or IBAN is required' }
-);
+export const bankAccountSchema = z
+  .object({
+    accountName: z.string().optional().nullable(),
+    accountNumber: z.string().optional().nullable(),
+    sortCode: z.string().optional().nullable(),
+    iban: z.string().optional().nullable(),
+    bankName: z.string().optional().nullable(),
+  })
+  .refine((data) => data.accountNumber || data.iban, {
+    message: "Either accountNumber or IBAN is required",
+  });
 
 // ============================================
 // Ingestion Schema
@@ -124,9 +122,10 @@ export const supplierAttributeSchema = z.object({
 // Type Exports
 // ============================================
 
-export type SupplierStatus = typeof SupplierStatus[keyof typeof SupplierStatus];
-export type DataSource = typeof DataSource[keyof typeof DataSource];
-export type AttributeType = typeof AttributeType[keyof typeof AttributeType];
+export type SupplierStatus =
+  (typeof SupplierStatus)[keyof typeof SupplierStatus];
+export type DataSource = (typeof DataSource)[keyof typeof DataSource];
+export type AttributeType = (typeof AttributeType)[keyof typeof AttributeType];
 
 export type Identifiers = z.infer<typeof identifierSchema>;
 export type Address = z.infer<typeof addressSchema>;
@@ -134,7 +133,9 @@ export type Contact = z.infer<typeof contactSchema>;
 export type BankAccount = z.infer<typeof bankAccountSchema>;
 
 export type SupplierIngestionData = z.infer<typeof supplierIngestionDataSchema>;
-export type SupplierIngestionRequest = z.infer<typeof supplierIngestionRequestSchema>;
+export type SupplierIngestionRequest = z.infer<
+  typeof supplierIngestionRequestSchema
+>;
 
 export type Supplier = z.infer<typeof supplierSchema>;
 export type SupplierAttribute = z.infer<typeof supplierAttributeSchema>;

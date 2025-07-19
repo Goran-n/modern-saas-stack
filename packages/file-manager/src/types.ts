@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // File source constants
 export const FILE_SOURCES = {
-  INTEGRATION: 'integration',
-  USER_UPLOAD: 'user_upload',
-  WHATSAPP: 'whatsapp',
-  SLACK: 'slack',
+  INTEGRATION: "integration",
+  USER_UPLOAD: "user_upload",
+  WHATSAPP: "whatsapp",
+  SLACK: "slack",
 } as const;
 
 export const fileSourceSchema = z.enum([
@@ -17,10 +17,10 @@ export const fileSourceSchema = z.enum([
 
 // Processing status constants
 export const PROCESSING_STATUS = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
+  PENDING: "pending",
+  PROCESSING: "processing",
+  COMPLETED: "completed",
+  FAILED: "failed",
 } as const;
 
 export const processingStatusSchema = z.enum([

@@ -1,2 +1,2 @@
-export * from './whatsapp.handler';
-export * from './slack.handler';
+export * from "./slack.handler";
+export * from "./whatsapp.handler";

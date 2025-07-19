@@ -1,49 +1,49 @@
 // Type exports
-export * from './types';
 
 // Constants exports
-export { 
-  CONFIDENCE_SCORES, 
+export {
+  CONFIDENCE_SCORES,
   CONFIDENCE_THRESHOLDS,
+  DEFAULT_CONFIDENCE,
   PROCESSING_NOTES,
-  DEFAULT_CONFIDENCE 
-} from './constants';
-
+} from "./constants";
 // Error exports
-export { SupplierError, SupplierErrors, createError } from './errors';
-
+export { createError, SupplierError, SupplierErrors } from "./errors";
 // Core exports
-export { AttributeNormalizer } from './ingestion/normalizer';
-export { IngestionValidator } from './ingestion/validator';
-export { SupplierMatcher, type MatchResult } from './matching/matcher';
-
-// Validation exports
-export { SupplierValidator, type ValidationResult } from './validation/supplier-validator';
-
-// Service exports
-export { SupplierIngestionService, type IngestionResult } from './services/ingestion-service';
-export { 
-  SupplierService, 
-  type CreateSupplierInput, 
-  type UpdateSupplierInput 
-} from './services/supplier-service';
-
+export { AttributeNormalizer } from "./ingestion/normalizer";
+export { IngestionValidator } from "./ingestion/validator";
+export { type MatchResult, SupplierMatcher } from "./matching/matcher";
 // Query exports
-export { SupplierQueries } from './queries/supplier-queries';
-
+export { SupplierQueries } from "./queries/supplier-queries";
+// Service exports
+export {
+  type IngestionResult,
+  SupplierIngestionService,
+} from "./services/ingestion-service";
+export {
+  type CreateSupplierInput,
+  SupplierService,
+  type UpdateSupplierInput,
+} from "./services/supplier-service";
 // Transformer exports
-export { 
+export {
+  type InvoiceSupplierData,
   transformInvoiceToSupplier,
-  type InvoiceSupplierData 
-} from './transformers/invoice-transformer';
+} from "./transformers/invoice-transformer";
+export * from "./types";
+export {
+  type ExtractedVendorData,
+  extractVendorAddress,
+  extractVendorData,
+  extractVendorDataWithConfidence,
+  getVendorDataCompleteness,
+  hasMinimumVendorData,
+} from "./utils/document-extraction";
 
 // Utility exports
-export { generateSlug } from './utils/slug';
-export { 
-  extractVendorData, 
-  extractVendorDataWithConfidence,
-  extractVendorAddress,
-  hasMinimumVendorData,
-  getVendorDataCompleteness,
-  type ExtractedVendorData
-} from './utils/document-extraction';
+export { generateSlug } from "./utils/slug";
+// Validation exports
+export {
+  SupplierValidator,
+  type ValidationResult,
+} from "./validation/supplier-validator";

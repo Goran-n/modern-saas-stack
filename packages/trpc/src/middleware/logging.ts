@@ -1,6 +1,6 @@
-import { middleware } from "../trpc";
 import { logger } from "@kibly/utils";
 import { TRPCError } from "@trpc/server";
+import { middleware } from "../trpc";
 
 interface LogContext {
   requestId: string;
@@ -52,72 +52,75 @@ function getResponseSize(data: unknown): number {
   }
 }
 
-export const loggingMiddleware = middleware(async ({ ctx, next, path, type, input }) => {
-  const logContext: LogContext = {
-    requestId: ctx.requestId,
-    userId: ctx.user?.id,
-    tenantId: ctx.tenantId || undefined,
-    path,
-    type,
-    input: sanitiseInput(input),
-    startTime: Date.now(),
-  };
-
-  logger.info({
-    ...logContext,
-    userAgent: ctx.headers.get("user-agent"),
-    ip: ctx.headers.get("x-forwarded-for") || ctx.headers.get("x-real-ip"),
-    msg: `TRPC Request Started: ${path}`,
-  });
-
-  try {
-    const result = await next();
-    const duration = Date.now() - logContext.startTime;
+export const loggingMiddleware = middleware(
+  async ({ ctx, next, path, type, input }) => {
+    const logContext: LogContext = {
+      requestId: ctx.requestId,
+      userId: ctx.user?.id,
+      tenantId: ctx.tenantId || undefined,
+      path,
+      type,
+      input: sanitiseInput(input),
+      startTime: Date.now(),
+    };
 
     logger.info({
       ...logContext,
-      duration,
-      status: "success",
-      responseSize: getResponseSize(result),
-      msg: `TRPC Request Completed: ${path}`,
+      userAgent: ctx.headers.get("user-agent"),
+      ip: ctx.headers.get("x-forwarded-for") || ctx.headers.get("x-real-ip"),
+      msg: `TRPC Request Started: ${path}`,
     });
 
-    return result;
-  } catch (error) {
-    const duration = Date.now() - logContext.startTime;
-    
-    if (error instanceof TRPCError) {
-      const logLevel = error.code === "INTERNAL_SERVER_ERROR" ? "error" : "warn";
-      
-      logger[logLevel]({
-        err: error,
-        ...logContext,
-        duration,
-        status: "error",
-        errorCode: error.code,
-        errorCause: error.cause,
-        msg: "TRPC Request Failed",
-      });
-    } else if (error instanceof Error) {
-      logger.error({
-        err: error,
-        ...logContext,
-        duration,
-        status: "error",
-        msg: "TRPC Request Failed - Unexpected Error",
-      });
-    } else {
-      logger.error({
-        error: String(error),
-        ...logContext,
-        duration,
-        status: "error",
-        msg: "TRPC Request Failed - Unknown Error",
-      });
-    }
+    try {
+      const result = await next();
+      const duration = Date.now() - logContext.startTime;
 
-    throw error;
-  }
-});
+      logger.info({
+        ...logContext,
+        duration,
+        status: "success",
+        responseSize: getResponseSize(result),
+        msg: `TRPC Request Completed: ${path}`,
+      });
+
+      return result;
+    } catch (error) {
+      const duration = Date.now() - logContext.startTime;
+
+      if (error instanceof TRPCError) {
+        const logLevel =
+          error.code === "INTERNAL_SERVER_ERROR" ? "error" : "warn";
+
+        logger[logLevel]({
+          err: error,
+          ...logContext,
+          duration,
+          status: "error",
+          errorCode: error.code,
+          errorCause: error.cause,
+          msg: "TRPC Request Failed",
+        });
+      } else if (error instanceof Error) {
+        logger.error({
+          err: error,
+          ...logContext,
+          duration,
+          status: "error",
+          msg: "TRPC Request Failed - Unexpected Error",
+        });
+      } else {
+        logger.error({
+          error: String(error),
+          ...logContext,
+          duration,
+          status: "error",
+          msg: "TRPC Request Failed - Unknown Error",
+        });
+      }
+
+      throw error;
+    }
+  },
+);
 
 export const createLoggingMiddleware = () => loggingMiddleware;

@@ -1,5 +1,5 @@
-import { middleware } from "../trpc";
 import { logger } from "@kibly/utils";
+import { middleware } from "../trpc";
 
 interface PerformanceMetrics {
   path: string;
@@ -20,7 +20,7 @@ class PerformanceMonitor {
 
   recordMetric(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
-    
+
     // Keep only recent metrics
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
@@ -53,13 +53,13 @@ class PerformanceMonitor {
       };
     }
 
-    const durations = this.metrics.map(m => m.duration).sort((a, b) => a - b);
+    const durations = this.metrics.map((m) => m.duration).sort((a, b) => a - b);
     const p95Index = Math.floor(durations.length * 0.95);
     const p99Index = Math.floor(durations.length * 0.99);
 
     const pathStats: Record<string, { total: number; count: number }> = {};
-    
-    this.metrics.forEach(metric => {
+
+    this.metrics.forEach((metric) => {
       if (!pathStats[metric.path]) {
         pathStats[metric.path] = { total: 0, count: 0 };
       }
@@ -70,7 +70,9 @@ class PerformanceMonitor {
       }
     });
 
-    const pathStatsFormatted = Object.entries(pathStats).reduce<Record<string, { count: number; avgDuration: number }>>((acc, [path, stats]) => {
+    const pathStatsFormatted = Object.entries(pathStats).reduce<
+      Record<string, { count: number; avgDuration: number }>
+    >((acc, [path, stats]) => {
       acc[path] = {
         count: stats.count,
         avgDuration: Math.round(stats.total / stats.count),
@@ -79,10 +81,14 @@ class PerformanceMonitor {
     }, {});
 
     return {
-      averageDuration: Math.round(durations.reduce((a, b) => a + b, 0) / durations.length),
+      averageDuration: Math.round(
+        durations.reduce((a, b) => a + b, 0) / durations.length,
+      ),
       p95Duration: durations[p95Index] || 0,
       p99Duration: durations[p99Index] || 0,
-      slowQueries: this.metrics.filter(m => m.duration > this.slowQueryThreshold).length,
+      slowQueries: this.metrics.filter(
+        (m) => m.duration > this.slowQueryThreshold,
+      ).length,
       pathStats: pathStatsFormatted,
     };
   }
@@ -96,10 +102,10 @@ export const performanceMiddleware = middleware(async ({ next, path }) => {
 
   try {
     const result = await next();
-    
+
     const duration = Date.now() - startTime;
     const endMemory = process.memoryUsage();
-    
+
     performanceMonitor.recordMetric({
       path,
       duration,
@@ -115,7 +121,7 @@ export const performanceMiddleware = middleware(async ({ next, path }) => {
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    
+
     // Still record metrics for failed requests
     performanceMonitor.recordMetric({
       path,
@@ -134,12 +140,15 @@ export function getPerformanceStats() {
 }
 
 // Log performance stats periodically (every 5 minutes)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const stats = getPerformanceStats();
-    
-    if (stats.slowQueries > 0) {
-      logger.info("TRPC Performance Stats", stats);
-    }
-  }, 5 * 60 * 1000);
+if (typeof setInterval !== "undefined") {
+  setInterval(
+    () => {
+      const stats = getPerformanceStats();
+
+      if (stats.slowQueries > 0) {
+        logger.info("TRPC Performance Stats", stats);
+      }
+    },
+    5 * 60 * 1000,
+  );
 }

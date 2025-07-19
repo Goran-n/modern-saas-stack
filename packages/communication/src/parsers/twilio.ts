@@ -1,39 +1,47 @@
-import { createLogger } from '@kibly/utils';
-import { getConfig } from '@kibly/config';
-import { 
-  TwilioWhatsAppWebhookSchema, 
-  extractTwilioMedia
-} from '../types/twilio';
-import type { ParsedWhatsAppMessage } from '../types';
+import { getConfig } from "@kibly/config";
+import { createLogger } from "@kibly/utils";
+import type { ParsedWhatsAppMessage } from "../types";
+import {
+  extractTwilioMedia,
+  TwilioWhatsAppWebhookSchema,
+} from "../types/twilio";
 
-const logger = createLogger('twilio-parser');
+const logger = createLogger("twilio-parser");
 
-export function parseTwilioWhatsAppPayload(payload: unknown): ParsedWhatsAppMessage | null {
+export function parseTwilioWhatsAppPayload(
+  payload: unknown,
+): ParsedWhatsAppMessage | null {
   try {
     const validated = TwilioWhatsAppWebhookSchema.parse(payload);
     const media = extractTwilioMedia(payload as Record<string, any>);
-    
+
     const config = getConfig().getForCommunication();
-    const phoneNumber = validated.From.replace(config.COMMUNICATION_WHATSAPP_PREFIX, '');
-    
-    let type: 'text' | 'document' | 'image' = 'text';
+    const phoneNumber = validated.From.replace(
+      config.COMMUNICATION_WHATSAPP_PREFIX,
+      "",
+    );
+
+    let type: "text" | "document" | "image" = "text";
     let mediaUrl: string | undefined;
     let mimeType: string | undefined;
-    
+
     if (media.length > 0) {
       const firstMedia = media[0];
       if (firstMedia) {
         mimeType = firstMedia.contentType;
         mediaUrl = firstMedia.url;
-        
-        if (mimeType.startsWith('image/')) {
-          type = 'image';
-        } else if (mimeType === config.COMMUNICATION_DEFAULT_MIME_TYPE || mimeType.startsWith('application/')) {
-          type = 'document';
+
+        if (mimeType.startsWith("image/")) {
+          type = "image";
+        } else if (
+          mimeType === config.COMMUNICATION_DEFAULT_MIME_TYPE ||
+          mimeType.startsWith("application/")
+        ) {
+          type = "document";
         }
       }
     }
-    
+
     const parsed: ParsedWhatsAppMessage = {
       messageId: validated.MessageSid,
       phoneNumber,
@@ -41,33 +49,33 @@ export function parseTwilioWhatsAppPayload(payload: unknown): ParsedWhatsAppMess
       type,
       content: validated.Body || undefined,
       mediaId: mediaUrl,
-      mimeType
+      mimeType,
     };
-    
-    logger.info('Parsed Twilio WhatsApp message', {
+
+    logger.info("Parsed Twilio WhatsApp message", {
       messageId: parsed.messageId,
       type: parsed.type,
-      hasMedia: !!mediaUrl
+      hasMedia: !!mediaUrl,
     });
-    
+
     return parsed;
   } catch (error) {
     logger.error({
       err: error,
-      msg: 'Failed to parse Twilio WhatsApp payload'
+      msg: "Failed to parse Twilio WhatsApp payload",
     });
     return null;
   }
 }
 
 export function isTwilioWhatsAppWebhook(payload: unknown): boolean {
-  if (typeof payload !== 'object' || payload === null) return false;
-  
+  if (typeof payload !== "object" || payload === null) return false;
+
   const config = getConfig().getForCommunication();
   const obj = payload as Record<string, any>;
   return (
-    typeof obj.MessageSid === 'string' &&
-    typeof obj.From === 'string' &&
+    typeof obj.MessageSid === "string" &&
+    typeof obj.From === "string" &&
     obj.From.startsWith(config.COMMUNICATION_WHATSAPP_PREFIX)
   );
 }

@@ -1,70 +1,75 @@
-import { createLogger } from '@kibly/utils';
-import { uploadFile, FILE_SOURCES, type FileSource } from '@kibly/file-manager';
-import { getConfig } from '@kibly/config';
-import { getTwilioService } from './services/twilio';
-import { getSlackService } from './services/slack';
-import type { 
-  ParsedWhatsAppMessage, 
-  ParsedSlackMessage, 
-  ProcessingResult 
-} from './types';
-import { FILE_LIMITS, ERROR_MESSAGES, SUPPORTED_MIME_TYPES } from './constants';
+import { getConfig } from "@kibly/config";
+import { FILE_SOURCES, type FileSource, uploadFile } from "@kibly/file-manager";
+import { createLogger } from "@kibly/utils";
+import { ERROR_MESSAGES, FILE_LIMITS, SUPPORTED_MIME_TYPES } from "./constants";
+import { getSlackService } from "./services/slack";
+import { getTwilioService } from "./services/twilio";
+import type {
+  ParsedSlackMessage,
+  ParsedWhatsAppMessage,
+  ProcessingResult,
+} from "./types";
 
-const logger = createLogger('communication-operations');
+const logger = createLogger("communication-operations");
 
 export async function processWhatsAppDocument(
   message: ParsedWhatsAppMessage,
   tenantId: string,
-  userId: string
+  userId: string,
 ): Promise<ProcessingResult> {
   try {
-    if (message.type !== 'document' && message.type !== 'image') {
+    if (message.type !== "document" && message.type !== "image") {
       return {
         success: false,
-        error: 'Message does not contain a document'
+        error: "Message does not contain a document",
       };
     }
 
-    logger.info('Processing WhatsApp document', {
+    logger.info("Processing WhatsApp document", {
       messageId: message.messageId,
       fileName: message.fileName,
-      mimeType: message.mimeType
+      mimeType: message.mimeType,
     });
 
     if (!message.mediaId) {
       return {
         success: false,
-        error: 'No media URL provided in message'
+        error: "No media URL provided in message",
       };
     }
 
     try {
       const twilioService = getTwilioService();
       const fileBuffer = await twilioService.downloadMedia(message.mediaId);
-      
+
       const config = getConfig().getForCommunication();
       const file = new File(
-        [fileBuffer], 
+        [fileBuffer],
         message.fileName || `whatsapp-document-${Date.now()}.pdf`,
-        { type: message.mimeType || config.COMMUNICATION_DEFAULT_MIME_TYPE }
+        { type: message.mimeType || config.COMMUNICATION_DEFAULT_MIME_TYPE },
       );
 
-      return await _createFileAndTriggerJob(file, tenantId, userId, FILE_SOURCES.WHATSAPP);
+      return await _createFileAndTriggerJob(
+        file,
+        tenantId,
+        userId,
+        FILE_SOURCES.WHATSAPP,
+      );
     } catch (downloadError) {
-      logger.error('Failed to download WhatsApp media', { 
+      logger.error("Failed to download WhatsApp media", {
         mediaId: message.mediaId,
-        error: downloadError 
+        error: downloadError,
       });
       return {
         success: false,
-        error: `Failed to download media: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`
+        error: `Failed to download media: ${downloadError instanceof Error ? downloadError.message : "Unknown error"}`,
       };
     }
   } catch (error) {
-    logger.error('Error processing WhatsApp document', error);
+    logger.error("Error processing WhatsApp document", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -72,30 +77,32 @@ export async function processWhatsAppDocument(
 export async function processSlackFiles(
   message: ParsedSlackMessage,
   _tenantId: string,
-  _userId: string
+  _userId: string,
 ): Promise<ProcessingResult[]> {
   const results: ProcessingResult[] = [];
 
   for (const file of message.files) {
     try {
-      logger.info('Processing Slack file', {
+      logger.info("Processing Slack file", {
         fileId: file.id,
         fileName: file.name,
-        size: file.size
+        size: file.size,
       });
 
       if (file.size > FILE_LIMITS.MAX_SIZE_BYTES) {
         results.push({
           success: false,
-          error: `File ${file.name} ${ERROR_MESSAGES.FILE_SIZE_EXCEEDED} (${FILE_LIMITS.MAX_SIZE_LABEL})`
+          error: `File ${file.name} ${ERROR_MESSAGES.FILE_SIZE_EXCEEDED} (${FILE_LIMITS.MAX_SIZE_LABEL})`,
         });
         continue;
       }
 
-      if (!SUPPORTED_MIME_TYPES.SLACK.some(type => file.mimeType.includes(type))) {
+      if (
+        !SUPPORTED_MIME_TYPES.SLACK.some((type) => file.mimeType.includes(type))
+      ) {
         results.push({
           success: false,
-          error: `${ERROR_MESSAGES.UNSUPPORTED_FILE_TYPE}: ${file.mimeType}`
+          error: `${ERROR_MESSAGES.UNSUPPORTED_FILE_TYPE}: ${file.mimeType}`,
         });
         continue;
       }
@@ -104,32 +111,35 @@ export async function processSlackFiles(
         // Download the file from Slack
         const slackService = getSlackService();
         const fileBuffer = await slackService.downloadFile(file.downloadUrl);
-        
+
         // Create a File object from the buffer
-        const fileObj = new File(
-          [fileBuffer],
-          file.name,
-          { type: file.mimeType }
-        );
-        
+        const fileObj = new File([fileBuffer], file.name, {
+          type: file.mimeType,
+        });
+
         // Upload using the helper function
-        const result = await _createFileAndTriggerJob(fileObj, _tenantId, _userId, FILE_SOURCES.SLACK);
+        const result = await _createFileAndTriggerJob(
+          fileObj,
+          _tenantId,
+          _userId,
+          FILE_SOURCES.SLACK,
+        );
         results.push(result);
       } catch (downloadError) {
-        logger.error('Failed to download Slack file', {
+        logger.error("Failed to download Slack file", {
           fileId: file.id,
-          error: downloadError
+          error: downloadError,
         });
         results.push({
           success: false,
-          error: `Failed to download file: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`
+          error: `Failed to download file: ${downloadError instanceof Error ? downloadError.message : "Unknown error"}`,
         });
       }
     } catch (error) {
-      logger.error('Error processing Slack file', { fileId: file.id, error });
+      logger.error("Error processing Slack file", { fileId: file.id, error });
       results.push({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -141,29 +151,35 @@ async function _createFileAndTriggerJob(
   file: File,
   tenantId: string,
   userId: string,
-  source: typeof FILE_SOURCES.WHATSAPP | typeof FILE_SOURCES.INTEGRATION | typeof FILE_SOURCES.SLACK
+  source:
+    | typeof FILE_SOURCES.WHATSAPP
+    | typeof FILE_SOURCES.INTEGRATION
+    | typeof FILE_SOURCES.SLACK,
 ): Promise<ProcessingResult> {
   try {
     const fileId = await uploadFile(file, {
       fileName: file.name,
-      pathTokens: ['communications', source],
+      pathTokens: ["communications", source],
       mimeType: file.type,
       size: file.size,
       source: source as FileSource,
       tenantId,
-      uploadedBy: userId
+      uploadedBy: userId,
     });
 
     return {
       success: true,
       fileId,
-      jobId: 'triggered-by-file-manager'
+      jobId: "triggered-by-file-manager",
     };
   } catch (error) {
-    logger.error('Error creating file and triggering job', error);
+    logger.error("Error creating file and triggering job", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
+
+// Re-export all database operations
+export * from "./operations/index";

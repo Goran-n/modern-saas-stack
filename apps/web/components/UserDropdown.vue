@@ -1,7 +1,10 @@
 <template>
-  <UDropdown
+  <UDropdownMenu
     :items="items"
-    :ui="{ item: { disabled: 'cursor-text select-text' }, width: 'w-64' }"
+    :ui="{ 
+      item: 'data-disabled:cursor-text data-disabled:select-text',
+      content: 'w-64'
+    }"
     :popper="{ placement: 'right-start' }"
   >
     <template #default="slotProps">
@@ -46,31 +49,31 @@
     </template>
 
     <template #item="{ item }">
-      <div class="flex items-center gap-2 w-full">
+      <div v-if="'label' in item" class="flex items-center gap-2 w-full">
         <UIcon
-          v-if="item.icon"
+          v-if="'icon' in item && item.icon"
           :name="item.icon"
           class="w-4 h-4 flex-shrink-0"
-          :class="item.iconClass"
+          :class="'iconClass' in item ? item.iconClass : ''"
         />
 
         <span class="flex-1 truncate">{{ item.label }}</span>
 
         <span 
-          v-if="item.shortcuts?.length"
+          v-if="'shortcuts' in item && item.shortcuts?.length"
           class="flex items-center gap-0.5"
         >
-          <kbd 
+          <UKbd 
             v-for="(shortcut, index) in item.shortcuts" 
             :key="index"
-            class="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 rounded"
+            size="sm"
           >
             {{ shortcut }}
-          </kbd>
+          </UKbd>
         </span>
       </div>
     </template>
-  </UDropdown>
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">

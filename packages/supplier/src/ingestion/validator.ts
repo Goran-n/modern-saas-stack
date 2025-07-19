@@ -1,4 +1,7 @@
-import { supplierIngestionRequestSchema, SupplierIngestionRequest } from '../types';
+import {
+  type SupplierIngestionRequest,
+  supplierIngestionRequestSchema,
+} from "../types";
 
 /**
  * Basic validation for ingestion requests
@@ -10,35 +13,39 @@ export class IngestionValidator {
   static validate(request: unknown): SupplierIngestionRequest {
     // Parse with Zod
     const parsed = supplierIngestionRequestSchema.parse(request);
-    
+
     // Sanitize data
-    return this.sanitize(parsed);
+    return IngestionValidator.sanitize(parsed);
   }
-  
-  private static sanitize(request: SupplierIngestionRequest): SupplierIngestionRequest {
+
+  private static sanitize(
+    request: SupplierIngestionRequest,
+  ): SupplierIngestionRequest {
     // Deep clone to avoid mutations
     const sanitized = JSON.parse(JSON.stringify(request));
-    
+
     // Trim all strings
-    this.trimStrings(sanitized);
-    
+    IngestionValidator.trimStrings(sanitized);
+
     // Normalize identifiers
     if (sanitized.data.identifiers.vatNumber) {
-      sanitized.data.identifiers.vatNumber = sanitized.data.identifiers.vatNumber.toUpperCase();
+      sanitized.data.identifiers.vatNumber =
+        sanitized.data.identifiers.vatNumber.toUpperCase();
     }
     if (sanitized.data.identifiers.companyNumber) {
-      sanitized.data.identifiers.companyNumber = sanitized.data.identifiers.companyNumber.toUpperCase();
+      sanitized.data.identifiers.companyNumber =
+        sanitized.data.identifiers.companyNumber.toUpperCase();
     }
-    
+
     return sanitized;
   }
-  
+
   private static trimStrings(obj: any): void {
-    Object.keys(obj).forEach(key => {
-      if (typeof obj[key] === 'string') {
+    Object.keys(obj).forEach((key) => {
+      if (typeof obj[key] === "string") {
         obj[key] = obj[key].trim();
-      } else if (obj[key] && typeof obj[key] === 'object') {
-        this.trimStrings(obj[key]);
+      } else if (obj[key] && typeof obj[key] === "object") {
+        IngestionValidator.trimStrings(obj[key]);
       }
     });
   }

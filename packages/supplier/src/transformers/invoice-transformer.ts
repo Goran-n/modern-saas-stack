@@ -1,6 +1,6 @@
-import { SupplierIngestionRequest, DataSource } from '../types';
-import type { ExtractedVendorData } from '../utils/document-extraction';
-import type { CompanyProfile } from '@kibly/shared-db';
+import type { CompanyProfile } from "@kibly/shared-db";
+import { DataSource, type SupplierIngestionRequest } from "../types";
+import type { ExtractedVendorData } from "../utils/document-extraction";
 
 export interface InvoiceSupplierData {
   id: string;
@@ -14,20 +14,24 @@ export interface InvoiceSupplierData {
 export function transformInvoiceToSupplier(
   invoice: InvoiceSupplierData,
   tenantId: string,
-  userId?: string
+  userId?: string,
 ): SupplierIngestionRequest | null {
   const { vendorData } = invoice;
-  
+
   // Must have at least a name
   if (!vendorData.name) {
     return null;
   }
 
   // Use identifiers from vendorData or fallback to companyProfile
-  const companyNumber = vendorData.companyNumber || 
-    invoice.companyProfile?.taxIdentifiers?.companyNumber || null;
-  const vatNumber = vendorData.vatNumber || 
-    invoice.companyProfile?.taxIdentifiers?.vatNumber || null;
+  const companyNumber =
+    vendorData.companyNumber ||
+    invoice.companyProfile?.taxIdentifiers?.companyNumber ||
+    null;
+  const vatNumber =
+    vendorData.vatNumber ||
+    invoice.companyProfile?.taxIdentifiers?.vatNumber ||
+    null;
 
   // No longer require tax identifiers - scoring system will handle validation
 
@@ -56,17 +60,17 @@ export function transformInvoiceToSupplier(
       line2: null,
       city: address.city,
       postalCode: address.postalCode || null,
-      country: address.country || 'GB',
+      country: address.country || "GB",
     });
   } else if (address.line1) {
     // If we have address but no city, use a default
-    const defaultCity = address.country === 'US' ? 'Unknown City' : 'Unknown';
+    const defaultCity = address.country === "US" ? "Unknown City" : "Unknown";
     request.data.addresses.push({
       line1: address.line1,
       line2: null,
       city: defaultCity,
       postalCode: address.postalCode || null,
-      country: address.country || 'GB',
+      country: address.country || "GB",
     });
   }
 
@@ -74,7 +78,7 @@ export function transformInvoiceToSupplier(
   const { contacts } = vendorData;
   if (contacts.email) {
     request.data.contacts.push({
-      type: 'email',
+      type: "email",
       value: contacts.email,
       isPrimary: true,
     });
@@ -82,7 +86,7 @@ export function transformInvoiceToSupplier(
 
   if (contacts.phone) {
     request.data.contacts.push({
-      type: 'phone',
+      type: "phone",
       value: contacts.phone,
       isPrimary: !contacts.email, // Primary if no email
     });
@@ -90,7 +94,7 @@ export function transformInvoiceToSupplier(
 
   if (contacts.website) {
     request.data.contacts.push({
-      type: 'website',
+      type: "website",
       value: contacts.website,
       isPrimary: false,
     });

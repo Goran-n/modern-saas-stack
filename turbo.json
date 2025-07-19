@@ -48,17 +48,6 @@
       "persistent": true
     }
   },
-  "globalDependencies": [
-    "package.json",
-    "bun.lockb",
-    "turbo.json",
-    ".env*"
-  ],
-  "globalEnv": [
-    "NODE_ENV",
-    "DATABASE_URL",
-    "LOG_LEVEL",
-    "PORT",
-    "HOST"
-  ]
+  "globalDependencies": ["package.json", "bun.lockb", "turbo.json", ".env*"],
+  "globalEnv": ["NODE_ENV", "DATABASE_URL", "LOG_LEVEL", "PORT", "HOST"]
 }

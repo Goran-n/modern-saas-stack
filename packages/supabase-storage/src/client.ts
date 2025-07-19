@@ -1,5 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { upload, download, remove, signedUrl } from './operations';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { download, remove, signedUrl, upload } from "./operations";
 
 export class SupabaseStorageClient {
   private client: SupabaseClient;
@@ -23,7 +23,7 @@ export class SupabaseStorageClient {
   async upload(path: string, file: File): Promise<string> {
     return upload(this.client, {
       file,
-      path: path.split('/'),
+      path: path.split("/"),
       bucket: this.bucket,
     });
   }
@@ -42,7 +42,10 @@ export class SupabaseStorageClient {
     });
   }
 
-  async signedUrl(path: string, expireIn: number): Promise<{ data: { signedUrl: string } | null; error: Error | null }> {
+  async signedUrl(
+    path: string,
+    expireIn: number,
+  ): Promise<{ data: { signedUrl: string } | null; error: Error | null }> {
     try {
       const result = await signedUrl(this.client, {
         path,

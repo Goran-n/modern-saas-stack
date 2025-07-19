@@ -1,5 +1,5 @@
 <template>
-  <UDropdown :items="items" :ui="{ width: 'w-48' }">
+  <UDropdownMenu :items="items" :ui="{ content: 'w-48' }">
     <template #default>
       <UButton
         color="neutral"
@@ -32,15 +32,15 @@
     <template #item="{ item }">
       <div class="flex items-center space-x-2 w-full">
         <UIcon
-          v-if="item.icon"
+          v-if="'icon' in item && item.icon"
           :name="item.icon"
           class="w-4 h-4 flex-shrink-0"
-          :class="item.iconClass"
+          :class="'iconClass' in item ? item.iconClass : ''"
         />
-        <span class="flex-1 truncate">{{ item.label }}</span>
+        <span class="flex-1 truncate">{{ 'label' in item ? item.label : '' }}</span>
       </div>
     </template>
-  </UDropdown>
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">

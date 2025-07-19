@@ -175,9 +175,13 @@
                   <span class="text-sm text-gray-500">{{ formatFieldName(String(key)) }}:</span>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-medium">{{ field.value }}</span>
-                    <span class="text-xs px-2 py-1 rounded" :class="getConfidenceColor(field.confidence)">
+                    <UBadge
+                      size="xs"
+                      :color="getConfidenceBadgeColor(field.confidence)"
+                      variant="soft"
+                    >
                       {{ Math.round(field.confidence) }}%
-                    </span>
+                    </UBadge>
                   </div>
                 </div>
               </div>
@@ -277,6 +281,12 @@ const getConfidenceColor = (confidence: number) => {
   if (confidence >= 90) return 'text-green-600 bg-green-100';
   if (confidence >= 70) return 'text-yellow-600 bg-yellow-100';
   return 'text-red-600 bg-red-100';
+};
+
+const getConfidenceBadgeColor = (confidence: number): 'success' | 'warning' | 'error' => {
+  if (confidence >= 90) return 'success';
+  if (confidence >= 70) return 'warning';
+  return 'error';
 };
 
 const getValidationColor = (status: string) => {

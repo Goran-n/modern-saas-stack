@@ -1,60 +1,66 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <!-- Simple Header -->
-    <header class="bg-white shadow-sm border-b border-slate-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <!-- Logo and Navigation -->
-          <div class="flex items-center space-x-8">
-            <!-- Logo -->
-            <NuxtLink to="/" class="flex items-center space-x-2">
-              <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-lg">K</span>
-              </div>
-              <span class="text-xl font-semibold text-slate-900">Kibly</span>
+  <UApp class="min-h-screen bg-slate-50">
+    <!-- Header -->
+    <UHeader 
+      title="" 
+      class="bg-white shadow-sm border-b border-slate-200"
+    >
+      <div class="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+        <!-- Logo and Navigation -->
+        <div class="flex items-center space-x-8">
+          <!-- Logo -->
+          <NuxtLink to="/" class="flex items-center space-x-2">
+            <UAvatar size="sm" class="bg-primary-600">
+              <span class="text-white font-bold text-lg">K</span>
+            </UAvatar>
+            <span class="text-xl font-semibold text-slate-900">Kibly</span>
+          </NuxtLink>
+          
+          <!-- Main Navigation -->
+          <nav class="hidden md:flex items-center space-x-1">
+            <NuxtLink 
+              v-for="item in navigationItems" 
+              :key="item.to"
+              :to="item.to"
+              class="px-3 py-2 text-sm font-medium rounded-md transition-colors text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+              active-class="bg-slate-100 text-slate-900"
+            >
+              {{ item.label }}
             </NuxtLink>
-            
-            <!-- Main Navigation -->
-            <nav class="hidden md:flex items-center space-x-4">
-              <NuxtLink 
-                to="/" 
-                class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors"
-                :class="{ 'bg-slate-100 text-slate-900': $route.path === '/' }"
-              >
-                Dashboard
-              </NuxtLink>
-              <NuxtLink 
-                to="/files" 
-                class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors"
-                :class="{ 'bg-slate-100 text-slate-900': $route.path.startsWith('/files') }"
-              >
-                Files
-              </NuxtLink>
-              <NuxtLink 
-                to="/suppliers" 
-                class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors"
-                :class="{ 'bg-slate-100 text-slate-900': $route.path.startsWith('/suppliers') }"
-              >
-                Suppliers
-              </NuxtLink>
-            </nav>
-          </div>
+          </nav>
+        </div>
 
-          <!-- User Menu -->
-          <div class="flex items-center">
-            <UserMenu />
-          </div>
+        <!-- User Menu -->
+        <div class="flex items-center">
+          <UserDropdown />
         </div>
       </div>
-    </header>
+    </UHeader>
 
     <!-- Main Content -->
-    <main>
+    <UMain>
       <slot />
-    </main>
-  </div>
+    </UMain>
+  </UApp>
 </template>
 
 <script setup lang="ts">
-// Simple clean layout - no theme toggle needed
+const navigationItems = [
+  {
+    label: 'Dashboard',
+    to: '/'
+  },
+  {
+    label: 'Files',
+    to: '/files'
+  },
+  {
+    label: 'Suppliers',
+    to: '/suppliers'
+  },
+  {
+    label: 'Communications',
+    to: '/communications'
+  }
+]
 </script>

@@ -1,23 +1,25 @@
-export * from './development';
-export * from './production';
-export * from './test';
+export * from "./development";
+export * from "./production";
+export * from "./test";
 
-import { developmentConfigSchema, type DevelopmentConfig } from './development';
-import { productionConfigSchema, type ProductionConfig } from './production';
-import { testConfigSchema, type TestConfig } from './test';
+import { type DevelopmentConfig, developmentConfigSchema } from "./development";
+import { type ProductionConfig, productionConfigSchema } from "./production";
+import { type TestConfig, testConfigSchema } from "./test";
 
 /**
  * Get the appropriate configuration schema based on NODE_ENV
  * @param env - The environment to get the schema for
  * @returns The Zod schema for the specified environment
  */
-export function getEnvironmentSchema(env: string = process.env.NODE_ENV || 'development') {
+export function getEnvironmentSchema(
+  env: string = process.env.NODE_ENV || "development",
+) {
   switch (env) {
-    case 'production':
+    case "production":
       return productionConfigSchema;
-    case 'test':
+    case "test":
       return testConfigSchema;
-    case 'development':
+    case "development":
     default:
       return developmentConfigSchema;
   }
@@ -26,4 +28,7 @@ export function getEnvironmentSchema(env: string = process.env.NODE_ENV || 'deve
 /**
  * Union type of all possible environment configurations
  */
-export type EnvironmentConfig = DevelopmentConfig | ProductionConfig | TestConfig;
+export type EnvironmentConfig =
+  | DevelopmentConfig
+  | ProductionConfig
+  | TestConfig;

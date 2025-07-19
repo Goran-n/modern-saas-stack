@@ -1,9 +1,9 @@
+import { logger } from "@kibly/utils";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { errorTracker } from "../services/error-tracker";
 import { createTRPCRouter } from "../trpc";
 import { publicProcedure } from "../trpc/procedures";
-import { TRPCError } from "@trpc/server";
-import { logger } from "@kibly/utils";
-import { errorTracker } from "../services/error-tracker";
 
 interface DatabaseError extends Error {
   code: string;
@@ -15,7 +15,7 @@ export const debugRouter = createTRPCRouter({
     .input(
       z.object({
         errorType: z.enum(["trpc", "standard", "database", "validation"]),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       logger.info("Test error endpoint called", {
@@ -34,10 +34,13 @@ export const debugRouter = createTRPCRouter({
         case "standard":
           throw new Error("This is a test standard error");
 
-        case "database":
-          const dbError = new Error("Database connection failed") as DatabaseError;
+        case "database": {
+          const dbError = new Error(
+            "Database connection failed",
+          ) as DatabaseError;
           dbError.code = "ECONNREFUSED";
           throw dbError;
+        }
 
         case "validation":
           throw new TRPCError({
@@ -65,7 +68,7 @@ export const debugRouter = createTRPCRouter({
     .input(
       z.object({
         message: z.string(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       logger.info("Test success endpoint called", {

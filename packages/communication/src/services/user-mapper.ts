@@ -1,13 +1,12 @@
-import { logger } from '@kibly/utils';
-import { 
-  getDatabaseConnection, 
-  whatsappMappings, 
+import {
+  type DrizzleClient,
+  getDatabaseConnection,
   slackUserMappings,
   slackWorkspaces,
-  eq,
-  and,
-  type DrizzleClient
-} from '@kibly/shared-db';
+  whatsappMappings,
+} from "@kibly/shared-db";
+import { and, eq } from "drizzle-orm";
+import { logger } from "@kibly/utils";
 
 export interface UserMappingResult {
   tenantId: string;
@@ -31,53 +30,57 @@ export class UserMapperService {
    * @param phoneNumber - E.164 formatted phone number
    * @returns User mapping result or error
    */
-  async lookupWhatsAppUser(phoneNumber: string): Promise<UserMappingResult | UserMappingError> {
+  async lookupWhatsAppUser(
+    phoneNumber: string,
+  ): Promise<UserMappingResult | UserMappingError> {
     try {
       // Normalize phone number to E.164 format if needed
       const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
-      
-      logger.info('Looking up WhatsApp user', { phoneNumber: normalizedPhone });
-      
+
+      logger.info("Looking up WhatsApp user", { phoneNumber: normalizedPhone });
+
       const result = await this.db
         .select({
           tenantId: whatsappMappings.tenantId,
-          userId: whatsappMappings.userId
+          userId: whatsappMappings.userId,
         })
         .from(whatsappMappings)
         .where(eq(whatsappMappings.phoneNumber, normalizedPhone))
         .limit(1);
-      
+
       if (result.length === 0) {
-        logger.warn('WhatsApp user not found', { phoneNumber: normalizedPhone });
+        logger.warn("WhatsApp user not found", {
+          phoneNumber: normalizedPhone,
+        });
         return {
-          error: 'User not registered',
+          error: "User not registered",
           details: {
             phoneNumber: normalizedPhone,
-            platform: 'whatsapp'
-          }
+            platform: "whatsapp",
+          },
         };
       }
-      
+
       const mapping = result[0]!;
-      logger.info('WhatsApp user found', { 
+      logger.info("WhatsApp user found", {
         phoneNumber: normalizedPhone,
         tenantId: mapping.tenantId,
-        userId: mapping.userId 
+        userId: mapping.userId,
       });
-      
+
       return {
         tenantId: mapping.tenantId,
-        userId: mapping.userId
+        userId: mapping.userId,
       };
     } catch (error) {
-      logger.error('Error looking up WhatsApp user', { error, phoneNumber });
+      logger.error("Error looking up WhatsApp user", { error, phoneNumber });
       return {
-        error: 'Failed to lookup user',
+        error: "Failed to lookup user",
         details: {
           phoneNumber,
-          platform: 'whatsapp',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        }
+          platform: "whatsapp",
+          message: error instanceof Error ? error.message : "Unknown error",
+        },
       };
     }
   }
@@ -88,80 +91,87 @@ export class UserMapperService {
    * @param slackUserId - Slack user ID
    * @returns User mapping result or error
    */
-  async lookupSlackUser(workspaceId: string, slackUserId: string): Promise<UserMappingResult | UserMappingError> {
+  async lookupSlackUser(
+    workspaceId: string,
+    slackUserId: string,
+  ): Promise<UserMappingResult | UserMappingError> {
     try {
-      logger.info('Looking up Slack user', { workspaceId, slackUserId });
-      
+      logger.info("Looking up Slack user", { workspaceId, slackUserId });
+
       // First, verify the workspace exists and get tenant ID
       const workspaceResult = await this.db
         .select({
-          tenantId: slackWorkspaces.tenantId
+          tenantId: slackWorkspaces.tenantId,
         })
         .from(slackWorkspaces)
         .where(eq(slackWorkspaces.workspaceId, workspaceId))
         .limit(1);
-      
+
       if (workspaceResult.length === 0) {
-        logger.warn('Slack workspace not found', { workspaceId });
+        logger.warn("Slack workspace not found", { workspaceId });
         return {
-          error: 'Workspace not registered',
+          error: "Workspace not registered",
           details: {
             workspaceId,
-            platform: 'slack'
-          }
+            platform: "slack",
+          },
         };
       }
-      
+
       const tenantId = workspaceResult[0]!.tenantId;
-      
+
       // Look up user mapping
       const userResult = await this.db
         .select({
-          userId: slackUserMappings.userId
+          userId: slackUserMappings.userId,
         })
         .from(slackUserMappings)
         .where(
           and(
             eq(slackUserMappings.workspaceId, workspaceId),
-            eq(slackUserMappings.slackUserId, slackUserId)
-          )
+            eq(slackUserMappings.slackUserId, slackUserId),
+          ),
         )
         .limit(1);
-      
+
       if (userResult.length === 0) {
-        logger.warn('Slack user not found', { workspaceId, slackUserId });
+        logger.warn("Slack user not found", { workspaceId, slackUserId });
         return {
-          error: 'User not registered',
+          error: "User not registered",
           details: {
             workspaceId,
             slackUserId,
-            platform: 'slack'
-          }
+            platform: "slack",
+          },
         };
       }
-      
+
       const userId = userResult[0]!.userId;
-      logger.info('Slack user found', { 
+      logger.info("Slack user found", {
         workspaceId,
         slackUserId,
         tenantId,
-        userId 
+        userId,
       });
-      
+
       return {
         tenantId,
-        userId
+        userId,
       };
     } catch (error) {
-      logger.error('Error looking up Slack user', { error, workspaceId, slackUserId });
+      logger.error("Error looking up Slack user", {
+        error,
+        workspaceId,
+        slackUserId,
+      });
       return {
-        error: 'Failed to lookup user',
+        error: "Failed to lookup user",
         details: {
           workspaceId,
           slackUserId,
-          platform: 'slack',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        }
+          platform: "slack",
+          message: error instanceof Error ? error.message : "Unknown error",
+        },
       };
     }
   }
@@ -175,19 +185,19 @@ export class UserMapperService {
     try {
       const result = await this.db
         .select({
-          botToken: slackWorkspaces.botToken
+          botToken: slackWorkspaces.botToken,
         })
         .from(slackWorkspaces)
         .where(eq(slackWorkspaces.workspaceId, workspaceId))
         .limit(1);
-      
+
       if (result.length === 0) {
         return null;
       }
-      
+
       return result[0]!.botToken;
     } catch (error) {
-      logger.error('Error getting Slack bot token', { error, workspaceId });
+      logger.error("Error getting Slack bot token", { error, workspaceId });
       return null;
     }
   }
@@ -199,22 +209,24 @@ export class UserMapperService {
    */
   private normalizePhoneNumber(phoneNumber: string): string {
     // Remove all non-numeric characters
-    let cleaned = phoneNumber.replace(/\D/g, '');
-    
+    let cleaned = phoneNumber.replace(/\D/g, "");
+
     // Add + prefix if not present
-    if (!phoneNumber.startsWith('+')) {
-      cleaned = '+' + cleaned;
+    if (!phoneNumber.startsWith("+")) {
+      cleaned = "+" + cleaned;
     } else {
-      cleaned = '+' + cleaned;
+      cleaned = "+" + cleaned;
     }
-    
+
     return cleaned;
   }
 
   /**
    * Check if error result
    */
-  static isError(result: UserMappingResult | UserMappingError): result is UserMappingError {
-    return 'error' in result;
+  static isError(
+    result: UserMappingResult | UserMappingError,
+  ): result is UserMappingError {
+    return "error" in result;
   }
 }

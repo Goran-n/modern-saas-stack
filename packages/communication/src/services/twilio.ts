@@ -1,8 +1,8 @@
-import twilio from 'twilio';
-import { createLogger } from '@kibly/utils';
-import { getConfig } from '@kibly/config';
+import { getConfig } from "@kibly/config";
+import { createLogger } from "@kibly/utils";
+import twilio from "twilio";
 
-const logger = createLogger('twilio-service');
+const logger = createLogger("twilio-service");
 
 export interface TwilioConfig {
   accountSid: string;
@@ -24,21 +24,23 @@ export class TwilioService {
   constructor(config?: Partial<TwilioConfig>) {
     const configInstance = getConfig();
     const envConfig = configInstance.getForCommunication();
-    
+
     this.config = {
       accountSid: config?.accountSid || envConfig.TWILIO_ACCOUNT_SID,
       authToken: config?.authToken || envConfig.TWILIO_AUTH_TOKEN,
-      whatsappNumber: config?.whatsappNumber || `${envConfig.COMMUNICATION_WHATSAPP_PREFIX}${envConfig.TWILIO_WHATSAPP_NUMBER}`
+      whatsappNumber:
+        config?.whatsappNumber ||
+        `${envConfig.COMMUNICATION_WHATSAPP_PREFIX}${envConfig.TWILIO_WHATSAPP_NUMBER}`,
     };
 
     if (!this.config.accountSid || !this.config.authToken) {
-      throw new Error('Twilio credentials are required');
+      throw new Error("Twilio credentials are required");
     }
 
     this.client = twilio(this.config.accountSid, this.config.authToken);
-    logger.info('Twilio service initialized', { 
+    logger.info("Twilio service initialized", {
       accountSid: this.config.accountSid,
-      whatsappNumber: this.config.whatsappNumber 
+      whatsappNumber: this.config.whatsappNumber,
     });
   }
 
@@ -48,30 +50,30 @@ export class TwilioService {
       const message = await this.client.messages.create({
         from: this.config.whatsappNumber,
         to: `${envConfig.COMMUNICATION_WHATSAPP_PREFIX}${to}`,
-        body
+        body,
       });
 
-      logger.info('WhatsApp message sent', { 
+      logger.info("WhatsApp message sent", {
         messageId: message.sid,
-        to 
+        to,
       });
 
       return message.sid;
     } catch (error) {
-      logger.error('Failed to send WhatsApp message', error);
+      logger.error("Failed to send WhatsApp message", error);
       throw error;
     }
   }
 
   async getMediaUrl(mediaId: string): Promise<WhatsAppMedia> {
     try {
-      logger.warn('Media download not fully implemented', { mediaId });
-      
+      logger.warn("Media download not fully implemented", { mediaId });
+
       // TODO: Implement actual media retrieval
-      
-      throw new Error('Media download not yet implemented');
+
+      throw new Error("Media download not yet implemented");
     } catch (error) {
-      logger.error('Failed to get media URL', { mediaId, error });
+      logger.error("Failed to get media URL", { mediaId, error });
       throw error;
     }
   }
@@ -80,8 +82,8 @@ export class TwilioService {
     try {
       const response = await fetch(mediaUrl, {
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${this.config.accountSid}:${this.config.authToken}`).toString('base64')}`
-        }
+          Authorization: `Basic ${Buffer.from(`${this.config.accountSid}:${this.config.authToken}`).toString("base64")}`,
+        },
       });
 
       if (!response.ok) {
@@ -91,12 +93,15 @@ export class TwilioService {
       const arrayBuffer = await response.arrayBuffer();
       return Buffer.from(arrayBuffer);
     } catch (error) {
-      logger.error('Failed to download media', { mediaUrl, error });
+      logger.error("Failed to download media", { mediaUrl, error });
       throw error;
     }
   }
 
-  async sendVerificationCode(phoneNumber: string, code: string): Promise<string> {
+  async sendVerificationCode(
+    phoneNumber: string,
+    code: string,
+  ): Promise<string> {
     const message = `Your Kibly verification code is: ${code}\n\nThis code will expire in 10 minutes.`;
     return this.sendMessage(phoneNumber, message);
   }
@@ -104,13 +109,13 @@ export class TwilioService {
   validateWebhookSignature(
     signature: string,
     url: string,
-    params: Record<string, string>
+    params: Record<string, string>,
   ): boolean {
     return twilio.validateRequest(
       this.config.authToken,
       signature,
       url,
-      params
+      params,
     );
   }
 }
@@ -122,7 +127,7 @@ export function getTwilioService(): TwilioService {
     try {
       twilioService = new TwilioService();
     } catch (error) {
-      logger.error('Failed to initialize Twilio service', error);
+      logger.error("Failed to initialize Twilio service", error);
       throw error;
     }
   }

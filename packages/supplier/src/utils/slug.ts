@@ -1,10 +1,11 @@
-import { suppliers, eq, and, like } from '@kibly/shared-db';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import type { PgTransaction } from 'drizzle-orm/pg-core';
+import { suppliers } from "@kibly/shared-db";
+import { and, eq, like } from "drizzle-orm";
+import type { PgTransaction } from "drizzle-orm/pg-core";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 /**
  * Generate a unique slug for a supplier within a tenant
- * 
+ *
  * This function handles race conditions by:
  * 1. Using a SELECT to find the highest suffix
  * 2. The database unique constraint will catch any races
@@ -13,17 +14,17 @@ import type { PgTransaction } from 'drizzle-orm/pg-core';
 export async function generateSlug(
   name: string,
   tenantId: string,
-  db: PostgresJsDatabase<any> | PgTransaction<any, any, any>
+  db: PostgresJsDatabase<any> | PgTransaction<any, any, any>,
 ): Promise<string> {
   // Create base slug
   const baseSlug = name
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-')     // Replace spaces with hyphens
-    .replace(/-+/g, '-')      // Replace multiple hyphens with single
-    .replace(/^-|-$/g, '')    // Remove leading/trailing hyphens
-    .substring(0, 50);        // Limit length
-  
+    .replace(/[^\w\s-]/g, "") // Remove special characters
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+    .substring(0, 50); // Limit length
+
   // Get all existing slugs that match our base pattern
   const existingSlugs = await db
     .select({ slug: suppliers.slug })
@@ -31,22 +32,22 @@ export async function generateSlug(
     .where(
       and(
         eq(suppliers.tenantId, tenantId),
-        like(suppliers.slug, `${baseSlug}%`)
-      )
+        like(suppliers.slug, `${baseSlug}%`),
+      ),
     );
-  
+
   // If no existing slugs, use the base
   if (existingSlugs.length === 0) {
     return baseSlug;
   }
-  
+
   // Find the highest numbered suffix
   let maxSuffix = 0;
-  const baseSlugExact = existingSlugs.some(s => s.slug === baseSlug);
+  const baseSlugExact = existingSlugs.some((s) => s.slug === baseSlug);
   if (baseSlugExact) {
     maxSuffix = 0;
   }
-  
+
   // Check for numbered variants
   const suffixPattern = new RegExp(`^${baseSlug}-(\\d+)$`);
   for (const { slug } of existingSlugs) {
@@ -58,7 +59,7 @@ export async function generateSlug(
       }
     }
   }
-  
+
   // Return the next available slug
   if (maxSuffix === 0 && baseSlugExact) {
     return `${baseSlug}-1`;

@@ -1,19 +1,28 @@
-import { Identifiers, Supplier } from '../types';
-import { MATCH_SCORES } from '../constants';
-import { calculateNameMatchScore } from '../utils/fuzzy-match';
+import { MATCH_SCORES } from "../constants";
+import type { Identifiers, Supplier } from "../types";
+import { calculateNameMatchScore } from "../utils/fuzzy-match";
 
 export interface MatchResult {
   matched: boolean;
   supplierId?: string | undefined;
   confidence: number;
-  matchType: 'company_number' | 'vat_number' | 'domain' | 'name' | 'address' | 'composite' | 'none';
-  details?: {
-    nameScore?: number;
-    addressScore?: number;
-    domainScore?: number;
-    identifierScore?: number;
-    contactScore?: number;
-  } | undefined;
+  matchType:
+    | "company_number"
+    | "vat_number"
+    | "domain"
+    | "name"
+    | "address"
+    | "composite"
+    | "none";
+  details?:
+    | {
+        nameScore?: number;
+        addressScore?: number;
+        domainScore?: number;
+        identifierScore?: number;
+        contactScore?: number;
+      }
+    | undefined;
 }
 
 export interface SupplierMatchData {
@@ -40,7 +49,7 @@ export class SupplierMatcher {
   static match(
     identifiers: Identifiers,
     name: string,
-    existingSuppliers: Supplier[]
+    existingSuppliers: Supplier[],
   ): MatchResult {
     // Legacy method - convert to new format
     const matchData: SupplierMatchData = {
@@ -49,8 +58,8 @@ export class SupplierMatcher {
       addresses: [],
       contacts: [],
     };
-    
-    return this.matchWithScoring(matchData, existingSuppliers);
+
+    return SupplierMatcher.matchWithScoring(matchData, existingSuppliers);
   }
 
   /**
@@ -58,17 +67,17 @@ export class SupplierMatcher {
    */
   static matchWithScoring(
     supplierData: SupplierMatchData,
-    existingSuppliers: Supplier[]
+    existingSuppliers: Supplier[],
   ): MatchResult {
     let bestMatch: MatchResult = {
       matched: false,
       confidence: 0,
-      matchType: 'none',
+      matchType: "none",
     };
 
     for (const existing of existingSuppliers) {
-      const matchResult = this.scoreMatch(supplierData, existing);
-      
+      const matchResult = SupplierMatcher.scoreMatch(supplierData, existing);
+
       if (matchResult.confidence > bestMatch.confidence) {
         bestMatch = matchResult;
       }
@@ -82,11 +91,11 @@ export class SupplierMatcher {
    */
   private static scoreMatch(
     supplierData: SupplierMatchData,
-    existing: Supplier
+    existing: Supplier,
   ): MatchResult {
     let totalScore = 0;
-    let matchType: MatchResult['matchType'] = 'none';
-    const details: MatchResult['details'] = {};
+    let matchType: MatchResult["matchType"] = "none";
+    const details: MatchResult["details"] = {};
 
     // 1. Company number matching (highest priority)
     if (supplierData.identifiers.companyNumber && existing.companyNumber) {
@@ -95,7 +104,7 @@ export class SupplierMatcher {
           matched: true,
           supplierId: existing.id,
           confidence: 100,
-          matchType: 'company_number',
+          matchType: "company_number",
           details: { identifierScore: MATCH_SCORES.IDENTIFIERS.COMPANY_NUMBER },
         };
       }
@@ -108,26 +117,29 @@ export class SupplierMatcher {
           matched: true,
           supplierId: existing.id,
           confidence: 95,
-          matchType: 'vat_number',
+          matchType: "vat_number",
           details: { identifierScore: MATCH_SCORES.IDENTIFIERS.VAT_NUMBER },
         };
       }
     }
 
     // 3. Name matching with fuzzy logic
-    const nameScore = calculateNameMatchScore(supplierData.name, existing.displayName || existing.legalName);
+    const nameScore = calculateNameMatchScore(
+      supplierData.name,
+      existing.displayName || existing.legalName,
+    );
     if (nameScore >= 100) {
       totalScore += MATCH_SCORES.NAME.EXACT;
-      matchType = 'name';
+      matchType = "name";
     } else if (nameScore >= 90) {
       totalScore += MATCH_SCORES.NAME.FUZZY_HIGH;
-      matchType = 'name';
+      matchType = "name";
     } else if (nameScore >= 70) {
       totalScore += MATCH_SCORES.NAME.FUZZY_MEDIUM;
-      matchType = 'name';
+      matchType = "name";
     } else if (nameScore >= 50) {
       totalScore += MATCH_SCORES.NAME.FUZZY_LOW;
-      matchType = 'name';
+      matchType = "name";
     }
     details.nameScore = nameScore;
 
@@ -145,7 +157,7 @@ export class SupplierMatcher {
     }
 
     // 6. Contact matching
-    let contactScore = 0;
+    const contactScore = 0;
     if (supplierData.contacts) {
       // This would need existing supplier contact data to compare
       // Placeholder for now
@@ -156,8 +168,8 @@ export class SupplierMatcher {
     const matched = totalScore > 0;
     const confidence = Math.min(totalScore, 100);
 
-    if (confidence >= 50 && matchType === 'none') {
-      matchType = 'composite';
+    if (confidence >= 50 && matchType === "none") {
+      matchType = "composite";
     }
 
     return {
@@ -203,9 +215,15 @@ export class SupplierMatcher {
 
     // Contact data
     if (supplierData.contacts) {
-      const hasEmail = supplierData.contacts.some(c => c.type === 'email' && c.value);
-      const hasPhone = supplierData.contacts.some(c => c.type === 'phone' && c.value);
-      const hasWebsite = supplierData.contacts.some(c => c.type === 'website' && c.value);
+      const hasEmail = supplierData.contacts.some(
+        (c) => c.type === "email" && c.value,
+      );
+      const hasPhone = supplierData.contacts.some(
+        (c) => c.type === "phone" && c.value,
+      );
+      const hasWebsite = supplierData.contacts.some(
+        (c) => c.type === "website" && c.value,
+      );
 
       if (hasEmail) {
         score += MATCH_SCORES.CONTACTS.EMAIL;

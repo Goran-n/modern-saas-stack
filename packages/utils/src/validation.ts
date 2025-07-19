@@ -8,7 +8,8 @@
  * @returns True if valid UUID, false otherwise
  */
 export function isValidUuid(uuid: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 }
 
@@ -20,5 +21,9 @@ export function isValidUuid(uuid: string): boolean {
 export function isValidFileName(fileName: string): boolean {
   // Check for reserved characters and length
   const reservedChars = /[<>:"/\\|?*\x00-\x1f]/;
-  return !reservedChars.test(fileName) && fileName.length > 0 && fileName.length <= 255;
+  return (
+    !reservedChars.test(fileName) &&
+    fileName.length > 0 &&
+    fileName.length <= 255
+  );
 }

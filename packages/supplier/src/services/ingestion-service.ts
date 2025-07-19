@@ -1,29 +1,27 @@
-import { logger } from '@kibly/utils';
 import {
-  suppliers,
-  supplierDataSources,
   supplierAttributes,
-  eq,
-  and,
-  sql,
-} from '@kibly/shared-db';
+  supplierDataSources,
+  suppliers,
+} from "@kibly/shared-db";
+import { and, eq, sql } from "drizzle-orm";
+import { logger } from "@kibly/utils";
+import { CONFIDENCE_THRESHOLDS, DEFAULT_CONFIDENCE } from "../constants";
+import { getDb } from "../db";
+import { SupplierError } from "../errors";
+import { AttributeNormalizer } from "../ingestion/normalizer";
+import { IngestionValidator } from "../ingestion/validator";
+import { SupplierMatcher } from "../matching/matcher";
 import {
-  SupplierIngestionRequest,
-  SupplierStatus,
   AttributeType,
-} from '../types';
-import { IngestionValidator } from '../ingestion/validator';
-import { AttributeNormalizer } from '../ingestion/normalizer';
-import { SupplierMatcher } from '../matching/matcher';
-import { generateSlug } from '../utils/slug';
-import { SupplierError } from '../errors';
-import { SupplierValidator } from '../validation/supplier-validator';
-import { CONFIDENCE_THRESHOLDS, DEFAULT_CONFIDENCE } from '../constants';
-import { getDb } from '../db';
+  type SupplierIngestionRequest,
+  SupplierStatus,
+} from "../types";
+import { generateSlug } from "../utils/slug";
+import { SupplierValidator } from "../validation/supplier-validator";
 
 export interface IngestionResult {
   success: boolean;
-  action: 'created' | 'updated' | 'skipped';
+  action: "created" | "updated" | "skipped";
   supplierId?: string;
   error?: string;
 }
@@ -40,7 +38,7 @@ export class SupplierIngestionService {
     try {
       // Validate and sanitize
       const validated = IngestionValidator.validate(request);
-      
+
       // Validate data quality
       const validateData: {
         name: string;
@@ -54,55 +52,69 @@ export class SupplierIngestionService {
         name: validated.data.name,
         companyNumber: validated.data.identifiers.companyNumber ?? null,
         vatNumber: validated.data.identifiers.vatNumber ?? null,
-        email: validated.data.contacts.find(c => c.type === 'email')?.value ?? null,
-        phone: validated.data.contacts.find(c => c.type === 'phone')?.value ?? null,
-        website: validated.data.contacts.find(c => c.type === 'website')?.value ?? null,
+        email:
+          validated.data.contacts.find((c) => c.type === "email")?.value ??
+          null,
+        phone:
+          validated.data.contacts.find((c) => c.type === "phone")?.value ??
+          null,
+        website:
+          validated.data.contacts.find((c) => c.type === "website")?.value ??
+          null,
       };
-      
+
       const country = validated.data.addresses[0]?.country;
       if (country) {
         validateData.country = country;
       }
-      
+
       const qualityValidation = SupplierValidator.validate(validateData);
-      
+
       if (!qualityValidation.isValid) {
-        logger.warn('Supplier data quality validation failed', {
+        logger.warn("Supplier data quality validation failed", {
           errors: qualityValidation.errors,
           warnings: qualityValidation.warnings,
           name: validated.data.name,
         });
         return {
           success: false,
-          action: 'skipped',
-          error: `Data quality issues: ${qualityValidation.errorMessages.join(', ')}`,
+          action: "skipped",
+          error: `Data quality issues: ${qualityValidation.errorMessages.join(", ")}`,
         };
       }
-      
+
       // Log warnings but continue
       if (qualityValidation.warnings.length > 0) {
-        logger.info('Supplier data quality warnings', {
+        logger.info("Supplier data quality warnings", {
           warnings: qualityValidation.warnings,
           confidence: qualityValidation.confidence,
         });
       }
-      
+
       // Apply enhanced data if available
       if (qualityValidation.enhancedData) {
         if (qualityValidation.enhancedData.validatedCompanyNumber) {
-          validated.data.identifiers.companyNumber = qualityValidation.enhancedData.validatedCompanyNumber;
+          validated.data.identifiers.companyNumber =
+            qualityValidation.enhancedData.validatedCompanyNumber;
         }
         if (qualityValidation.enhancedData.validatedVat) {
-          validated.data.identifiers.vatNumber = qualityValidation.enhancedData.validatedVat;
+          validated.data.identifiers.vatNumber =
+            qualityValidation.enhancedData.validatedVat;
         }
       }
-      
+
       // Match against existing suppliers
       const matchResult = await this.matchSupplier(validated);
-      
-      if (matchResult.matched && matchResult.confidence >= CONFIDENCE_THRESHOLDS.AUTO_ACCEPT) {
+
+      if (
+        matchResult.matched &&
+        matchResult.confidence >= CONFIDENCE_THRESHOLDS.AUTO_ACCEPT
+      ) {
         // High confidence match - update existing
-        return await this.updateExistingSupplier(validated, matchResult.supplierId!);
+        return await this.updateExistingSupplier(
+          validated,
+          matchResult.supplierId!,
+        );
       } else if (!matchResult.matched) {
         // No match - check if we have enough data to create new supplier
         const supplierMatchData = {
@@ -111,13 +123,14 @@ export class SupplierIngestionService {
           addresses: validated.data.addresses,
           contacts: validated.data.contacts,
         };
-        
-        const creationScore = SupplierMatcher.calculateCreationScore(supplierMatchData);
-        
+
+        const creationScore =
+          SupplierMatcher.calculateCreationScore(supplierMatchData);
+
         if (creationScore >= CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER) {
           return await this.createNewSupplier(validated);
         } else {
-          logger.warn('Insufficient data for supplier creation', {
+          logger.warn("Insufficient data for supplier creation", {
             name: validated.data.name,
             creationScore,
             requiredScore: CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER,
@@ -125,56 +138,57 @@ export class SupplierIngestionService {
           });
           return {
             success: false,
-            action: 'skipped',
+            action: "skipped",
             error: `Insufficient data for supplier creation (score: ${creationScore}/${CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER})`,
           };
         }
       } else {
         // Low confidence match - skip for manual review
-        logger.info('Low confidence match, skipping', {
+        logger.info("Low confidence match, skipping", {
           name: validated.data.name,
           confidence: matchResult.confidence,
         });
         return {
           success: true,
-          action: 'skipped',
+          action: "skipped",
         };
       }
     } catch (error: any) {
-      logger.error('Supplier ingestion failed', { error, request });
-      
+      logger.error("Supplier ingestion failed", { error, request });
+
       // Handle database constraint violations
-      if (error.code === '23505') { // Unique constraint violation
-        if (error.detail?.includes('company_number')) {
+      if (error.code === "23505") {
+        // Unique constraint violation
+        if (error.detail?.includes("company_number")) {
           throw new SupplierError(
-            'A supplier with this company number already exists',
-            'DUPLICATE_COMPANY_NUMBER',
-            409
+            "A supplier with this company number already exists",
+            "DUPLICATE_COMPANY_NUMBER",
+            409,
           );
         }
         // VAT number constraint removed - multiple trading names can share VAT
       }
-      
+
       return {
         success: false,
-        action: 'skipped',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        action: "skipped",
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
-  
+
   /**
    * Match supplier against existing records
    */
   private async matchSupplier(request: SupplierIngestionRequest) {
     const { data, tenantId } = request;
-    
+
     // Get all suppliers for tenant
     const existingSuppliers = await this.db
       .select()
       .from(suppliers)
       .where(eq(suppliers.tenantId, tenantId));
-    
+
     // Use enhanced matching with scoring
     const supplierMatchData = {
       identifiers: data.identifiers,
@@ -182,7 +196,7 @@ export class SupplierIngestionService {
       addresses: data.addresses,
       contacts: data.contacts,
     };
-    
+
     return SupplierMatcher.matchWithScoring(
       supplierMatchData,
       existingSuppliers.map((s: any) => ({
@@ -197,20 +211,22 @@ export class SupplierIngestionService {
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
         deletedAt: s.deletedAt,
-      }))
+      })),
     );
   }
-  
+
   /**
    * Create new supplier
    */
-  private async createNewSupplier(request: SupplierIngestionRequest): Promise<IngestionResult> {
+  private async createNewSupplier(
+    request: SupplierIngestionRequest,
+  ): Promise<IngestionResult> {
     const { data, source, sourceId, tenantId } = request;
-    
+
     // Retry logic for slug generation race conditions
     let retries = 3;
     let lastError: any;
-    
+
     while (retries > 0) {
       try {
         return await this.db.transaction(async (tx) => {
@@ -227,68 +243,70 @@ export class SupplierIngestionService {
               tenantId,
             })
             .returning();
-          
+
           if (!supplier) {
-            throw new Error('Failed to create supplier')
+            throw new Error("Failed to create supplier");
           }
-          
+
           // Track data source
           await tx.insert(supplierDataSources).values({
             supplierId: supplier.id,
             sourceType: source,
             sourceId,
           });
-          
+
           // Add attributes
           await this.addAttributes(tx, supplier.id, request);
-          
-          logger.info('Created new supplier', {
+
+          logger.info("Created new supplier", {
             supplierId: supplier.id,
             name: supplier.displayName,
             source,
           });
-          
+
           return {
             success: true,
-            action: 'created',
+            action: "created",
             supplierId: supplier.id,
           };
         });
       } catch (error: any) {
         lastError = error;
-        
+
         // Check if it's a unique constraint violation on slug
-        if (error.code === '23505' && error.detail?.includes('slug')) {
+        if (error.code === "23505" && error.detail?.includes("slug")) {
           retries--;
-          logger.warn('Slug collision detected, retrying', {
+          logger.warn("Slug collision detected, retrying", {
             name: data.name,
             tenantId,
             retriesLeft: retries,
           });
-          
+
           // Add a small delay to reduce contention
-          await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 50));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 50 + Math.random() * 50),
+          );
           continue;
         }
-        
+
         // If it's a different error, throw immediately
         throw error;
       }
     }
-    
+
     // If we exhausted retries, throw the last error
     throw lastError;
   }
-  
+
   /**
    * Update existing supplier
    */
   private async updateExistingSupplier(
     request: SupplierIngestionRequest,
-    supplierId: string
+    supplierId: string,
   ): Promise<IngestionResult> {
     const { source, sourceId } = request;
-    
+
     return await this.db.transaction(async (tx) => {
       // Update source tracking
       await tx
@@ -299,40 +317,44 @@ export class SupplierIngestionService {
           sourceId,
         })
         .onConflictDoUpdate({
-          target: [supplierDataSources.supplierId, supplierDataSources.sourceType, supplierDataSources.sourceId],
+          target: [
+            supplierDataSources.supplierId,
+            supplierDataSources.sourceType,
+            supplierDataSources.sourceId,
+          ],
           set: {
             lastSeenAt: sql`NOW()`,
             occurrenceCount: sql`${supplierDataSources.occurrenceCount} + 1`,
           },
         });
-      
+
       // Update attributes
       await this.updateAttributes(tx, supplierId, request);
-      
-      logger.info('Updated existing supplier', {
+
+      logger.info("Updated existing supplier", {
         supplierId,
         source,
       });
-      
+
       return {
         success: true,
-        action: 'updated',
+        action: "updated",
         supplierId,
       };
     });
   }
-  
+
   /**
    * Add attributes for a new supplier
    */
   private async addAttributes(
     tx: any,
     supplierId: string,
-    request: SupplierIngestionRequest
+    request: SupplierIngestionRequest,
   ): Promise<void> {
     const { data, source, sourceId, userId } = request;
     const attributes = [];
-    
+
     // Add addresses
     for (const address of data.addresses) {
       attributes.push({
@@ -346,13 +368,16 @@ export class SupplierIngestionService {
         createdBy: userId,
       });
     }
-    
+
     // Add contacts
     for (const contact of data.contacts) {
-      const type = contact.type === 'phone' ? AttributeType.PHONE :
-                   contact.type === 'email' ? AttributeType.EMAIL :
-                   AttributeType.WEBSITE;
-                   
+      const type =
+        contact.type === "phone"
+          ? AttributeType.PHONE
+          : contact.type === "email"
+            ? AttributeType.EMAIL
+            : AttributeType.WEBSITE;
+
       attributes.push({
         supplierId,
         attributeType: type,
@@ -365,7 +390,7 @@ export class SupplierIngestionService {
         createdBy: userId,
       });
     }
-    
+
     // Add bank accounts
     for (const bankAccount of data.bankAccounts) {
       attributes.push({
@@ -379,33 +404,33 @@ export class SupplierIngestionService {
         createdBy: userId,
       });
     }
-    
+
     if (attributes.length > 0) {
       await tx.insert(supplierAttributes).values(attributes);
     }
   }
-  
+
   /**
    * Update attributes for existing supplier
    */
   private async updateAttributes(
     tx: any,
     supplierId: string,
-    request: SupplierIngestionRequest
+    request: SupplierIngestionRequest,
   ): Promise<void> {
     const { data, source, sourceId, userId } = request;
-    
+
     // Get existing attribute hashes
     const existing = await tx
       .select({ hash: supplierAttributes.hash })
       .from(supplierAttributes)
       .where(eq(supplierAttributes.supplierId, supplierId));
-    
+
     const existingHashes = new Set(existing.map((a: any) => a.hash));
-    
+
     // Process each attribute type
     const newAttributes = [];
-    
+
     // Check addresses
     for (const address of data.addresses) {
       const hash = AttributeNormalizer.hash(address);
@@ -432,12 +457,12 @@ export class SupplierIngestionService {
           .where(
             and(
               eq(supplierAttributes.supplierId, supplierId),
-              eq(supplierAttributes.hash, hash)
-            )
+              eq(supplierAttributes.hash, hash),
+            ),
           );
       }
     }
-    
+
     // Add new attributes if any
     if (newAttributes.length > 0) {
       await tx.insert(supplierAttributes).values(newAttributes);

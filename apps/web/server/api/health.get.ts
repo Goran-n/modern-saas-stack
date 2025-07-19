@@ -1,7 +1,7 @@
 export default defineEventHandler(async () => {
   return {
-    status: 'ok',
+    status: "ok",
     timestamp: new Date().toISOString(),
-    service: 'kibly-web-nuxt'
-  }
-})
+    service: "kibly-web-nuxt",
+  };
+});

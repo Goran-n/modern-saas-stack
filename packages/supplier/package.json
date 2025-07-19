@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "biome check src",
+    "lint:fix": "biome check --fix src"
   },
   "dependencies": {
     "@kibly/shared-db": "workspace:*",

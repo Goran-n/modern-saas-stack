@@ -1,5 +1,5 @@
-import { TRPCError } from "@trpc/server";
 import { logger } from "@kibly/utils";
+import { TRPCError } from "@trpc/server";
 
 export interface ErrorMetrics {
   totalErrors: number;
@@ -30,15 +30,18 @@ class ErrorTracker {
   private readonly maxRecentErrors = 100;
   private readonly errorRateWindow = 60 * 1000; // 1 minute
 
-  trackError(error: TRPCError | Error, context: {
-    path?: string | undefined;
-    userId?: string | undefined;
-    tenantId?: string | undefined;
-    requestId?: string | undefined;
-  }): string {
+  trackError(
+    error: TRPCError | Error,
+    context: {
+      path?: string | undefined;
+      userId?: string | undefined;
+      tenantId?: string | undefined;
+      requestId?: string | undefined;
+    },
+  ): string {
     const errorId = crypto.randomUUID();
     const timestamp = Date.now();
-    
+
     const errorDetails: ErrorDetails = {
       errorId,
       timestamp,
@@ -56,7 +59,8 @@ class ErrorTracker {
     this.errorCounts.total++;
 
     // Update error counts by code
-    const currentCodeCount = this.errorCounts.byCode.get(errorDetails.code) || 0;
+    const currentCodeCount =
+      this.errorCounts.byCode.get(errorDetails.code) || 0;
     this.errorCounts.byCode.set(errorDetails.code, currentCodeCount + 1);
 
     // Update error counts by path
@@ -79,7 +83,7 @@ class ErrorTracker {
   private checkErrorRate(): void {
     const now = Date.now();
     const recentErrors = this.errors.filter(
-      e => e.timestamp > now - this.errorRateWindow
+      (e) => e.timestamp > now - this.errorRateWindow,
     );
 
     // Alert if error rate is high
@@ -92,29 +96,31 @@ class ErrorTracker {
     }
 
     // Alert on specific error patterns
-    const authErrors = recentErrors.filter(e => e.code === "UNAUTHORIZED");
+    const authErrors = recentErrors.filter((e) => e.code === "UNAUTHORIZED");
     if (authErrors.length > 5) {
       logger.warn("Multiple authentication failures detected", {
         count: authErrors.length,
-        userIds: [...new Set(authErrors.map(e => e.userId).filter(Boolean))],
+        userIds: [...new Set(authErrors.map((e) => e.userId).filter(Boolean))],
       });
     }
   }
 
-  private getErrorCodeDistribution(errors: ErrorDetails[]): Record<string, number> {
+  private getErrorCodeDistribution(
+    errors: ErrorDetails[],
+  ): Record<string, number> {
     const distribution: Record<string, number> = {};
-    
-    errors.forEach(error => {
+
+    errors.forEach((error) => {
       distribution[error.code] = (distribution[error.code] || 0) + 1;
     });
-    
+
     return distribution;
   }
 
   getMetrics(): ErrorMetrics {
     const now = Date.now();
     const recentErrors = this.errors.filter(
-      e => e.timestamp > now - 5 * 60 * 1000 // Last 5 minutes
+      (e) => e.timestamp > now - 5 * 60 * 1000, // Last 5 minutes
     );
 
     return {
@@ -126,12 +132,12 @@ class ErrorTracker {
   }
 
   getErrorDetails(errorId: string): ErrorDetails | undefined {
-    return this.errors.find(e => e.errorId === errorId);
+    return this.errors.find((e) => e.errorId === errorId);
   }
 
   clearOldErrors(): void {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000; // 24 hours
-    this.errors = this.errors.filter(e => e.timestamp > cutoff);
+    this.errors = this.errors.filter((e) => e.timestamp > cutoff);
   }
 }
 
@@ -139,8 +145,11 @@ class ErrorTracker {
 export const errorTracker = new ErrorTracker();
 
 // Clean up old errors every hour
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    errorTracker.clearOldErrors();
-  }, 60 * 60 * 1000);
+if (typeof setInterval !== "undefined") {
+  setInterval(
+    () => {
+      errorTracker.clearOldErrors();
+    },
+    60 * 60 * 1000,
+  );
 }

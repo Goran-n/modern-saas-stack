@@ -6,11 +6,11 @@
  * Extract domain from email address
  */
 export function extractDomain(email: string): string | null {
-  if (!email || !email.includes('@')) {
+  if (!email || !email.includes("@")) {
     return null;
   }
-  
-  const domain = email.split('@')[1]?.toLowerCase().trim();
+
+  const domain = email.split("@")[1]?.toLowerCase().trim();
   return domain || null;
 }
 
@@ -19,20 +19,19 @@ export function extractDomain(email: string): string | null {
  */
 export function extractDomainFromUrl(url: string): string | null {
   if (!url) return null;
-  
+
   try {
     // Add protocol if missing
-    const urlWithProtocol = url.startsWith('http') ? url : `https://${url}`;
+    const urlWithProtocol = url.startsWith("http") ? url : `https://${url}`;
     const urlObj = new URL(urlWithProtocol);
-    return urlObj.hostname.toLowerCase().replace('www.', '');
+    return urlObj.hostname.toLowerCase().replace("www.", "");
   } catch {
     // Fallback for malformed URLs
     if (!url) return null;
-    const cleanUrl = url.toLowerCase()
-      .replace(/^(https?:\/\/)?(www\.)?/, '');
-    const parts = cleanUrl.split('/');
-    const domain = parts[0]?.split('?')[0]?.trim();
-    
+    const cleanUrl = url.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "");
+    const parts = cleanUrl.split("/");
+    const domain = parts[0]?.split("?")[0]?.trim();
+
     return domain || null;
   }
 }
@@ -40,12 +39,15 @@ export function extractDomainFromUrl(url: string): string | null {
 /**
  * Check if two domains match, handling common variations
  */
-export function domainsMatch(domain1: string | null, domain2: string | null): boolean {
+export function domainsMatch(
+  domain1: string | null,
+  domain2: string | null,
+): boolean {
   if (!domain1 || !domain2) return false;
-  
-  const normalized1 = domain1.toLowerCase().replace('www.', '');
-  const normalized2 = domain2.toLowerCase().replace('www.', '');
-  
+
+  const normalized1 = domain1.toLowerCase().replace("www.", "");
+  const normalized2 = domain2.toLowerCase().replace("www.", "");
+
   return normalized1 === normalized2;
 }
 
@@ -58,33 +60,33 @@ export function extractDomainsFromSupplier(data: {
   email?: string;
 }): string[] {
   const domains: string[] = [];
-  
+
   // From email contacts
   if (data.contacts) {
     for (const contact of data.contacts) {
-      if (contact.type === 'email') {
+      if (contact.type === "email") {
         const domain = extractDomain(contact.value);
         if (domain) domains.push(domain);
       }
-      if (contact.type === 'website') {
+      if (contact.type === "website") {
         const domain = extractDomainFromUrl(contact.value);
         if (domain) domains.push(domain);
       }
     }
   }
-  
+
   // From direct email field
   if (data.email) {
     const domain = extractDomain(data.email);
     if (domain) domains.push(domain);
   }
-  
+
   // From website field
   if (data.website) {
     const domain = extractDomainFromUrl(data.website);
     if (domain) domains.push(domain);
   }
-  
+
   // Remove duplicates
   return [...new Set(domains)];
 }

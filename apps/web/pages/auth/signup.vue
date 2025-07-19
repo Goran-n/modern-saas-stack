@@ -58,14 +58,7 @@
       </UButton>
     </UForm>
 
-    <div class="relative">
-      <div class="absolute inset-0 flex items-center">
-        <div class="w-full border-t border-slate-200"></div>
-      </div>
-      <div class="relative flex justify-center text-sm">
-        <span class="px-2 bg-white text-slate-500">or continue with</span>
-      </div>
-    </div>
+    <UDivider label="or continue with" />
 
     <UButton
       block

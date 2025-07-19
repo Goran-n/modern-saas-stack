@@ -1,4 +1,4 @@
-import { Platform, ProcessingResult } from '../types';
+import type { Platform, ProcessingResult } from "../types";
 
 /**
  * Represents an attachment in a message
@@ -39,10 +39,10 @@ export class MessageProcessingError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly details?: any | undefined
+    public readonly details?: any | undefined,
   ) {
     super(message);
-    this.name = 'MessageProcessingError';
+    this.name = "MessageProcessingError";
   }
 }
 
@@ -61,7 +61,7 @@ export interface IMessageHandler {
   process(
     payload: MessagePayload,
     tenantId: string,
-    userId: string
+    userId: string,
   ): Promise<ProcessingResult>;
 
   /**
@@ -84,23 +84,25 @@ export abstract class BaseMessageHandler implements IMessageHandler {
     const errors: string[] = [];
 
     if (!payload.messageId) {
-      errors.push('Message ID is required');
+      errors.push("Message ID is required");
     }
 
     if (!payload.platform) {
-      errors.push('Platform is required');
+      errors.push("Platform is required");
     }
 
     if (!this.supportedPlatforms.includes(payload.platform)) {
-      errors.push(`Platform ${payload.platform} is not supported by this handler`);
+      errors.push(
+        `Platform ${payload.platform} is not supported by this handler`,
+      );
     }
 
     if (!payload.sender) {
-      errors.push('Sender is required');
+      errors.push("Sender is required");
     }
 
     if (!payload.timestamp) {
-      errors.push('Timestamp is required');
+      errors.push("Timestamp is required");
     }
 
     // Platform-specific validation
@@ -110,13 +112,13 @@ export abstract class BaseMessageHandler implements IMessageHandler {
     }
 
     const result: ValidationResult = {
-      isValid: errors.length === 0
+      isValid: errors.length === 0,
     };
-    
+
     if (errors.length > 0) {
       result.errors = errors;
     }
-    
+
     return result;
   }
 
@@ -124,7 +126,7 @@ export abstract class BaseMessageHandler implements IMessageHandler {
    * Platform-specific validation to be implemented by subclasses
    */
   protected abstract validatePlatformSpecific(
-    payload: MessagePayload
+    payload: MessagePayload,
   ): Promise<ValidationResult>;
 
   /**
@@ -133,6 +135,6 @@ export abstract class BaseMessageHandler implements IMessageHandler {
   abstract process(
     payload: MessagePayload,
     tenantId: string,
-    userId: string
+    userId: string,
   ): Promise<ProcessingResult>;
 }

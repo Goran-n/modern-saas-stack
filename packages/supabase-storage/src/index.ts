@@ -1,3 +1,3 @@
-export * from './operations';
-export * from './types';
-export * from './client';
+export * from "./client";
+export * from "./operations";
+export * from "./types";

@@ -6,7 +6,7 @@ export const categorizeFileSchema = z.object({
   mimeType: z.string(),
   size: z.number(),
   pathTokens: z.array(z.string()),
-  source: z.enum(['integration', 'user_upload', 'whatsapp', 'slack']),
+  source: z.enum(["integration", "user_upload", "whatsapp", "slack"]),
 });
 
 export type CategorizeFilePayload = z.infer<typeof categorizeFileSchema>;

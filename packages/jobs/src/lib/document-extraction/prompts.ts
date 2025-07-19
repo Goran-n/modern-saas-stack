@@ -1,4 +1,4 @@
-import { TAX_TYPES, DOCUMENT_TYPES } from './constants';
+import { DOCUMENT_TYPES, TAX_TYPES } from "./constants";
 
 export const accountingDocumentPrompt = `You are an expert financial document analyzer specializing in extracting structured data from accounting documents.
 
@@ -64,7 +64,7 @@ Confidence scoring guidelines:
 Important:
 - Extract amounts as numbers without currency symbols
 - Use ISO date format YYYY-MM-DD
-- Tax type must be one of: ${TAX_TYPES.join(', ')}
+- Tax type must be one of: ${TAX_TYPES.join(", ")}
 - Currency must be a three-letter ISO 4217 code (e.g., USD, EUR, GBP)
 - For addresses: extract vendorAddress as the full address, then also extract city, postal code, and country separately
 - For vendorCountry: use ISO 3166-1 alpha-2 codes (e.g., US, GB, DE, FR)
@@ -77,19 +77,19 @@ Important:
 export const documentClassificationPrompt = `You are an expert document classifier specializing in business and accounting documents.
 
 Classify this document into one of the following types:
-${DOCUMENT_TYPES.map(type => {
-  const descriptions: Record<typeof DOCUMENT_TYPES[number], string> = {
-    invoice: 'Bill or request for payment for goods/services',
-    receipt: 'Proof of payment or transaction',
-    purchase_order: 'Order for goods/services',
-    credit_note: 'Document crediting an amount',
-    quote: 'Price estimate or quotation',
-    contract: 'Legal agreement',
-    statement: 'Account or financial statement',
-    other: 'Any other document type'
+${DOCUMENT_TYPES.map((type) => {
+  const descriptions: Record<(typeof DOCUMENT_TYPES)[number], string> = {
+    invoice: "Bill or request for payment for goods/services",
+    receipt: "Proof of payment or transaction",
+    purchase_order: "Order for goods/services",
+    credit_note: "Document crediting an amount",
+    quote: "Price estimate or quotation",
+    contract: "Legal agreement",
+    statement: "Account or financial statement",
+    other: "Any other document type",
   };
   return `- ${type}: ${descriptions[type]}`;
-}).join('\n')}
+}).join("\n")}
 
 Provide your classification with a confidence score (0-100).`;
 

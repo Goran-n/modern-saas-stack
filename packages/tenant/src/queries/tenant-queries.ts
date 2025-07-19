@@ -1,72 +1,77 @@
-import { getDb } from '../db'
-import { 
-  tenants, 
-  tenantMembers
-} from '@kibly/shared-db'
-import { eq, desc } from 'drizzle-orm'
-import { logger } from '@kibly/utils'
-import type {
-  Tenant,
-  TenantMember,
-  TenantStatus
-} from '../types'
+import { tenantMembers, tenants } from "@kibly/shared-db";
+import { logger } from "@kibly/utils";
+import { desc, eq } from "drizzle-orm";
+import { getDb } from "../db";
+import type { Tenant, TenantMember, TenantStatus } from "../types";
 
 export async function getTenant(tenantId: string): Promise<Tenant | null> {
-  const db = getDb()
-  
-  const [tenant] = await db.select()
+  const db = getDb();
+
+  const [tenant] = await db
+    .select()
     .from(tenants)
     .where(eq(tenants.id, tenantId))
-    .limit(1)
+    .limit(1);
 
-  return tenant ? {
-    ...tenant,
-    settings: tenant.settings as Record<string, any>,
-    subscription: tenant.subscription as Record<string, any>,
-    metadata: tenant.metadata as Record<string, any>
-  } as Tenant : null
+  return tenant
+    ? ({
+        ...tenant,
+        settings: tenant.settings as Record<string, any>,
+        subscription: tenant.subscription as Record<string, any>,
+        metadata: tenant.metadata as Record<string, any>,
+      } as Tenant)
+    : null;
 }
 
-export async function listTenants(filters?: { status?: TenantStatus }): Promise<Tenant[]> {
-  const db = getDb()
-  
-  const results = await db.select()
+export async function listTenants(filters?: {
+  status?: TenantStatus;
+}): Promise<Tenant[]> {
+  const db = getDb();
+
+  const results = await db
+    .select()
     .from(tenants)
     .where(filters?.status ? eq(tenants.status, filters.status) : undefined)
-    .orderBy(desc(tenants.createdAt))
+    .orderBy(desc(tenants.createdAt));
 
-  return results.map(tenant => ({
-    ...tenant,
-    settings: tenant.settings as Record<string, any>,
-    subscription: tenant.subscription as Record<string, any>,
-    metadata: tenant.metadata as Record<string, any>
-  } as Tenant))
+  return results.map(
+    (tenant) =>
+      ({
+        ...tenant,
+        settings: tenant.settings as Record<string, any>,
+        subscription: tenant.subscription as Record<string, any>,
+        metadata: tenant.metadata as Record<string, any>,
+      }) as Tenant,
+  );
 }
 
-export async function getUserTenants(userId: string): Promise<(TenantMember & { tenant: Tenant })[]> {
-  const db = getDb()
-  const startTime = Date.now()
-  
+export async function getUserTenants(
+  userId: string,
+): Promise<(TenantMember & { tenant: Tenant })[]> {
+  const db = getDb();
+  const startTime = Date.now();
+
   try {
-    const memberships = await db.select({
-      member: tenantMembers,
-      tenant: tenants
-    })
+    const memberships = await db
+      .select({
+        member: tenantMembers,
+        tenant: tenants,
+      })
       .from(tenantMembers)
       .innerJoin(tenants, eq(tenantMembers.tenantId, tenants.id))
       .where(eq(tenantMembers.userId, userId))
-      .orderBy(desc(tenantMembers.joinedAt))
+      .orderBy(desc(tenantMembers.joinedAt));
 
-    const duration = Date.now() - startTime
-    
+    const duration = Date.now() - startTime;
+
     if (memberships.length === 0) {
-      logger.debug('No tenants found for user', { userId, duration })
+      logger.debug("No tenants found for user", { userId, duration });
     } else {
-      logger.debug('getUserTenants query successful', { 
-        userId, 
+      logger.debug("getUserTenants query successful", {
+        userId,
         tenantCount: memberships.length,
         duration,
-      })
+      });
     }
 
     return memberships.map(({ member, tenant }) => ({
@@ -75,16 +80,16 @@ export async function getUserTenants(userId: string): Promise<(TenantMember & { 
         ...tenant,
         settings: tenant.settings as Record<string, any>,
         subscription: tenant.subscription as Record<string, any>,
-        metadata: tenant.metadata as Record<string, any>
-      } as Tenant
-    }))
+        metadata: tenant.metadata as Record<string, any>,
+      } as Tenant,
+    }));
   } catch (error) {
-    const duration = Date.now() - startTime
-    logger.error('getUserTenants query failed', { 
-      userId, 
+    const duration = Date.now() - startTime;
+    logger.error("getUserTenants query failed", {
+      userId,
       duration,
       error: error instanceof Error ? error.message : error,
-    })
-    throw error
+    });
+    throw error;
   }
 }

@@ -1,4 +1,4 @@
-export * from './types';
-export * from './operations';
-export * from './db';
-export * from './client';
+export * from "./client";
+export { setDb } from "./db";
+export * from "./operations";
+export * from "./types";

@@ -1,13 +1,13 @@
 export default defineNuxtRouteMiddleware((to) => {
-  const user = useSupabaseUser()
-  
+  const user = useSupabaseUser();
+
   // Skip auth check for auth routes
-  if (to.path.startsWith('/auth')) {
-    return
+  if (to.path.startsWith("/auth")) {
+    return;
   }
-  
+
   // Check authentication status
   if (!user.value) {
-    return navigateTo('/auth/login')
+    return navigateTo("/auth/login");
   }
-})
+});

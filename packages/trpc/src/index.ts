@@ -1,28 +1,32 @@
 // Core tRPC exports
-export { createTRPCRouter, publicProcedure, createCallerFactory, middleware } from "./trpc";
-export { protectedProcedure, tenantProcedure } from "./trpc/procedures";
 
+export type { LoggingLinkOptions } from "./client/logging-link";
+// Client utilities
+export { createLoggingLink } from "./client/logging-link";
+export { hasTenantAccess, isAuthenticated } from "./middleware/auth";
+export { loggingMiddleware } from "./middleware/logging";
+export {
+  getPerformanceStats,
+  performanceMiddleware,
+} from "./middleware/performance";
+// Type exports
+export type { AppRouter } from "./routers";
 // Router exports
 export { appRouter } from "./routers";
 export { authRouter } from "./routers/auth";
+export { debugRouter } from "./routers/debug";
 export { filesRouter } from "./routers/files";
 export { suppliersRouter } from "./routers/suppliers";
-export { debugRouter } from "./routers/debug";
-
-// Context and middleware
-export { createContext } from "./trpc/context";
-export { isAuthenticated, hasTenantAccess } from "./middleware/auth";
-export { loggingMiddleware } from "./middleware/logging";
-export { performanceMiddleware, getPerformanceStats } from "./middleware/performance";
-
-// Client utilities
-export { createLoggingLink } from "./client/logging-link";
-export type { LoggingLinkOptions } from "./client/logging-link";
-
+export type { ErrorDetails, ErrorMetrics } from "./services/error-tracker";
 // Error tracking
 export { errorTracker } from "./services/error-tracker";
-export type { ErrorMetrics, ErrorDetails } from "./services/error-tracker";
-
-// Type exports
-export type { AppRouter } from "./routers";
+export {
+  createCallerFactory,
+  createTRPCRouter,
+  middleware,
+  publicProcedure,
+} from "./trpc";
 export type { Context } from "./trpc/context";
+// Context and middleware
+export { createContext } from "./trpc/context";
+export { protectedProcedure, tenantProcedure } from "./trpc/procedures";

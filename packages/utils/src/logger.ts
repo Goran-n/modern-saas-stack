@@ -1,5 +1,5 @@
-import pino from 'pino';
-import type { Logger, LoggerOptions } from 'pino';
+import type { Logger, LoggerOptions } from "pino";
+import pino from "pino";
 
 let cachedLogger: Logger | null = null;
 let currentConfig: LoggerConfig | null = null;
@@ -17,10 +17,11 @@ export interface LoggerConfig {
  * Get default logger options based on environment
  */
 function getDefaultOptions(config?: LoggerConfig): LoggerOptions {
-  const level = config?.level || process.env.LOG_LEVEL || 'info';
-  const nodeEnv = config?.nodeEnv || process.env.NODE_ENV || 'development';
-  const isDevelopment = nodeEnv === 'development';
-  const usePretty = config?.pretty !== undefined ? config.pretty : isDevelopment;
+  const level = config?.level || process.env.LOG_LEVEL || "info";
+  const nodeEnv = config?.nodeEnv || process.env.NODE_ENV || "development";
+  const isDevelopment = nodeEnv === "development";
+  const usePretty =
+    config?.pretty !== undefined ? config.pretty : isDevelopment;
 
   const baseOptions: LoggerOptions = {
     level,
@@ -41,16 +42,16 @@ function getDefaultOptions(config?: LoggerConfig): LoggerOptions {
     return {
       ...baseOptions,
       transport: {
-        target: 'pino-pretty',
+        target: "pino-pretty",
         options: {
           colorize: true,
           colorizeObjects: true,
-          translateTime: 'HH:MM:ss',
-          ignore: 'pid,hostname',
-          messageKey: 'msg',
-          errorLikeObjectKeys: ['err', 'error', 'e'],
+          translateTime: "HH:MM:ss",
+          ignore: "pid,hostname",
+          messageKey: "msg",
+          errorLikeObjectKeys: ["err", "error", "e"],
           singleLine: false, // Multi-line for better error readability
-          sync: false, // Use async for better performance
+          sync: true, // Use sync to ensure logs appear immediately
           hideObject: false, // Show all object properties
           // Ensure nested objects are displayed
           depth: 5,
@@ -95,17 +96,20 @@ export const logger: Logger = new Proxy({} as Logger, {
   get(_target, prop) {
     const loggerInstance = getLogger();
     const value = loggerInstance[prop as keyof Logger];
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
       return value.bind(loggerInstance);
     }
     return value;
-  }
+  },
 });
 
 /**
  * Export child logger factory for scoped logging
  */
-export function createLogger(name: string, bindings?: Record<string, any>): Logger {
+export function createLogger(
+  name: string,
+  bindings?: Record<string, any>,
+): Logger {
   return getLogger().child({ service: name, ...bindings });
 }
 
@@ -118,4 +122,4 @@ export function resetLogger(): void {
 }
 
 // Re-export types for convenience
-export type { Logger } from 'pino';
+export type { Logger } from "pino";

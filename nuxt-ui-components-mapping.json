@@ -1,0 +1,406 @@
+{
+  "elements": {
+    "UAlert": {
+      "purpose": "A callout to draw user's attention",
+      "usage": "<UAlert title='Alert' description='...' />"
+    },
+    "UAvatar": {
+      "purpose": "An img element with fallback and Nuxt Image support",
+      "usage": "<UAvatar src='...' alt='...' />"
+    },
+    "UAvatarGroup": {
+      "purpose": "Stack multiple avatars in a group",
+      "usage": "<UAvatarGroup :avatars='[...]' />"
+    },
+    "UBadge": {
+      "purpose": "A short text to represent a status or a category",
+      "usage": "<UBadge label='...' variant='...' />"
+    },
+    "UButton": {
+      "purpose": "A button element that can act as a link or trigger an action",
+      "usage": "<UButton @click='...' variant='...' />"
+    },
+    "UButtonGroup": {
+      "purpose": "Group multiple button-like elements together",
+      "usage": "<UButtonGroup :items='[...]' />"
+    },
+    "UCalendar": {
+      "purpose": "Date selection calendar",
+      "usage": "<UCalendar v-model='date' />"
+    },
+    "UChatPromptSubmitPRO": {
+      "purpose": "Chat prompt submission component (PRO)",
+      "usage": "<UChatPromptSubmitPRO />"
+    },
+    "UChip": {
+      "purpose": "Small interactive chip component",
+      "usage": "<UChip label='...' />"
+    },
+    "UCollapsible": {
+      "purpose": "Collapsible content container",
+      "usage": "<UCollapsible title='...'><template #content>...</template></UCollapsible>"
+    },
+    "UColorModeAvatarPRO": {
+      "purpose": "Color mode avatar (PRO)",
+      "usage": "<UColorModeAvatarPRO />"
+    },
+    "UColorModeButtonPRO": {
+      "purpose": "Color mode toggle button (PRO)",
+      "usage": "<UColorModeButtonPRO />"
+    },
+    "UColorModeImagePRO": {
+      "purpose": "Color mode responsive image (PRO)",
+      "usage": "<UColorModeImagePRO />"
+    },
+    "UColorModeSelectPRO": {
+      "purpose": "Color mode select dropdown (PRO)",
+      "usage": "<UColorModeSelectPRO />"
+    },
+    "UColorModeSwitchPRO": {
+      "purpose": "Color mode switch toggle (PRO)",
+      "usage": "<UColorModeSwitchPRO />"
+    },
+    "UContentSearchButtonPRO": {
+      "purpose": "Content search button (PRO)",
+      "usage": "<UContentSearchButtonPRO />"
+    },
+    "UDashboardSearchButtonPRO": {
+      "purpose": "Dashboard search button (PRO)",
+      "usage": "<UDashboardSearchButtonPRO />"
+    },
+    "UDashboardSidebarCollapsePRO": {
+      "purpose": "Dashboard sidebar collapse (PRO)",
+      "usage": "<UDashboardSidebarCollapsePRO />"
+    },
+    "UDashboardSidebarTogglePRO": {
+      "purpose": "Dashboard sidebar toggle (PRO)",
+      "usage": "<UDashboardSidebarTogglePRO />"
+    },
+    "UIcon": {
+      "purpose": "Icon component",
+      "usage": "<UIcon name='icon-name' />"
+    },
+    "UKbd": { "purpose": "Keyboard key display", "usage": "<UKbd>Ctrl</UKbd>" },
+    "ULocaleSelectPRO": {
+      "purpose": "Locale selection dropdown (PRO)",
+      "usage": "<ULocaleSelectPRO />"
+    },
+    "UProgress": {
+      "purpose": "Progress bar indicator",
+      "usage": "<UProgress :value='50' :max='100' />"
+    }
+  },
+  "forms": {
+    "UAuthFormPRO": {
+      "purpose": "Authentication form (PRO)",
+      "usage": "<UAuthFormPRO />"
+    },
+    "UChatPromptPRO": {
+      "purpose": "Chat prompt input (PRO)",
+      "usage": "<UChatPromptPRO />"
+    },
+    "UCheckbox": {
+      "purpose": "Checkbox input",
+      "usage": "<UCheckbox v-model='checked' label='...' />"
+    },
+    "UCheckboxGroup": {
+      "purpose": "Group of checkboxes",
+      "usage": "<UCheckboxGroup v-model='selected' :options='[...]' />"
+    },
+    "UColorPicker": {
+      "purpose": "Color picker input",
+      "usage": "<UColorPicker v-model='color' />"
+    },
+    "UForm": {
+      "purpose": "Form wrapper with validation",
+      "usage": "<UForm :schema='schema' @submit='onSubmit' />"
+    },
+    "UFormField": {
+      "purpose": "Form field wrapper",
+      "usage": "<UFormField name='...' label='...' />"
+    },
+    "UInput": {
+      "purpose": "Text input field",
+      "usage": "<UInput v-model='value' placeholder='...' />"
+    },
+    "UInputMenu": {
+      "purpose": "Input with dropdown menu",
+      "usage": "<UInputMenu v-model='value' :options='[...]' />"
+    },
+    "UInputNumber": {
+      "purpose": "Number input field",
+      "usage": "<UInputNumber v-model='number' :min='0' :max='100' />"
+    },
+    "UInputTags": {
+      "purpose": "Tags input field",
+      "usage": "<UInputTags v-model='tags' />"
+    },
+    "UPinInput": {
+      "purpose": "PIN/OTP input field",
+      "usage": "<UPinInput v-model='pin' :length='4' />"
+    },
+    "URadioGroup": {
+      "purpose": "Radio button group",
+      "usage": "<URadioGroup v-model='selected' :options='[...]' />"
+    },
+    "USelect": {
+      "purpose": "Select dropdown",
+      "usage": "<USelect v-model='selected' :options='[...]' />"
+    },
+    "USelectMenu": {
+      "purpose": "Advanced select with menu",
+      "usage": "<USelectMenu v-model='selected' :options='[...]' />"
+    },
+    "USlider": {
+      "purpose": "Range slider input",
+      "usage": "<USlider v-model='value' :min='0' :max='100' />"
+    },
+    "USwitch": {
+      "purpose": "Toggle switch",
+      "usage": "<USwitch v-model='enabled' />"
+    },
+    "UTextarea": {
+      "purpose": "Multiline text input",
+      "usage": "<UTextarea v-model='text' placeholder='...' />"
+    }
+  },
+  "data": {
+    "UAccordion": {
+      "purpose": "Collapsible content sections",
+      "usage": "<UAccordion :items='[...]' />"
+    },
+    "UBlogPostPRO": {
+      "purpose": "Blog post component (PRO)",
+      "usage": "<UBlogPostPRO />"
+    },
+    "UCarousel": {
+      "purpose": "Image/content carousel",
+      "usage": "<UCarousel :items='[...]' />"
+    },
+    "UChangelogVersionPRO": {
+      "purpose": "Changelog version (PRO)",
+      "usage": "<UChangelogVersionPRO />"
+    },
+    "UChatMessagePRO": {
+      "purpose": "Chat message component (PRO)",
+      "usage": "<UChatMessagePRO />"
+    },
+    "UPageAccordionPRO": {
+      "purpose": "Page accordion (PRO)",
+      "usage": "<UPageAccordionPRO />"
+    },
+    "UPageCardPRO": {
+      "purpose": "Page card component (PRO)",
+      "usage": "<UPageCardPRO />"
+    },
+    "UPageCTAPRO": {
+      "purpose": "Page CTA section (PRO)",
+      "usage": "<UPageCTAPRO />"
+    },
+    "UPageFeaturePRO": {
+      "purpose": "Page feature section (PRO)",
+      "usage": "<UPageFeaturePRO />"
+    },
+    "UPageHeaderPRO": {
+      "purpose": "Page header (PRO)",
+      "usage": "<UPageHeaderPRO />"
+    },
+    "UPageHeroPRO": {
+      "purpose": "Page hero section (PRO)",
+      "usage": "<UPageHeroPRO />"
+    },
+    "UPageLogosPRO": {
+      "purpose": "Page logos section (PRO)",
+      "usage": "<UPageLogosPRO />"
+    },
+    "UPageMarqueePRO": {
+      "purpose": "Page marquee component (PRO)",
+      "usage": "<UPageMarqueePRO />"
+    },
+    "UPageSectionPRO": {
+      "purpose": "Page section wrapper (PRO)",
+      "usage": "<UPageSectionPRO />"
+    },
+    "UPricingPlanPRO": {
+      "purpose": "Pricing plan card (PRO)",
+      "usage": "<UPricingPlanPRO />"
+    },
+    "UPricingTablePRO": {
+      "purpose": "Pricing table (PRO)",
+      "usage": "<UPricingTablePRO />"
+    },
+    "UTable": {
+      "purpose": "Data table",
+      "usage": "<UTable :columns='[...]' :rows='[...]' />"
+    },
+    "UTimeline": {
+      "purpose": "Timeline component",
+      "usage": "<UTimeline :items='[...]' />"
+    },
+    "UTree": {
+      "purpose": "Tree view component",
+      "usage": "<UTree :items='[...]' />"
+    }
+  },
+  "overlay": {
+    "UContentSearch": {
+      "purpose": "Content search overlay",
+      "usage": "<UContentSearch />"
+    },
+    "UContextMenu": {
+      "purpose": "Right-click context menu",
+      "usage": "<UContextMenu :items='[...]' />"
+    },
+    "UDashboardSearch": {
+      "purpose": "Dashboard search overlay",
+      "usage": "<UDashboardSearch />"
+    },
+    "UDrawer": {
+      "purpose": "Slide-out drawer",
+      "usage": "<UDrawer v-model='open' />"
+    },
+    "UDropdownMenu": {
+      "purpose": "Dropdown menu",
+      "usage": "<UDropdownMenu :items='[...]' />"
+    },
+    "UModal": {
+      "purpose": "Modal dialog",
+      "usage": "<UModal v-model='open' />"
+    },
+    "UPopover": {
+      "purpose": "Popover tooltip",
+      "usage": "<UPopover><template #content>...</template></UPopover>"
+    },
+    "USlideover": {
+      "purpose": "Slide-over panel",
+      "usage": "<USlideover v-model='open' />"
+    },
+    "UToast": {
+      "purpose": "Toast notification",
+      "usage": "<UToast title='...' description='...' />"
+    },
+    "UTooltip": {
+      "purpose": "Tooltip on hover",
+      "usage": "<UTooltip text='...' />"
+    }
+  },
+  "navigation": {
+    "UBreadcrumb": {
+      "purpose": "Breadcrumb navigation",
+      "usage": "<UBreadcrumb :items='[...]' />"
+    },
+    "UChatPalette": {
+      "purpose": "Chat command palette",
+      "usage": "<UChatPalette />"
+    },
+    "UCommandPalette": {
+      "purpose": "Command palette",
+      "usage": "<UCommandPalette :items='[...]' />"
+    },
+    "UContentNavigation": {
+      "purpose": "Content navigation",
+      "usage": "<UContentNavigation />"
+    },
+    "UContentSurround": {
+      "purpose": "Content surround navigation",
+      "usage": "<UContentSurround />"
+    },
+    "UContentToc": {
+      "purpose": "Table of contents",
+      "usage": "<UContentToc />"
+    },
+    "UFooterColumns": {
+      "purpose": "Footer with columns",
+      "usage": "<UFooterColumns :columns='[...]' />"
+    },
+    "ULink": { "purpose": "Link component", "usage": "<ULink to='...' />" },
+    "UNavigationMenu": {
+      "purpose": "Navigation menu",
+      "usage": "<UNavigationMenu :items='[...]' />"
+    },
+    "UPageAnchors": {
+      "purpose": "Page anchor navigation",
+      "usage": "<UPageAnchors />"
+    },
+    "UPageLinks": {
+      "purpose": "Page links navigation",
+      "usage": "<UPageLinks />"
+    },
+    "UPagination": {
+      "purpose": "Pagination controls",
+      "usage": "<UPagination v-model='page' :total='100' />"
+    },
+    "UStepper": {
+      "purpose": "Step-by-step navigation",
+      "usage": "<UStepper :steps='[...]' />"
+    },
+    "UTabs": {
+      "purpose": "Tab navigation",
+      "usage": "<UTabs :items='[...]' />"
+    }
+  },
+  "layout": {
+    "UApp": { "purpose": "App wrapper", "usage": "<UApp />" },
+    "UBanner": { "purpose": "Banner component", "usage": "<UBanner />" },
+    "UBlogPosts": { "purpose": "Blog posts layout", "usage": "<UBlogPosts />" },
+    "UCard": {
+      "purpose": "Card container",
+      "usage": "<UCard><template #header>...</template></UCard>"
+    },
+    "UChangelogVersions": {
+      "purpose": "Changelog versions layout",
+      "usage": "<UChangelogVersions />"
+    },
+    "UChatMessages": {
+      "purpose": "Chat messages layout",
+      "usage": "<UChatMessages />"
+    },
+    "UContainer": { "purpose": "Container wrapper", "usage": "<UContainer />" },
+    "UDashboardGroup": {
+      "purpose": "Dashboard group layout",
+      "usage": "<UDashboardGroup />"
+    },
+    "UDashboardNavbar": {
+      "purpose": "Dashboard navbar",
+      "usage": "<UDashboardNavbar />"
+    },
+    "UDashboardPanel": {
+      "purpose": "Dashboard panel",
+      "usage": "<UDashboardPanel />"
+    },
+    "UDashboardResizeHandle": {
+      "purpose": "Dashboard resize handle",
+      "usage": "<UDashboardResizeHandle />"
+    },
+    "UDashboardSidebar": {
+      "purpose": "Dashboard sidebar",
+      "usage": "<UDashboardSidebar />"
+    },
+    "UDashboardToolbar": {
+      "purpose": "Dashboard toolbar",
+      "usage": "<UDashboardToolbar />"
+    },
+    "UError": { "purpose": "Error page layout", "usage": "<UError />" },
+    "UFooter": { "purpose": "Footer layout", "usage": "<UFooter />" },
+    "UHeader": { "purpose": "Header layout", "usage": "<UHeader />" },
+    "UMain": { "purpose": "Main content area", "usage": "<UMain />" },
+    "UPage": { "purpose": "Page wrapper", "usage": "<UPage />" },
+    "UPageAside": {
+      "purpose": "Page aside section",
+      "usage": "<UPageAside />"
+    },
+    "UPageBody": { "purpose": "Page body content", "usage": "<UPageBody />" },
+    "UPageColumns": {
+      "purpose": "Page columns layout",
+      "usage": "<UPageColumns />"
+    },
+    "UPageGrid": { "purpose": "Page grid layout", "usage": "<UPageGrid />" },
+    "UPageList": { "purpose": "Page list layout", "usage": "<UPageList />" },
+    "UPricingPlans": {
+      "purpose": "Pricing plans layout",
+      "usage": "<UPricingPlans />"
+    },
+    "USeparator": { "purpose": "Visual separator", "usage": "<USeparator />" },
+    "USkeleton": { "purpose": "Loading skeleton", "usage": "<USkeleton />" }
+  }
+}

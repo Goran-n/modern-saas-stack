@@ -1,118 +1,134 @@
-import type { DrizzleClient } from '@kibly/shared-db'
-import { setDb } from './db'
+import type { DrizzleClient } from "@kibly/shared-db";
 import {
-  createTenant as createTenantAction,
-  updateTenant as updateTenantAction,
-  inviteMember as inviteMemberAction,
   acceptInvitation as acceptInvitationAction,
-  updateMemberRole as updateMemberRoleAction,
-  removeMember as removeMemberAction,
+  createTenant as createTenantAction,
   generateTenantToken as generateTenantTokenAction,
+  inviteMember as inviteMemberAction,
+  removeMember as removeMemberAction,
+  updateMemberRole as updateMemberRoleAction,
+  updateTenant as updateTenantAction,
+  updateUser as updateUserAction,
   verifyToken as verifyTokenAction,
-  updateUser as updateUserAction
-} from './actions'
+} from "./actions";
+import { setDb } from "./db";
 import {
+  checkPermission as checkPermissionQuery,
   getTenant as getTenantQuery,
-  listTenants as listTenantsQuery,
+  getUserPermissions as getUserPermissionsQuery,
+  getUser as getUserQuery,
   getUserTenants as getUserTenantsQuery,
   listMembers as listMembersQuery,
-  checkPermission as checkPermissionQuery,
-  getUserPermissions as getUserPermissionsQuery,
-  getUser as getUserQuery
-} from './queries'
+  listTenants as listTenantsQuery,
+} from "./queries";
 import type {
-  CreateTenantInput,
-  UpdateTenantInput,
-  InviteMemberInput,
-  UpdateMemberRoleInput,
-  CheckPermissionInput,
-  CreateUserInput,
-  Tenant,
-  User,
-  TenantMember,
-  Invitation,
   AuthToken,
+  CheckPermissionInput,
+  CreateTenantInput,
+  CreateUserInput,
+  Invitation,
+  InviteMemberInput,
   Permission,
-  TenantStatus
-} from './types'
-
+  Tenant,
+  TenantMember,
+  TenantStatus,
+  UpdateMemberRoleInput,
+  UpdateTenantInput,
+  User,
+} from "./types";
 
 export class TenantService {
-  constructor(
-    db: DrizzleClient,
-    _jwtSecret: string = process.env.JWT_SECRET || 'default-secret'
-  ) {
+  constructor(db: DrizzleClient, _jwtSecret: string) {
+    if (!_jwtSecret) {
+      throw new Error(
+        "JWT_SECRET is required for TenantService initialization",
+      );
+    }
     // Set the database instance for the functional API
-    setDb(db)
+    setDb(db);
   }
 
   // Tenant management
-  async createTenant(input: CreateTenantInput): Promise<{ tenant: Tenant; member: TenantMember }> {
-    return createTenantAction(input)
+  async createTenant(
+    input: CreateTenantInput,
+  ): Promise<{ tenant: Tenant; member: TenantMember }> {
+    return createTenantAction(input);
   }
 
   async updateTenant(input: UpdateTenantInput): Promise<Tenant> {
-    return updateTenantAction(input)
+    return updateTenantAction(input);
   }
 
   async getTenant(tenantId: string): Promise<Tenant | null> {
-    return getTenantQuery(tenantId)
+    return getTenantQuery(tenantId);
   }
 
   async listTenants(filters?: { status?: TenantStatus }): Promise<Tenant[]> {
-    return listTenantsQuery(filters)
+    return listTenantsQuery(filters);
   }
 
   // Member management
   async inviteMember(input: InviteMemberInput): Promise<Invitation> {
-    return inviteMemberAction(input)
+    return inviteMemberAction(input);
   }
 
-  async acceptInvitation(token: string, userData: CreateUserInput): Promise<TenantMember> {
-    return acceptInvitationAction(token, userData)
+  async acceptInvitation(
+    token: string,
+    userData: CreateUserInput,
+  ): Promise<TenantMember> {
+    return acceptInvitationAction(token, userData);
   }
 
   async updateMemberRole(input: UpdateMemberRoleInput): Promise<TenantMember> {
-    return updateMemberRoleAction(input)
+    return updateMemberRoleAction(input);
   }
 
   async removeMember(tenantId: string, memberId: string): Promise<void> {
-    return removeMemberAction(tenantId, memberId)
+    return removeMemberAction(tenantId, memberId);
   }
 
-  async listMembers(tenantId: string): Promise<(TenantMember & { user: User })[]> {
-    return listMembersQuery(tenantId)
+  async listMembers(
+    tenantId: string,
+  ): Promise<(TenantMember & { user: User })[]> {
+    return listMembersQuery(tenantId);
   }
 
   // Permission management
   async checkPermission(input: CheckPermissionInput): Promise<boolean> {
-    return checkPermissionQuery(input)
+    return checkPermissionQuery(input);
   }
 
-  async getUserPermissions(tenantId: string, userId: string): Promise<Permission[]> {
-    return getUserPermissionsQuery(tenantId, userId)
+  async getUserPermissions(
+    tenantId: string,
+    userId: string,
+  ): Promise<Permission[]> {
+    return getUserPermissionsQuery(tenantId, userId);
   }
 
   // Authentication is handled by Supabase
   // This method is only used for generating tenant-specific JWT tokens
-  async generateTenantToken(userId: string, tenantId?: string): Promise<string> {
-    return generateTenantTokenAction(userId, tenantId)
+  async generateTenantToken(
+    userId: string,
+    tenantId?: string,
+  ): Promise<string> {
+    return generateTenantTokenAction(userId, tenantId);
   }
 
   async verifyToken(token: string): Promise<AuthToken> {
-    return verifyTokenAction(token)
+    return verifyTokenAction(token);
   }
 
   // User management
   async getUser(userId: string): Promise<User | null> {
-    return getUserQuery(userId)
+    return getUserQuery(userId);
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User> {
-    return updateUserAction(userId, updates)
+    return updateUserAction(userId, updates);
   }
 
-  async getUserTenants(userId: string): Promise<(TenantMember & { tenant: Tenant })[]> {
-    return getUserTenantsQuery(userId)
+  async getUserTenants(
+    userId: string,
+  ): Promise<(TenantMember & { tenant: Tenant })[]> {
+    return getUserTenantsQuery(userId);
   }
 }

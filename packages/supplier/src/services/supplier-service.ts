@@ -1,14 +1,10 @@
-import { logger } from '@kibly/utils';
-import {
-  suppliers,
-  supplierAttributes,
-  eq,
-  and,
-} from '@kibly/shared-db';
-import { generateSlug } from '../utils/slug';
-import { SupplierError, SupplierErrors } from '../errors';
-import { SupplierStatus } from '../types';
-import { getDb } from '../db';
+import { supplierAttributes, suppliers } from "@kibly/shared-db";
+import { logger } from "@kibly/utils";
+import { and, eq } from "drizzle-orm";
+import { getDb } from "../db";
+import { SupplierError, SupplierErrors } from "../errors";
+import { SupplierStatus } from "../types";
+import { generateSlug } from "../utils/slug";
 
 export interface CreateSupplierInput {
   companyNumber?: string | null;
@@ -33,7 +29,8 @@ export class SupplierService {
    * Create a new supplier manually
    */
   async create(input: CreateSupplierInput) {
-    const { companyNumber, vatNumber, legalName, displayName, tenantId } = input;
+    const { companyNumber, vatNumber, legalName, displayName, tenantId } =
+      input;
 
     // Validate at least one identifier
     if (!companyNumber && !vatNumber) {
@@ -55,10 +52,10 @@ export class SupplierService {
         .returning();
 
       if (!supplier) {
-        throw new Error('Failed to create supplier')
+        throw new Error("Failed to create supplier");
       }
 
-      logger.info('Created supplier manually', {
+      logger.info("Created supplier manually", {
         supplierId: supplier.id,
         name: supplier.displayName,
         tenantId,
@@ -66,11 +63,12 @@ export class SupplierService {
 
       return supplier;
     } catch (error: any) {
-      if (error.code === '23505') { // Unique constraint violation
-        if (error.detail?.includes('company_number')) {
+      if (error.code === "23505") {
+        // Unique constraint violation
+        if (error.detail?.includes("company_number")) {
           throw SupplierErrors.DUPLICATE_COMPANY_NUMBER;
         }
-        if (error.detail?.includes('vat_number')) {
+        if (error.detail?.includes("vat_number")) {
           throw SupplierErrors.DUPLICATE_VAT_NUMBER;
         }
       }
@@ -81,16 +79,17 @@ export class SupplierService {
   /**
    * Update supplier details
    */
-  async update(supplierId: string, tenantId: string, input: UpdateSupplierInput) {
+  async update(
+    supplierId: string,
+    tenantId: string,
+    input: UpdateSupplierInput,
+  ) {
     // Verify supplier exists and belongs to tenant
     const [existing] = await this.db
       .select()
       .from(suppliers)
       .where(
-        and(
-          eq(suppliers.id, supplierId),
-          eq(suppliers.tenantId, tenantId)
-        )
+        and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId)),
       );
 
     if (!existing) {
@@ -107,10 +106,10 @@ export class SupplierService {
       .returning();
 
     if (!updated) {
-      throw new Error('Supplier not found or failed to update')
+      throw new Error("Supplier not found or failed to update");
     }
 
-    logger.info('Updated supplier', {
+    logger.info("Updated supplier", {
       supplierId: updated.id,
       changes: Object.keys(input),
     });
@@ -127,10 +126,7 @@ export class SupplierService {
       .select()
       .from(suppliers)
       .where(
-        and(
-          eq(suppliers.id, supplierId),
-          eq(suppliers.tenantId, tenantId)
-        )
+        and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId)),
       );
 
     if (!existing) {
@@ -146,7 +142,7 @@ export class SupplierService {
       })
       .where(eq(suppliers.id, supplierId));
 
-    logger.info('Soft deleted supplier', {
+    logger.info("Soft deleted supplier", {
       supplierId,
       tenantId,
     });
@@ -158,17 +154,14 @@ export class SupplierService {
   async setPrimaryAttribute(
     supplierId: string,
     tenantId: string,
-    attributeId: string
+    attributeId: string,
   ) {
     // Verify supplier exists and belongs to tenant
     const [supplier] = await this.db
       .select({ id: suppliers.id })
       .from(suppliers)
       .where(
-        and(
-          eq(suppliers.id, supplierId),
-          eq(suppliers.tenantId, tenantId)
-        )
+        and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId)),
       );
 
     if (!supplier) {
@@ -182,12 +175,16 @@ export class SupplierService {
       .where(
         and(
           eq(supplierAttributes.id, attributeId),
-          eq(supplierAttributes.supplierId, supplierId)
-        )
+          eq(supplierAttributes.supplierId, supplierId),
+        ),
       );
 
     if (!attribute) {
-      throw new SupplierError('Attribute not found', 'ATTRIBUTE_NOT_FOUND', 404);
+      throw new SupplierError(
+        "Attribute not found",
+        "ATTRIBUTE_NOT_FOUND",
+        404,
+      );
     }
 
     await this.db.transaction(async (tx) => {
@@ -198,8 +195,8 @@ export class SupplierService {
         .where(
           and(
             eq(supplierAttributes.supplierId, supplierId),
-            eq(supplierAttributes.attributeType, attribute.attributeType)
-          )
+            eq(supplierAttributes.attributeType, attribute.attributeType),
+          ),
         );
 
       // Set this attribute as primary
@@ -209,7 +206,7 @@ export class SupplierService {
         .where(eq(supplierAttributes.id, attributeId));
     });
 
-    logger.info('Set primary attribute', {
+    logger.info("Set primary attribute", {
       supplierId,
       attributeId,
       attributeType: attribute.attributeType,

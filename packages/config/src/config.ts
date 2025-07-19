@@ -1,29 +1,32 @@
-import { z } from 'zod';
-import { createLogger } from '@kibly/utils';
-import { getEnvironmentSchema, type EnvironmentConfig } from './environments';
-import { 
-  coreConfigSchema, 
-  fileManagerConfigSchema,
-  webAppConfigSchema,
-  tenantConfigSchema,
-  communicationConfigSchema,
-  type FullConfig,
+import { createLogger } from "@kibly/utils";
+import { z } from "zod";
+import { type EnvironmentConfig, getEnvironmentSchema } from "./environments";
+import {
+  type CommunicationConfig,
   type CoreConfig,
+  communicationConfigSchema,
+  coreConfigSchema,
   type FileManagerConfig,
-  type WebAppConfig,
+  type FullConfig,
+  fileManagerConfigSchema,
   type TenantConfig,
-  type CommunicationConfig
-} from './schemas';
+  tenantConfigSchema,
+  type WebAppConfig,
+  webAppConfigSchema,
+} from "./schemas";
 
-const logger = createLogger('config');
+const logger = createLogger("config");
 
 /**
  * Configuration validation error
  */
 export class ConfigValidationError extends Error {
-  constructor(message: string, public errors: z.ZodError) {
+  constructor(
+    message: string,
+    public errors: z.ZodError,
+  ) {
     super(message);
-    this.name = 'ConfigValidationError';
+    this.name = "ConfigValidationError";
   }
 }
 
@@ -61,32 +64,32 @@ export class Config {
    */
   public validate(customEnv?: Record<string, string>): EnvironmentConfig {
     const env = customEnv || process.env;
-    const nodeEnv = env.NODE_ENV || 'development';
-    
-    logger.info('Validating configuration', { environment: nodeEnv });
+    const nodeEnv = env.NODE_ENV || "development";
+
+    logger.info("Validating configuration", { environment: nodeEnv });
 
     try {
       // Get the appropriate schema for the environment
       const schema = getEnvironmentSchema(nodeEnv);
-      
+
       // Parse and validate the environment variables
       const result = schema.parse(env);
-      
+
       this._config = result;
       this._validated = true;
-      
-      logger.info('Configuration validation successful', { 
+
+      logger.info("Configuration validation successful", {
         environment: nodeEnv,
-        configKeys: Object.keys(result).length
+        configKeys: Object.keys(result).length,
       });
-      
+
       return result;
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessage = this.formatValidationErrors(error);
-        logger.error('Configuration validation failed', { 
+        logger.error("Configuration validation failed", {
           environment: nodeEnv,
-          errors: error.errors
+          errors: error.errors,
         });
         throw new ConfigValidationError(errorMessage, error);
       }
@@ -99,7 +102,7 @@ export class Config {
    */
   public get(): EnvironmentConfig {
     if (!this._validated || !this._config) {
-      throw new Error('Configuration not validated. Call validate() first.');
+      throw new Error("Configuration not validated. Call validate() first.");
     }
     return this._config;
   }
@@ -116,7 +119,6 @@ export class Config {
     const config = this.get();
     return webAppConfigSchema.parse(config);
   }
-
 
   public getCore(): CoreConfig {
     const config = this.get();
@@ -144,19 +146,19 @@ export class Config {
    * Get current environment
    */
   public getEnvironment(): string {
-    return this._config?.NODE_ENV || process.env.NODE_ENV || 'development';
+    return this._config?.NODE_ENV || process.env.NODE_ENV || "development";
   }
 
   /**
    * Format Zod validation errors into a readable message
    */
   private formatValidationErrors(error: z.ZodError): string {
-    const errors = error.errors.map(err => {
-      const path = err.path.join('.');
+    const errors = error.errors.map((err) => {
+      const path = err.path.join(".");
       return `${path}: ${err.message}`;
     });
 
-    return `Configuration validation failed:\n${errors.join('\n')}`;
+    return `Configuration validation failed:\n${errors.join("\n")}`;
   }
 }
 
@@ -170,10 +172,20 @@ export function getConfig(): Config {
 /**
  * Convenience function to validate and get configuration
  */
-export function validateConfig(customEnv?: Record<string, string>): EnvironmentConfig {
+export function validateConfig(
+  customEnv?: Record<string, string>,
+): EnvironmentConfig {
   const config = getConfig();
   return config.validate(customEnv);
 }
 
 // Type exports for convenience
-export type { EnvironmentConfig, FullConfig, CoreConfig, FileManagerConfig, WebAppConfig, TenantConfig, CommunicationConfig };
+export type {
+  EnvironmentConfig,
+  FullConfig,
+  CoreConfig,
+  FileManagerConfig,
+  WebAppConfig,
+  TenantConfig,
+  CommunicationConfig,
+};

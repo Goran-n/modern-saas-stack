@@ -1,11 +1,11 @@
-import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getConfig } from "@kibly/config";
-import { getDatabaseConnection } from "@kibly/shared-db";
 import type { DrizzleClient } from "@kibly/shared-db";
+import { getDatabaseConnection } from "@kibly/shared-db";
+import type { Tenant } from "@kibly/tenant";
 import { logger } from "@kibly/utils";
 import type { User } from "@supabase/supabase-js";
-import type { Tenant } from "@kibly/tenant";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 
 export interface Context {
   db: DrizzleClient;
@@ -23,7 +23,7 @@ export async function createContext({
   const headers = req.headers;
   const requestId = crypto.randomUUID();
   const config = getConfig().getCore();
-  
+
   const supabase = createClient(
     config.SUPABASE_URL,
     config.SUPABASE_SERVICE_KEY || config.SUPABASE_ANON_KEY,
@@ -31,7 +31,7 @@ export async function createContext({
       auth: {
         persistSession: false,
       },
-    }
+    },
   );
 
   let user: User | null = null;
@@ -40,10 +40,13 @@ export async function createContext({
   const authorization = headers.get("authorization");
   if (authorization) {
     const token = authorization.replace("Bearer ", "");
-    
+
     try {
-      const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
-      
+      const {
+        data: { user: authUser },
+        error,
+      } = await supabase.auth.getUser(token);
+
       if (!error && authUser) {
         user = authUser;
         tenantId = headers.get("x-tenant-id") || null;

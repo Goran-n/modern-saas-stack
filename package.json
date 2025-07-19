@@ -13,8 +13,10 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --filter @kibly/api --filter @kibly/web",
-    "lint": "turbo run lint",
-    "format": "turbo run format",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "clean": "turbo run clean",
     "typecheck": "turbo run typecheck",
     "typecheck:strict": "bun run scripts/validate-strict.ts",

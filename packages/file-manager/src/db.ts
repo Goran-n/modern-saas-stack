@@ -1,5 +1,5 @@
-import { getDatabaseConnection, type DrizzleClient } from '@kibly/shared-db';
-import { getConfig } from '@kibly/config';
+import { getConfig } from "@kibly/config";
+import { type DrizzleClient, getDatabaseConnection } from "@kibly/shared-db";
 
 let dbInstance: DrizzleClient | null = null;
 

@@ -1,7 +1,7 @@
-import { createLogger } from '@kibly/utils';
-import { SlackEventPayloadSchema, type ParsedSlackMessage } from '../types';
+import { createLogger } from "@kibly/utils";
+import { type ParsedSlackMessage, SlackEventPayloadSchema } from "../types";
 
-const logger = createLogger('slack-parser');
+const logger = createLogger("slack-parser");
 
 export function parseSlackPayload(payload: unknown): ParsedSlackMessage | null {
   try {
@@ -9,7 +9,7 @@ export function parseSlackPayload(payload: unknown): ParsedSlackMessage | null {
     const event = validated.event;
 
     // Only process file events
-    if (event.type !== 'file_shared' || !event.files) {
+    if (event.type !== "file_shared" || !event.files) {
       return null;
     }
 
@@ -19,23 +19,23 @@ export function parseSlackPayload(payload: unknown): ParsedSlackMessage | null {
       channelId: event.channel,
       workspaceId: validated.team_id,
       timestamp: new Date(validated.event_time * 1000),
-      files: event.files.map(file => ({
+      files: event.files.map((file) => ({
         id: file.id,
         name: file.name,
         mimeType: file.mimetype,
         size: file.size,
-        downloadUrl: file.url_private_download
-      }))
+        downloadUrl: file.url_private_download,
+      })),
     };
 
-    logger.info('Parsed Slack message', {
+    logger.info("Parsed Slack message", {
       messageId: parsed.messageId,
-      filesCount: parsed.files.length
+      filesCount: parsed.files.length,
     });
 
     return parsed;
   } catch (error) {
-    logger.error('Failed to parse Slack payload', error);
-    throw new Error('Invalid Slack event payload');
+    logger.error("Failed to parse Slack payload", error);
+    throw new Error("Invalid Slack event payload");
   }
 }

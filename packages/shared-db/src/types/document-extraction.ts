@@ -3,7 +3,7 @@
 export interface ExtractedFieldValue {
   value: any;
   confidence: number;
-  source: 'ai_extraction' | 'ocr' | 'rules' | 'manual';
+  source: "ai_extraction" | "ocr" | "rules" | "manual";
   alternativeValues?: Array<{
     value: any;
     confidence: number;
@@ -18,12 +18,12 @@ export interface ExtractedFields {
   taxRate?: ExtractedFieldValue;
   taxType?: ExtractedFieldValue;
   currency?: ExtractedFieldValue;
-  
+
   // Document identifiers
   documentNumber?: ExtractedFieldValue;
   documentDate?: ExtractedFieldValue;
   dueDate?: ExtractedFieldValue;
-  
+
   // Vendor information
   vendorName?: ExtractedFieldValue;
   vendorAddress?: ExtractedFieldValue;
@@ -35,23 +35,23 @@ export interface ExtractedFields {
   vendorWebsite?: ExtractedFieldValue;
   vendorTaxId?: ExtractedFieldValue;
   vendorCompanyNumber?: ExtractedFieldValue;
-  
+
   // Customer information
   customerName?: ExtractedFieldValue;
   customerAddress?: ExtractedFieldValue;
   customerEmail?: ExtractedFieldValue;
   customerTaxId?: ExtractedFieldValue;
-  
+
   // Payment information
   paymentMethod?: ExtractedFieldValue;
   paymentTerms?: ExtractedFieldValue;
   bankAccount?: ExtractedFieldValue;
-  
+
   // Additional fields
   language?: ExtractedFieldValue;
   notes?: ExtractedFieldValue;
   _validationErrors?: ExtractedFieldValue;
-  
+
   // Allow additional fields
   [key: string]: ExtractedFieldValue | undefined;
 }
@@ -66,7 +66,7 @@ export interface CompanyProfile {
   legalName: string;
   tradingNames: string[];
   addresses: Array<{
-    type: 'billing' | 'shipping' | 'registered' | 'other';
+    type: "billing" | "shipping" | "registered" | "other";
     line1: string;
     line2?: string;
     city: string;
@@ -121,5 +121,5 @@ export interface SuggestedMatch {
   supplierId: string;
   supplierName: string;
   confidence: number;
-  matchType: 'exact' | 'fuzzy' | 'domain' | 'tax_id';
+  matchType: "exact" | "fuzzy" | "domain" | "tax_id";
 }

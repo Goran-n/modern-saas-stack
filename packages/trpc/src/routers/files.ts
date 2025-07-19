@@ -1,12 +1,21 @@
-import { z } from "zod";
+import { 
+  uploadFileFromBase64,
+  generateSignedUrl,
+  listFiles,
+  deleteFileByUser,
+  getFileById,
+  getFileWithExtractions,
+  processBatchFiles,
+  getFilesGroupedByYear,
+  getFilesByProcessingStatus,
+  getFilesBySupplierAndYear,
+  setDb as setFileManagerDb,
+} from "@kibly/file-manager";
+import { logger } from "@kibly/utils";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
 import { tenantProcedure } from "../trpc/procedures";
-import { logger } from "@kibly/utils";
-import { files as filesTable, documentExtractions, suppliers, eq, and, desc, inArray, sql } from "@kibly/shared-db";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { CategorizeFilePayload } from "@kibly/jobs";
-import { getConfig } from "@kibly/config";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = [
@@ -22,26 +31,22 @@ const ALLOWED_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-// Get storage bucket from config
-const getStorageBucket = () => {
-  try {
-    const config = getConfig().getForFileManager();
-    return config.STORAGE_BUCKET || 'vault';
-  } catch (error) {
-    // Fallback to default if config is not available
-    return 'vault';
-  }
-};
+// Create a custom procedure that sets the db for file-manager
+const fileManagerProcedure = tenantProcedure.use(async ({ ctx, next }) => {
+  // Set the database instance for file-manager
+  setFileManagerDb(ctx.db);
+  return next({ ctx });
+});
 
 export const filesRouter = createTRPCRouter({
-  upload: tenantProcedure
+  upload: fileManagerProcedure
     .input(
       z.object({
         fileName: z.string().min(1).max(255),
         mimeType: z.string(),
         size: z.number().positive(),
         base64Data: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { fileName, mimeType, size, base64Data } = input;
@@ -61,56 +66,17 @@ export const filesRouter = createTRPCRouter({
       }
 
       try {
-        const fileBuffer = Buffer.from(base64Data, "base64");
-        
-        const sanitisedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-        const timestamp = Date.now();
-        const pathTokens = [ctx.tenantId, ctx.user.id, `${timestamp}_${sanitisedFileName}`];
-        const fullPath = pathTokens.join("/");
-
-        // Upload directly using Supabase client
-        const storageBucket = getStorageBucket();
-        const { error: uploadError } = await ctx.supabase.storage
-          .from(storageBucket)
-          .upload(fullPath, fileBuffer, {
-            contentType: mimeType,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = ctx.supabase.storage
-          .from(storageBucket)
-          .getPublicUrl(fullPath);
-
-        const [fileRecord] = await ctx.db
-          .insert(filesTable)
-          .values({
-            tenantId: ctx.tenantId,
-            uploadedBy: ctx.user.id,
-            fileName,
-            pathTokens,
-            mimeType,
-            size,
-            source: "user_upload",
-            metadata: {
-              originalName: fileName,
-              publicUrl,
-            },
-          })
-          .returning();
-
-        if (!fileRecord) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create file record",
-          });
-        }
+        const result = await uploadFileFromBase64({
+          fileName,
+          mimeType,
+          size,
+          base64Data,
+          tenantId: ctx.tenantId,
+          uploadedBy: ctx.user.id,
+        });
 
         logger.info("File uploaded successfully", {
-          fileId: fileRecord.id,
+          fileId: result.id,
           tenantId: ctx.tenantId,
           userId: ctx.user.id,
           fileName,
@@ -118,28 +84,7 @@ export const filesRouter = createTRPCRouter({
           requestId: ctx.requestId,
         });
 
-        // Trigger categorization job
-        await tasks.trigger("categorize-file", {
-          fileId: fileRecord.id,
-          tenantId: ctx.tenantId,
-          mimeType: fileRecord.mimeType,
-          size: fileRecord.size,
-          pathTokens: fileRecord.pathTokens,
-          source: fileRecord.source,
-        } satisfies CategorizeFilePayload);
-
-        logger.info("File categorization job triggered", {
-          fileId: fileRecord.id,
-          tenantId: ctx.tenantId,
-        });
-
-        return {
-          id: fileRecord.id,
-          fileName: fileRecord.fileName,
-          size: fileRecord.size,
-          mimeType: fileRecord.mimeType,
-          createdAt: fileRecord.createdAt,
-        };
+        return result;
       } catch (error) {
         logger.error("Failed to upload file", {
           error,
@@ -156,91 +101,41 @@ export const filesRouter = createTRPCRouter({
       }
     }),
 
-  getSignedUrl: tenantProcedure
+  getSignedUrl: fileManagerProcedure
     .input(
       z.object({
         fileId: z.string().uuid(),
         expiresIn: z.number().min(60).max(3600).default(3600),
-        download: z.boolean().default(false), // Add option to control download behavior
-      })
+        download: z.boolean().default(false),
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { fileId, expiresIn, download } = input;
 
-      const file = await ctx.db
-        .select()
-        .from(filesTable)
-        .where(
-          and(
-            eq(filesTable.id, fileId),
-            eq(filesTable.tenantId, ctx.tenantId)
-          )
-        )
-        .limit(1);
-
-      if (!file[0]) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "File not found",
-        });
-      }
-
       try {
-        const filePath = file[0].pathTokens.join("/");
-        const storageBucket = getStorageBucket();
-        
-        logger.info("Generating signed URL", {
-          fileId,
-          filePath,
-          storageBucket,
+        const result = await generateSignedUrl(fileId, ctx.tenantId, {
           expiresIn,
           download,
-          tenantId: ctx.tenantId,
-          requestId: ctx.requestId,
         });
-
-        const { data, error: urlError } = await ctx.supabase.storage
-          .from(storageBucket)
-          .createSignedUrl(filePath, expiresIn, {
-            download: download // Use the download parameter from input
-          });
-
-        if (urlError) {
-          logger.error("Supabase storage error", {
-            error: urlError,
-            fileId,
-            filePath,
-            storageBucket,
-            tenantId: ctx.tenantId,
-            requestId: ctx.requestId,
-          });
-          throw urlError;
-        }
-
-        if (!data) {
-          logger.error("No data returned from Supabase", {
-            fileId,
-            filePath,
-            storageBucket,
-            tenantId: ctx.tenantId,
-            requestId: ctx.requestId,
-          });
-          throw new Error("No data returned from Supabase storage");
-        }
 
         logger.info("Signed URL generated successfully", {
           fileId,
-          url: data.signedUrl,
-          expiresAt: new Date(Date.now() + expiresIn * 1000),
+          expiresAt: result.expiresAt,
           tenantId: ctx.tenantId,
           requestId: ctx.requestId,
         });
 
-        return {
-          url: data.signedUrl,
-          expiresAt: new Date(Date.now() + expiresIn * 1000),
-        };
+        return result;
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        
+        if (errorMessage === "File not found") {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "File not found",
+          });
+        }
+
         logger.error("Failed to generate signed URL", {
           error,
           fileId,
@@ -255,78 +150,37 @@ export const filesRouter = createTRPCRouter({
       }
     }),
 
-  list: tenantProcedure
+  list: fileManagerProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
         offset: z.number().min(0).default(0),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { limit, offset } = input;
 
-      const files = await ctx.db
-        .select({
-          id: filesTable.id,
-          fileName: filesTable.fileName,
-          mimeType: filesTable.mimeType,
-          size: filesTable.size,
-          createdAt: filesTable.createdAt,
-        })
-        .from(filesTable)
-        .where(eq(filesTable.tenantId, ctx.tenantId))
-        .orderBy(desc(filesTable.createdAt))
-        .limit(limit)
-        .offset(offset);
-
-      return {
-        files,
-        hasMore: files.length === limit,
-      };
+      return listFiles(ctx.tenantId, { limit, offset });
     }),
 
-  delete: tenantProcedure
+  delete: fileManagerProcedure
     .input(
       z.object({
         fileId: z.string().uuid(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { fileId } = input;
 
-      const file = await ctx.db
-        .select()
-        .from(filesTable)
-        .where(
-          and(
-            eq(filesTable.id, fileId),
-            eq(filesTable.tenantId, ctx.tenantId),
-            eq(filesTable.uploadedBy, ctx.user.id)
-          )
-        )
-        .limit(1);
-
-      if (!file[0]) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "File not found or you don't have permission to delete it",
-        });
-      }
-
       try {
-        const filePath = file[0].pathTokens.join("/");
-        const storageBucket = getStorageBucket();
-        const { error: removeError } = await ctx.supabase.storage
-          .from(storageBucket)
-          .remove([filePath]);
+        const success = await deleteFileByUser(fileId, ctx.tenantId, ctx.user.id);
 
-        if (removeError) {
-          throw removeError;
+        if (!success) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "File not found or you don't have permission to delete it",
+          });
         }
-
-        await ctx.db
-          .delete(filesTable)
-          .where(eq(filesTable.id, fileId));
 
         logger.info("File deleted successfully", {
           fileId,
@@ -337,6 +191,10 @@ export const filesRouter = createTRPCRouter({
 
         return { success: true };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
         logger.error("Failed to delete file", {
           error,
           fileId,
@@ -351,218 +209,94 @@ export const filesRouter = createTRPCRouter({
       }
     }),
 
-  getById: tenantProcedure
+  getById: fileManagerProcedure
     .input(
       z.object({
         fileId: z.string().uuid(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { fileId } = input;
 
-      const file = await ctx.db
-        .select()
-        .from(filesTable)
-        .where(
-          and(
-            eq(filesTable.id, fileId),
-            eq(filesTable.tenantId, ctx.tenantId)
-          )
-        )
-        .limit(1);
+      const file = await getFileById(fileId, ctx.tenantId);
 
-      if (!file[0]) {
+      if (!file) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "File not found",
         });
       }
 
-      return {
-        id: file[0].id,
-        fileName: file[0].fileName,
-        mimeType: file[0].mimeType,
-        size: file[0].size,
-        processingStatus: file[0].processingStatus,
-        createdAt: file[0].createdAt,
-        updatedAt: file[0].updatedAt,
-      };
+      return file;
     }),
 
-  getWithExtractions: tenantProcedure
+  getWithExtractions: fileManagerProcedure
     .input(
       z.object({
         fileId: z.string().uuid(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { fileId } = input;
 
-      const file = await ctx.db
-        .select()
-        .from(filesTable)
-        .where(
-          and(
-            eq(filesTable.id, fileId),
-            eq(filesTable.tenantId, ctx.tenantId)
-          )
-        )
-        .limit(1);
+      const file = await getFileWithExtractions(fileId, ctx.tenantId);
 
-      if (!file[0]) {
+      if (!file) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "File not found",
         });
       }
 
-      // Get document extractions for this file
-      const extractions = await ctx.db
-        .select()
-        .from(documentExtractions)
-        .where(eq(documentExtractions.fileId, fileId))
-        .orderBy(desc(documentExtractions.createdAt))
-        .limit(1);
-
-      return {
-        id: file[0].id,
-        fileName: file[0].fileName,
-        mimeType: file[0].mimeType,
-        size: file[0].size,
-        processingStatus: file[0].processingStatus,
-        createdAt: file[0].createdAt,
-        updatedAt: file[0].updatedAt,
-        extraction: extractions[0] || null,
-      };
+      return file;
     }),
 
-  processBatch: tenantProcedure
+  processBatch: fileManagerProcedure
     .input(
       z.object({
         fileIds: z.array(z.string().uuid()),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      const files = await ctx.db
-        .select()
-        .from(filesTable)
-        .where(
-          and(
-            eq(filesTable.tenantId, ctx.tenantId),
-            inArray(filesTable.id, input.fileIds)
-          )
-        );
+      try {
+        const result = await processBatchFiles(input.fileIds, ctx.tenantId);
 
-      if (files.length === 0) {
+        logger.info("Batch file categorization jobs triggered", {
+          count: result.triggered,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        return result;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        
+        if (errorMessage === "No files found") {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "No files found",
+          });
+        }
+
+        logger.error("Failed to process batch files", {
+          error,
+          fileIds: input.fileIds,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "No files found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to process files",
         });
       }
-
-      const jobHandle = await tasks.batchTrigger(
-        "categorize-file",
-        files.map(file => ({
-          payload: {
-            fileId: file.id,
-            tenantId: file.tenantId,
-            mimeType: file.mimeType,
-            size: file.size,
-            pathTokens: file.pathTokens,
-            source: file.source,
-          } satisfies CategorizeFilePayload,
-        }))
-      );
-
-      logger.info("Batch file categorization jobs triggered", {
-        count: files.length,
-        tenantId: ctx.tenantId,
-        requestId: ctx.requestId,
-      });
-
-      return {
-        triggered: files.length,
-        jobHandle: jobHandle.batchId,
-      };
     }),
 
-  getGroupedByYear: tenantProcedure
+  getGroupedByYear: fileManagerProcedure
     .input(z.object({}))
     .query(async ({ ctx }) => {
       try {
-        // Get all files with their extractions and suppliers
-        const filesWithData = await ctx.db
-          .select({
-            id: filesTable.id,
-            fileName: filesTable.fileName,
-            mimeType: filesTable.mimeType,
-            size: filesTable.size,
-            processingStatus: filesTable.processingStatus,
-            createdAt: filesTable.createdAt,
-            updatedAt: filesTable.updatedAt,
-            extraction: {
-              id: documentExtractions.id,
-              documentType: documentExtractions.documentType,
-              overallConfidence: documentExtractions.overallConfidence,
-              validationStatus: documentExtractions.validationStatus,
-              extractedFields: documentExtractions.extractedFields,
-            },
-            supplier: {
-              id: suppliers.id,
-              displayName: suppliers.displayName,
-              legalName: suppliers.legalName,
-            },
-          })
-          .from(filesTable)
-          .leftJoin(documentExtractions, eq(documentExtractions.fileId, filesTable.id))
-          .leftJoin(suppliers, eq(suppliers.id, documentExtractions.matchedSupplierId))
-          .where(eq(filesTable.tenantId, ctx.tenantId))
-          .orderBy(desc(filesTable.createdAt));
-
-        // Group files by year and supplier
-        const groupedData: Record<string, any> = {};
-
-        filesWithData.forEach((file) => {
-          const year = new Date(file.createdAt).getFullYear().toString();
-          const supplierName = file.supplier?.displayName || file.supplier?.legalName || 'Unknown Supplier';
-
-          if (!groupedData[year]) {
-            groupedData[year] = {
-              year,
-              suppliers: {},
-              totalFiles: 0,
-            };
-          }
-
-          if (!groupedData[year].suppliers[supplierName]) {
-            groupedData[year].suppliers[supplierName] = {
-              name: supplierName,
-              supplierId: file.supplier?.id || null,
-              files: [],
-              fileCount: 0,
-            };
-          }
-
-          const fileData = {
-            id: file.id,
-            fileName: file.fileName,
-            mimeType: file.mimeType,
-            size: file.size,
-            processingStatus: file.processingStatus,
-            createdAt: file.createdAt,
-            updatedAt: file.updatedAt,
-            extraction: file.extraction?.id ? file.extraction : null,
-          };
-
-          groupedData[year].suppliers[supplierName].files.push(fileData);
-          groupedData[year].suppliers[supplierName].fileCount++;
-          groupedData[year].totalFiles++;
-        });
-
-        return {
-          byYear: groupedData,
-          totalFiles: filesWithData.length,
-        };
+        return await getFilesGroupedByYear(ctx.tenantId);
       } catch (error) {
         logger.error("Failed to get grouped files", {
           error,
@@ -577,52 +311,11 @@ export const filesRouter = createTRPCRouter({
       }
     }),
 
-  getProcessingStatus: tenantProcedure
+  getProcessingStatus: fileManagerProcedure
     .input(z.object({}))
     .query(async ({ ctx }) => {
       try {
-        const processingFiles = await ctx.db
-          .select({
-            id: filesTable.id,
-            fileName: filesTable.fileName,
-            mimeType: filesTable.mimeType,
-            size: filesTable.size,
-            processingStatus: filesTable.processingStatus,
-            createdAt: filesTable.createdAt,
-            updatedAt: filesTable.updatedAt,
-          })
-          .from(filesTable)
-          .where(
-            and(
-              eq(filesTable.tenantId, ctx.tenantId),
-              inArray(filesTable.processingStatus, ['processing', 'pending'])
-            )
-          )
-          .orderBy(desc(filesTable.createdAt));
-
-        const failedFiles = await ctx.db
-          .select({
-            id: filesTable.id,
-            fileName: filesTable.fileName,
-            mimeType: filesTable.mimeType,
-            size: filesTable.size,
-            processingStatus: filesTable.processingStatus,
-            createdAt: filesTable.createdAt,
-            updatedAt: filesTable.updatedAt,
-          })
-          .from(filesTable)
-          .where(
-            and(
-              eq(filesTable.tenantId, ctx.tenantId),
-              eq(filesTable.processingStatus, 'failed')
-            )
-          )
-          .orderBy(desc(filesTable.createdAt));
-
-        return {
-          processing: processingFiles,
-          failed: failedFiles,
-        };
+        return await getFilesByProcessingStatus(ctx.tenantId);
       } catch (error) {
         logger.error("Failed to get processing status files", {
           error,
@@ -637,70 +330,18 @@ export const filesRouter = createTRPCRouter({
       }
     }),
 
-  getBySupplierAndYear: tenantProcedure
+  getBySupplierAndYear: fileManagerProcedure
     .input(
       z.object({
         year: z.string(),
         supplierId: z.string().uuid().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { year, supplierId } = input;
 
       try {
-        const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
-        const endOfYear = new Date(`${parseInt(year) + 1}-01-01T00:00:00.000Z`);
-
-        const baseConditions = [
-          eq(filesTable.tenantId, ctx.tenantId),
-          sql`${filesTable.createdAt} >= ${startOfYear}`,
-          sql`${filesTable.createdAt} < ${endOfYear}`
-        ];
-
-        if (supplierId) {
-          baseConditions.push(eq(documentExtractions.matchedSupplierId, supplierId));
-        }
-
-        const query = ctx.db
-          .select({
-            id: filesTable.id,
-            fileName: filesTable.fileName,
-            mimeType: filesTable.mimeType,
-            size: filesTable.size,
-            processingStatus: filesTable.processingStatus,
-            createdAt: filesTable.createdAt,
-            updatedAt: filesTable.updatedAt,
-            extraction: {
-              id: documentExtractions.id,
-              documentType: documentExtractions.documentType,
-              overallConfidence: documentExtractions.overallConfidence,
-              validationStatus: documentExtractions.validationStatus,
-              extractedFields: documentExtractions.extractedFields,
-            },
-            supplier: {
-              id: suppliers.id,
-              displayName: suppliers.displayName,
-              legalName: suppliers.legalName,
-            },
-          })
-          .from(filesTable)
-          .leftJoin(documentExtractions, eq(documentExtractions.fileId, filesTable.id))
-          .leftJoin(suppliers, eq(suppliers.id, documentExtractions.matchedSupplierId))
-          .where(and(...baseConditions));
-
-        const files = await query.orderBy(desc(filesTable.createdAt));
-
-        return files.map((file) => ({
-          id: file.id,
-          fileName: file.fileName,
-          mimeType: file.mimeType,
-          size: file.size,
-          processingStatus: file.processingStatus,
-          createdAt: file.createdAt,
-          updatedAt: file.updatedAt,
-          extraction: file.extraction?.id ? file.extraction : null,
-          supplier: file.supplier?.id ? file.supplier : null,
-        }));
+        return await getFilesBySupplierAndYear(ctx.tenantId, year, supplierId);
       } catch (error) {
         logger.error("Failed to get files by supplier and year", {
           error,

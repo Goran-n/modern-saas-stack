@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo",
     "test": "bun test",
-    "build": "tsc"
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@kibly/config": "workspace:*",
