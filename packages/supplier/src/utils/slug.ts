@@ -1,7 +1,4 @@
-import { suppliers } from "@kibly/shared-db";
-import { and, eq, like } from "drizzle-orm";
-import type { PgTransaction } from "drizzle-orm/pg-core";
-import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { suppliers, and, eq, like } from "@kibly/shared-db";
 
 /**
  * Generate a unique slug for a supplier within a tenant
@@ -14,7 +11,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 export async function generateSlug(
   name: string,
   tenantId: string,
-  db: PostgresJsDatabase<any> | PgTransaction<any, any, any>,
+  db: any,
 ): Promise<string> {
   // Create base slug
   const baseSlug = name
@@ -26,7 +23,7 @@ export async function generateSlug(
     .substring(0, 50); // Limit length
 
   // Get all existing slugs that match our base pattern
-  const existingSlugs = await db
+  const existingSlugs = await (db as any)
     .select({ slug: suppliers.slug })
     .from(suppliers)
     .where(
@@ -43,14 +40,15 @@ export async function generateSlug(
 
   // Find the highest numbered suffix
   let maxSuffix = 0;
-  const baseSlugExact = existingSlugs.some((s) => s.slug === baseSlug);
+  const baseSlugExact = existingSlugs.some((s: any) => (s.slug as string) === baseSlug);
   if (baseSlugExact) {
     maxSuffix = 0;
   }
 
   // Check for numbered variants
   const suffixPattern = new RegExp(`^${baseSlug}-(\\d+)$`);
-  for (const { slug } of existingSlugs) {
+  for (const row of existingSlugs) {
+    const slug = row.slug as string;
     const match = slug.match(suffixPattern);
     if (match && match[1]) {
       const suffix = parseInt(match[1], 10);

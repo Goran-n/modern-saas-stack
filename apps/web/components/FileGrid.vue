@@ -19,18 +19,38 @@
         <!-- File Name -->
         <h3 
           class="text-sm font-medium text-gray-900 text-center line-clamp-2 hover:text-primary-600 transition-colors"
-          :title="file.fileName"
+          :title="file.metadata?.displayName || file.fileName"
         >
-          {{ file.fileName }}
+          {{ file.metadata?.displayName || file.fileName }}
         </h3>
 
-        <!-- File Info -->
-        <div class="mt-2 text-center">
-          <p class="text-xs text-gray-500">
-            {{ formatFileSize(file.size || 0) }}
+        <!-- Supplier Name if available -->
+        <p v-if="file.metadata?.supplierName" class="text-xs text-gray-600 text-center mt-1">
+          {{ file.metadata.supplierName }}
+        </p>
+
+        <!-- Document Info -->
+        <div class="mt-2 text-center space-y-1">
+          <!-- Amount if available -->
+          <p v-if="file.extraction?.extractedFields?.totalAmount?.value" class="text-sm font-semibold text-gray-900">
+            {{ formatCurrency(file.extraction.extractedFields.totalAmount.value, file.extraction.extractedFields.currency?.value) }}
           </p>
+          
+          <!-- Document Number if available -->
+          <p v-if="file.extraction?.extractedFields?.documentNumber?.value" class="text-xs text-gray-600">
+            #{{ file.extraction.extractedFields.documentNumber.value }}
+          </p>
+
+          <!-- Date if extracted, otherwise created date -->
+          <p class="text-xs text-gray-500">
+            {{ file.extraction?.extractedFields?.documentDate?.value 
+              ? formatDate(file.extraction.extractedFields.documentDate.value)
+              : formatDate(file.createdAt) }}
+          </p>
+
+          <!-- File size -->
           <p class="text-xs text-gray-400">
-            {{ formatDate(file.createdAt) }}
+            {{ formatFileSize(file.size || 0) }}
           </p>
         </div>
 
@@ -66,8 +86,22 @@ interface FileItem {
   size?: number
   createdAt: string
   processingStatus?: string
+  metadata?: {
+    displayName?: string
+    supplierName?: string
+    documentType?: string
+    [key: string]: any
+  }
   extraction?: {
     overallConfidence: number
+    documentType?: string
+    extractedFields?: {
+      totalAmount?: { value: any; confidence: number }
+      documentNumber?: { value: any; confidence: number }
+      documentDate?: { value: any; confidence: number }
+      currency?: { value: any; confidence: number }
+      [key: string]: any
+    }
   }
 }
 
@@ -168,6 +202,21 @@ const formatFileSize = (bytes: number): string => {
 
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString()
+}
+
+const formatCurrency = (amount: any, currency?: any): string => {
+  const numAmount = parseFloat(amount)
+  if (isNaN(numAmount)) return amount
+  
+  const curr = currency || 'GBP'
+  const formatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: curr,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+  
+  return formatter.format(numAmount)
 }
 
 </script>

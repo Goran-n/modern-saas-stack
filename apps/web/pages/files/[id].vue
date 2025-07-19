@@ -24,8 +24,12 @@
             class="text-2xl text-gray-500"
           />
           <div>
-            <h1 class="text-2xl font-semibold">{{ file.fileName }}</h1>
-            <p class="text-sm text-gray-500">{{ formatFileSize(file.size || 0) }} • {{ formatDate(file.createdAt) }}</p>
+            <h1 class="text-2xl font-semibold">{{ file.metadata?.displayName || file.fileName }}</h1>
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <span v-if="file.metadata?.supplierName">{{ file.metadata.supplierName }} •</span>
+              <span>{{ formatFileSize(file.size || 0) }} •</span>
+              <span>{{ formatDate(file.extraction?.extractedFields?.documentDate?.value || file.createdAt) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -94,6 +98,69 @@
 
         <!-- File Information & Extractions -->
         <div class="space-y-4">
+          <!-- Key Document Information (if extracted) -->
+          <UCard v-if="file.extraction?.extractedFields" class="border-primary-500">
+            <template #header>
+              <h2 class="text-lg font-medium">Document Summary</h2>
+            </template>
+            
+            <div class="space-y-4">
+              <!-- Amount if available -->
+              <div v-if="file.extraction.extractedFields.totalAmount?.value" class="bg-primary-50 rounded-lg p-4 text-center">
+                <p class="text-sm text-gray-600 mb-1">Total Amount</p>
+                <p class="text-2xl font-bold text-gray-900">
+                  {{ formatCurrency(file.extraction.extractedFields.totalAmount.value, file.extraction.extractedFields.currency?.value) }}
+                </p>
+                <p v-if="file.extraction.extractedFields.totalAmount.confidence" class="text-xs text-gray-500 mt-1">
+                  {{ Math.round(file.extraction.extractedFields.totalAmount.confidence) }}% confidence
+                </p>
+              </div>
+              
+              <!-- Key Info Grid -->
+              <div class="grid grid-cols-2 gap-4">
+                <div v-if="file.extraction.extractedFields.documentNumber?.value" class="bg-gray-50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500">Document Number</p>
+                  <p class="font-semibold">{{ file.extraction.extractedFields.documentNumber.value }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.documentDate?.value" class="bg-gray-50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500">Document Date</p>
+                  <p class="font-semibold">{{ formatDate(file.extraction.extractedFields.documentDate.value) }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.dueDate?.value" class="bg-gray-50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500">Due Date</p>
+                  <p class="font-semibold">{{ formatDate(file.extraction.extractedFields.dueDate.value) }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.vendorName?.value" class="bg-gray-50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500">Vendor</p>
+                  <p class="font-semibold text-sm">{{ file.extraction.extractedFields.vendorName.value }}</p>
+                </div>
+              </div>
+              
+              <!-- Document Type Badge -->
+              <div class="flex items-center justify-between pt-2 border-t">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-500">Document Type:</span>
+                  <UBadge variant="soft" size="sm">
+                    {{ file.extraction.documentType }}
+                  </UBadge>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-500">Confidence:</span>
+                  <UBadge 
+                    :color="file.extraction.overallConfidence >= 90 ? 'success' : file.extraction.overallConfidence >= 70 ? 'warning' : 'error'"
+                    variant="soft"
+                    size="sm"
+                  >
+                    {{ Math.round(file.extraction.overallConfidence) }}%
+                  </UBadge>
+                </div>
+              </div>
+            </div>
+          </UCard>
+
           <UCard>
             <template #header>
               <h2 class="text-lg font-medium">File Information</h2>
@@ -101,7 +168,7 @@
             
             <div class="space-y-3">
               <div class="flex justify-between">
-                <span class="text-sm text-gray-500">File Name:</span>
+                <span class="text-sm text-gray-500">Original Name:</span>
                 <span class="text-sm font-medium">{{ file.fileName }}</span>
               </div>
               
@@ -275,6 +342,21 @@ const formatFileSize = (bytes: number) => {
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
+};
+
+const formatCurrency = (amount: any, currency?: any): string => {
+  const numAmount = parseFloat(amount)
+  if (isNaN(numAmount)) return amount
+  
+  const curr = currency || 'GBP'
+  const formatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: curr,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+  
+  return formatter.format(numAmount)
 };
 
 const getConfidenceColor = (confidence: number) => {

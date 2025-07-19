@@ -1,14 +1,20 @@
 import { getConfig } from "@kibly/config";
+import { DeduplicationService } from "@kibly/deduplication";
 import type { CategorizeFilePayload } from "@kibly/jobs";
 import { 
   documentExtractions, 
   files, 
-  suppliers
+  suppliers,
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  sql
 } from "@kibly/shared-db";
 import { download, remove, signedUrl, upload } from "@kibly/supabase-storage";
 import { createLogger, stripSpecialCharacters } from "@kibly/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { getClient } from "./client";
 import { getDb } from "./db";
 import type { CreateFileInput, ProcessingStatus } from "./types";
@@ -48,6 +54,29 @@ export async function uploadFile(
     bucket,
   });
 
+  // Calculate file hash for deduplication
+  const fileBuffer = await file.arrayBuffer();
+  const deduplicationService = new DeduplicationService();
+  const contentHash = await deduplicationService.calculateAndStoreFileHash(
+    '', // Temporary, will update after insert
+    Buffer.from(fileBuffer)
+  );
+
+  // Check for duplicates
+  const duplicateCheck = await deduplicationService.checkFileDuplicate(
+    contentHash,
+    file.size,
+    input.tenantId
+  );
+
+  if (duplicateCheck.isDuplicate) {
+    logger.warn("File is a duplicate", {
+      fileName: file.name,
+      duplicateFileId: duplicateCheck.duplicateFileId,
+      contentHash,
+    });
+  }
+
   // Save to database
   const db = getDb();
   const [record] = await db
@@ -58,6 +87,8 @@ export async function uploadFile(
       fileName: sanitisedFileName,
       pathTokens: fullPath,
       bucket,
+      contentHash,
+      fileSize: file.size,
     })
     .returning();
 
@@ -138,6 +169,28 @@ export async function uploadFileFromBase64(input: {
   // Convert base64 to buffer
   const fileBuffer = Buffer.from(input.base64Data, "base64");
 
+  // Calculate file hash for deduplication
+  const deduplicationService = new DeduplicationService();
+  const contentHash = await deduplicationService.calculateAndStoreFileHash(
+    '', // Temporary, will update after insert
+    fileBuffer
+  );
+
+  // Check for duplicates
+  const duplicateCheck = await deduplicationService.checkFileDuplicate(
+    contentHash,
+    fileBuffer.length,
+    input.tenantId
+  );
+
+  if (duplicateCheck.isDuplicate) {
+    logger.warn("File is a duplicate", {
+      fileName: input.fileName,
+      duplicateFileId: duplicateCheck.duplicateFileId,
+      contentHash,
+    });
+  }
+
   // Get bucket from config
   const config = getConfig().getForFileManager();
   const bucket = config.STORAGE_BUCKET || "vault";
@@ -174,9 +227,13 @@ export async function uploadFileFromBase64(input: {
       metadata: {
         originalName: input.fileName,
         publicUrl,
+        isDuplicate: duplicateCheck.isDuplicate,
+        duplicateFileId: duplicateCheck.duplicateFileId,
         ...input.metadata,
       },
       bucket,
+      contentHash,
+      fileSize: fileBuffer.length,
     })
     .returning();
 

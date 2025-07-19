@@ -1,10 +1,13 @@
 import { getConfig } from "@kibly/config";
+import { generateDisplayName } from "@kibly/file-manager";
 import {
   type CompanyProfile,
   documentExtractions,
+  files as filesTable,
   getDatabaseConnection,
+  suppliers,
+  eq,
 } from "@kibly/shared-db";
-import { eq } from "drizzle-orm";
 import {
   CONFIDENCE_SCORES,
   extractVendorData,
@@ -140,6 +143,46 @@ export const processInvoiceSupplier = task({
                   : PROCESSING_NOTES.SUPPLIER_MATCHED,
             })
             .where(eq(documentExtractions.id, documentExtractionId));
+
+          // Update file's display name with supplier information
+          const [supplier] = await tx
+            .select()
+            .from(suppliers)
+            .where(eq(suppliers.id, result.supplierId))
+            .limit(1);
+
+          if (supplier && extraction.fileId) {
+            const [file] = await tx
+              .select()
+              .from(filesTable)
+              .where(eq(filesTable.id, extraction.fileId))
+              .limit(1);
+
+            if (file) {
+              const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+              const displayName = generateDisplayName({
+                documentType: extraction.documentType,
+                extractedFields: extraction.extractedFields as any || null,
+                supplierName: supplier.displayName,
+                originalFileName: file.fileName,
+                fileExtension,
+              });
+
+              await tx
+                .update(filesTable)
+                .set({
+                  metadata: {
+                    ...(typeof file.metadata === "object" && file.metadata !== null
+                      ? file.metadata
+                      : {}),
+                    displayName,
+                    supplierName: supplier.displayName,
+                  },
+                  updatedAt: new Date(),
+                })
+                .where(eq(filesTable.id, extraction.fileId));
+            }
+          }
 
           logger.info("Supplier processing completed", {
             documentExtractionId,

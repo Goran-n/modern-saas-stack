@@ -1,6 +1,5 @@
-import { supplierAttributes, suppliers } from "@kibly/shared-db";
+import { supplierAttributes, suppliers, and, eq } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
-import { and, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { SupplierError, SupplierErrors } from "../errors";
 import { SupplierStatus } from "../types";

@@ -18,6 +18,7 @@ export {
   type DocumentExtraction,
   documentExtractions,
   documentTypeEnum,
+  duplicateStatusEnum,
   extractionMethodEnum,
   type NewDocumentExtraction,
   validationStatusEnum,

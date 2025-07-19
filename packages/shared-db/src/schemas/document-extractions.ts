@@ -34,6 +34,13 @@ export const extractionMethodEnum = pgEnum("extraction_method", [
   "manual",
 ]);
 
+export const duplicateStatusEnum = pgEnum("duplicate_status", [
+  "unique",
+  "duplicate",
+  "possible_duplicate",
+  "reviewing",
+]);
+
 export const documentExtractions = pgTable("document_extractions", {
   id: uuid("id").primaryKey().defaultRandom(),
   fileId: uuid("file_id")
@@ -77,6 +84,12 @@ export const documentExtractions = pgTable("document_extractions", {
     .array()
     .$type<import("../types").SuggestedMatch[]>(),
 
+  // Deduplication fields
+  invoiceFingerprint: text("invoice_fingerprint"),
+  duplicateConfidence: numeric("duplicate_confidence", { precision: 5, scale: 2 }),
+  duplicateCandidateId: uuid("duplicate_candidate_id"),
+  duplicateStatus: duplicateStatusEnum("duplicate_status").default("unique"),
+
   // Processing metadata
   extractionMethod: extractionMethodEnum("extraction_method").notNull(),
   processingDurationMs: integer("processing_duration_ms").notNull(),
@@ -90,6 +103,11 @@ export const documentExtractions = pgTable("document_extractions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Add foreign key relation for duplicate candidate
+export const documentExtractionsRelations = {
+  duplicateCandidate: documentExtractions.duplicateCandidateId,
+};
 
 // Type exports
 export type DocumentExtraction = typeof documentExtractions.$inferSelect;

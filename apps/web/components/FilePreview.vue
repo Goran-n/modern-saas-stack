@@ -21,10 +21,12 @@
               :class="getFileIconColor(file.fileName)"
             />
             <div>
-              <h3 class="text-lg font-medium">{{ file.fileName }}</h3>
-              <p class="text-sm text-gray-500">
-                {{ formatFileSize(file.size || 0) }} • {{ formatDate(file.createdAt) }}
-              </p>
+              <h3 class="text-lg font-medium">{{ file.metadata?.displayName || file.fileName }}</h3>
+              <div class="flex items-center gap-2 text-sm text-gray-500">
+                <span v-if="file.metadata?.supplierName">{{ file.metadata.supplierName }} •</span>
+                <span>{{ formatFileSize(file.size || 0) }} •</span>
+                <span>{{ formatDate(file.extraction?.extractedFields?.documentDate?.value || file.createdAt) }}</span>
+              </div>
             </div>
           </div>
           
@@ -106,6 +108,46 @@
 
         <!-- File Information Sidebar -->
         <div class="space-y-4 overflow-y-auto">
+          <!-- Key Document Information (if extracted) -->
+          <UCard v-if="file.extraction?.extractedFields">
+            <template #header>
+              <h4 class="text-sm font-medium">Document Details</h4>
+            </template>
+            
+            <div class="space-y-3">
+              <!-- Amount if available -->
+              <div v-if="file.extraction.extractedFields.totalAmount?.value" class="bg-primary-50 rounded-lg p-3">
+                <p class="text-xs text-gray-600 mb-1">Total Amount</p>
+                <p class="text-xl font-semibold text-gray-900">
+                  {{ formatCurrency(file.extraction.extractedFields.totalAmount.value, file.extraction.extractedFields.currency?.value) }}
+                </p>
+              </div>
+              
+              <!-- Document Info Grid -->
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div v-if="file.extraction.extractedFields.documentNumber?.value">
+                  <p class="text-xs text-gray-500">Document Number</p>
+                  <p class="font-medium">{{ file.extraction.extractedFields.documentNumber.value }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.documentDate?.value">
+                  <p class="text-xs text-gray-500">Document Date</p>
+                  <p class="font-medium">{{ formatDate(file.extraction.extractedFields.documentDate.value) }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.dueDate?.value">
+                  <p class="text-xs text-gray-500">Due Date</p>
+                  <p class="font-medium">{{ formatDate(file.extraction.extractedFields.dueDate.value) }}</p>
+                </div>
+                
+                <div v-if="file.extraction.extractedFields.vendorName?.value">
+                  <p class="text-xs text-gray-500">Vendor</p>
+                  <p class="font-medium">{{ file.extraction.extractedFields.vendorName.value }}</p>
+                </div>
+              </div>
+            </div>
+          </UCard>
+
           <!-- File Details -->
           <UCard>
             <template #header>
@@ -113,6 +155,11 @@
             </template>
             
             <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Original Name:</span>
+                <span class="font-medium text-xs">{{ file.fileName }}</span>
+              </div>
+              
               <div class="flex justify-between">
                 <span class="text-gray-500">Size:</span>
                 <span class="font-medium">{{ formatFileSize(file.size || 0) }}</span>
@@ -219,6 +266,12 @@ interface FileItem {
   mimeType?: string
   createdAt: string
   processingStatus?: string
+  metadata?: {
+    displayName?: string
+    supplierName?: string
+    documentType?: string
+    [key: string]: any
+  }
   extraction?: {
     overallConfidence: number
     documentType: string
@@ -329,6 +382,21 @@ const formatFileSize = (bytes: number): string => {
 
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString()
+}
+
+const formatCurrency = (amount: any, currency?: any): string => {
+  const numAmount = parseFloat(amount)
+  if (isNaN(numAmount)) return amount
+  
+  const curr = currency || 'GBP'
+  const formatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: curr,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+  
+  return formatter.format(numAmount)
 }
 
 const getStatusColor = (status: string): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' => {

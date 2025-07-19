@@ -1,5 +1,6 @@
-// Re-export only Drizzle types (not query builders)
+// Re-export Drizzle types and operations
 export type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+export { and, desc, eq, gte, inArray, like, ne, sql } from "drizzle-orm";
 export * from "./helpers";
 export * from "./schemas";
 export type { DrizzleClient } from "./singleton";

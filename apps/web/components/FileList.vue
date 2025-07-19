@@ -13,11 +13,22 @@
           :class="getFileIconColor((row as any).fileName)"
         />
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-medium text-gray-900 truncate" :title="(row as any).fileName">
-            {{ (row as any).fileName }}
+          <div class="text-sm font-medium text-gray-900 truncate" :title="(row as any).metadata?.displayName || (row as any).fileName">
+            {{ (row as any).metadata?.displayName || (row as any).fileName }}
           </div>
-          <div class="text-xs text-gray-500">
-            {{ formatFileSize((row as any).size || 0) }}
+          <div class="space-y-0.5">
+            <div v-if="(row as any).metadata?.supplierName" class="text-xs text-gray-600">
+              {{ (row as any).metadata.supplierName }}
+            </div>
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+              <span>{{ formatFileSize((row as any).size || 0) }}</span>
+              <span v-if="(row as any).extraction?.extractedFields?.totalAmount?.value" class="font-medium">
+                • {{ formatCurrency((row as any).extraction.extractedFields.totalAmount.value, (row as any).extraction.extractedFields.currency?.value) }}
+              </span>
+              <span v-if="(row as any).extraction?.extractedFields?.documentNumber?.value">
+                • #{{ (row as any).extraction.extractedFields.documentNumber.value }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -47,8 +58,10 @@
     <!-- Date Column -->
     <template #date-data="{ row }">
       <div class="text-sm text-gray-500">
-        <div>{{ formatDate((row as any).createdAt) }}</div>
-        <div class="text-xs">{{ formatTime((row as any).createdAt) }}</div>
+        <div>{{ formatDate((row as any).extraction?.extractedFields?.documentDate?.value || (row as any).createdAt) }}</div>
+        <div class="text-xs">
+          {{ (row as any).extraction?.extractedFields?.documentDate?.value ? 'Document date' : formatTime((row as any).createdAt) }}
+        </div>
       </div>
     </template>
 
@@ -85,9 +98,22 @@ interface FileItem {
   size?: number
   createdAt: string
   processingStatus?: string
+  metadata?: {
+    displayName?: string
+    supplierName?: string
+    documentType?: string
+    [key: string]: any
+  }
   extraction?: {
     overallConfidence: number
     documentType?: string
+    extractedFields?: {
+      totalAmount?: { value: any; confidence: number }
+      documentNumber?: { value: any; confidence: number }
+      documentDate?: { value: any; confidence: number }
+      currency?: { value: any; confidence: number }
+      [key: string]: any
+    }
   }
 }
 
@@ -220,6 +246,21 @@ const formatTime = (dateString: string): string => {
     hour: '2-digit', 
     minute: '2-digit' 
   })
+}
+
+const formatCurrency = (amount: any, currency?: any): string => {
+  const numAmount = parseFloat(amount)
+  if (isNaN(numAmount)) return amount
+  
+  const curr = currency || 'GBP'
+  const formatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: curr,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+  
+  return formatter.format(numAmount)
 }
 
 

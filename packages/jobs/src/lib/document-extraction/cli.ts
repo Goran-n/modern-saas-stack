@@ -5,11 +5,11 @@ import {
   documentExtractions,
   files as filesTable,
   getDatabaseConnection,
+  eq,
 } from "@kibly/shared-db";
 import { SupabaseStorageClient } from "@kibly/supabase-storage";
 import { logger } from "@kibly/utils";
 import { program } from "commander";
-import { eq } from "drizzle-orm";
 import { DocumentExtractor } from "./extractor";
 
 program

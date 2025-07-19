@@ -2,8 +2,10 @@ import {
   supplierAttributes,
   supplierDataSources,
   suppliers,
+  and,
+  eq,
+  sql,
 } from "@kibly/shared-db";
-import { and, eq, sql } from "drizzle-orm";
 import { logger } from "@kibly/utils";
 import { CONFIDENCE_THRESHOLDS, DEFAULT_CONFIDENCE } from "../constants";
 import { getDb } from "../db";

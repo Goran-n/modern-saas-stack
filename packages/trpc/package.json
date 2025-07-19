@@ -14,6 +14,7 @@
     "@hono/trpc-server": "^0.3.2",
     "@kibly/communication": "workspace:*",
     "@kibly/config": "workspace:*",
+    "@kibly/deduplication": "workspace:*",
     "@kibly/jobs": "workspace:*",
     "@kibly/shared-db": "workspace:*",
     "@kibly/supabase-storage": "workspace:*",

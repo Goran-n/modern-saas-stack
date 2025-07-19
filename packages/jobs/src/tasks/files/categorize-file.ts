@@ -1,14 +1,16 @@
 import { getConfig } from "@kibly/config";
+import { DeduplicationService } from "@kibly/deduplication";
+import { generateDisplayName } from "@kibly/file-manager";
 import {
   documentExtractions,
   files as filesTable,
   getDatabaseConnection,
   type NewDocumentExtraction,
+  eq,
 } from "@kibly/shared-db";
 import { SupabaseStorageClient } from "@kibly/supabase-storage";
 import { logger } from "@kibly/utils";
 import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
-import { eq } from "drizzle-orm";
 import { DocumentExtractor } from "../../lib/document-extraction/extractor";
 import { categorizeFileSchema } from "../../schemas/file";
 
@@ -145,6 +147,87 @@ export const categorizeFile = schemaTask({
           status: "completed",
           category: "non-extractable",
         };
+      }
+
+      // Check if file hash exists and if it's a duplicate
+      const deduplicationService = new DeduplicationService(db);
+      
+      if (file.contentHash) {
+        const duplicateCheck = await deduplicationService.checkFileDuplicate(
+          file.contentHash,
+          file.size,
+          file.tenantId,
+          file.id
+        );
+
+        if (duplicateCheck.isDuplicate && duplicateCheck.duplicateFileId) {
+          logger.info("File is a duplicate, checking if duplicate was already processed", {
+            fileId,
+            duplicateFileId: duplicateCheck.duplicateFileId,
+            contentHash: file.contentHash
+          });
+
+          // Check if the duplicate file has already been processed
+          const [duplicateFile] = await db
+            .select()
+            .from(filesTable)
+            .where(eq(filesTable.id, duplicateCheck.duplicateFileId))
+            .limit(1);
+
+          if (duplicateFile && duplicateFile.processingStatus === "completed") {
+            // Copy extraction results from duplicate
+            const [duplicateExtraction] = await db
+              .select()
+              .from(documentExtractions)
+              .where(eq(documentExtractions.fileId, duplicateCheck.duplicateFileId))
+              .limit(1);
+
+            if (duplicateExtraction) {
+              logger.info("Copying extraction results from duplicate file", {
+                fileId,
+                duplicateFileId: duplicateCheck.duplicateFileId
+              });
+
+              // Generate display name from duplicate's extraction
+              const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+              const displayName = generateDisplayName({
+                documentType: duplicateExtraction.documentType,
+                extractedFields: duplicateExtraction.extractedFields as any || null,
+                supplierName: null, // Will be updated when supplier is matched
+                originalFileName: file.fileName,
+                fileExtension,
+              });
+
+              // Update file status
+              await db
+                .update(filesTable)
+                .set({
+                  processingStatus: "completed",
+                  metadata: {
+                    ...(typeof file.metadata === "object" && file.metadata !== null
+                      ? file.metadata
+                      : {}),
+                    categorized: true,
+                    isDuplicate: true,
+                    duplicateOfFileId: duplicateCheck.duplicateFileId,
+                    category: duplicateExtraction.documentType,
+                    processedAt: new Date().toISOString(),
+                    displayName,
+                  },
+                  updatedAt: new Date(),
+                })
+                .where(eq(filesTable.id, fileId));
+
+              return {
+                fileId,
+                status: "completed",
+                category: duplicateExtraction.documentType,
+                isDuplicate: true,
+                duplicateFileId: duplicateCheck.duplicateFileId,
+              };
+            }
+          }
+        }
       }
 
       // Get signed URL for file
@@ -286,6 +369,28 @@ export const categorizeFile = schemaTask({
         throw new Error("Failed to insert document extraction");
       }
 
+      // Check for invoice-level duplicates
+      if (["invoice", "receipt", "purchase_order"].includes(extraction.documentType || "")) {
+        const invoiceDuplicateResult = await deduplicationService.checkInvoiceDuplicate(
+          insertedExtraction.id,
+          extraction.fields as any || {},
+          file.tenantId
+        );
+
+        // Update extraction with duplicate status
+        await deduplicationService.updateInvoiceDuplicateStatus(
+          insertedExtraction.id,
+          invoiceDuplicateResult
+        );
+
+        logger.info("Invoice duplicate check completed", {
+          extractionId: insertedExtraction.id,
+          duplicateType: invoiceDuplicateResult.duplicateType,
+          duplicateConfidence: invoiceDuplicateResult.duplicateConfidence,
+          isDuplicate: invoiceDuplicateResult.isDuplicate
+        });
+      }
+
       // Trigger supplier processing for invoice-type documents
       if (
         ["invoice", "receipt", "purchase_order"].includes(
@@ -311,6 +416,16 @@ export const categorizeFile = schemaTask({
         );
       }
 
+      // Generate display name based on extracted data
+      const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+      const displayName = generateDisplayName({
+        documentType: extraction.documentType,
+        extractedFields: extraction.fields || null,
+        supplierName: null, // Will be updated when supplier is matched
+        originalFileName: file.fileName,
+        fileExtension,
+      });
+
       // Update file with categorization results
       await db
         .update(filesTable)
@@ -326,6 +441,7 @@ export const categorizeFile = schemaTask({
             extractionConfidence: extraction.overallConfidence,
             validationStatus: extraction.validationStatus,
             processedAt: new Date().toISOString(),
+            displayName,
           },
           updatedAt: new Date(),
         })

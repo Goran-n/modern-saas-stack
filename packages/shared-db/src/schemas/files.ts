@@ -31,6 +31,9 @@ export const files = pgTable("files", {
   processingStatus:
     fileProcessingStatusEnum("processing_status").default("pending"),
   bucket: text("bucket").notNull().default("vault"),
+  // Deduplication fields
+  contentHash: text("content_hash"), // SHA256 hash
+  fileSize: bigint("file_size", { mode: "number" }), // For validation
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
