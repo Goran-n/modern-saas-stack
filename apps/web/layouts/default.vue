@@ -24,6 +24,13 @@
                 Dashboard
               </NuxtLink>
               <NuxtLink 
+                to="/files" 
+                class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors"
+                :class="{ 'bg-slate-100 text-slate-900': $route.path.startsWith('/files') }"
+              >
+                Files
+              </NuxtLink>
+              <NuxtLink 
                 to="/suppliers" 
                 class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors"
                 :class="{ 'bg-slate-100 text-slate-900': $route.path.startsWith('/suppliers') }"

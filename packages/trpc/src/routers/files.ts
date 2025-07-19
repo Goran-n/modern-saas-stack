@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter } from "../trpc";
 import { tenantProcedure } from "../trpc/procedures";
 import { logger } from "@kibly/utils";
-import { files as filesTable, documentExtractions, eq, and, desc, inArray } from "@kibly/shared-db";
+import { files as filesTable, documentExtractions, suppliers, eq, and, desc, inArray, sql } from "@kibly/shared-db";
 import { tasks } from "@trigger.dev/sdk/v3";
 import type { CategorizeFilePayload } from "@kibly/jobs";
 import { getConfig } from "@kibly/config";
@@ -484,5 +484,236 @@ export const filesRouter = createTRPCRouter({
         triggered: files.length,
         jobHandle: jobHandle.batchId,
       };
+    }),
+
+  getGroupedByYear: tenantProcedure
+    .input(z.object({}))
+    .query(async ({ ctx }) => {
+      try {
+        // Get all files with their extractions and suppliers
+        const filesWithData = await ctx.db
+          .select({
+            id: filesTable.id,
+            fileName: filesTable.fileName,
+            mimeType: filesTable.mimeType,
+            size: filesTable.size,
+            processingStatus: filesTable.processingStatus,
+            createdAt: filesTable.createdAt,
+            updatedAt: filesTable.updatedAt,
+            extraction: {
+              id: documentExtractions.id,
+              documentType: documentExtractions.documentType,
+              overallConfidence: documentExtractions.overallConfidence,
+              validationStatus: documentExtractions.validationStatus,
+              extractedFields: documentExtractions.extractedFields,
+            },
+            supplier: {
+              id: suppliers.id,
+              displayName: suppliers.displayName,
+              legalName: suppliers.legalName,
+            },
+          })
+          .from(filesTable)
+          .leftJoin(documentExtractions, eq(documentExtractions.fileId, filesTable.id))
+          .leftJoin(suppliers, eq(suppliers.id, documentExtractions.matchedSupplierId))
+          .where(eq(filesTable.tenantId, ctx.tenantId))
+          .orderBy(desc(filesTable.createdAt));
+
+        // Group files by year and supplier
+        const groupedData: Record<string, any> = {};
+
+        filesWithData.forEach((file) => {
+          const year = new Date(file.createdAt).getFullYear().toString();
+          const supplierName = file.supplier?.displayName || file.supplier?.legalName || 'Unknown Supplier';
+
+          if (!groupedData[year]) {
+            groupedData[year] = {
+              year,
+              suppliers: {},
+              totalFiles: 0,
+            };
+          }
+
+          if (!groupedData[year].suppliers[supplierName]) {
+            groupedData[year].suppliers[supplierName] = {
+              name: supplierName,
+              supplierId: file.supplier?.id || null,
+              files: [],
+              fileCount: 0,
+            };
+          }
+
+          const fileData = {
+            id: file.id,
+            fileName: file.fileName,
+            mimeType: file.mimeType,
+            size: file.size,
+            processingStatus: file.processingStatus,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+            extraction: file.extraction.id ? file.extraction : null,
+          };
+
+          groupedData[year].suppliers[supplierName].files.push(fileData);
+          groupedData[year].suppliers[supplierName].fileCount++;
+          groupedData[year].totalFiles++;
+        });
+
+        return {
+          byYear: groupedData,
+          totalFiles: filesWithData.length,
+        };
+      } catch (error) {
+        logger.error("Failed to get grouped files", {
+          error,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve files",
+        });
+      }
+    }),
+
+  getProcessingStatus: tenantProcedure
+    .input(z.object({}))
+    .query(async ({ ctx }) => {
+      try {
+        const processingFiles = await ctx.db
+          .select({
+            id: filesTable.id,
+            fileName: filesTable.fileName,
+            mimeType: filesTable.mimeType,
+            size: filesTable.size,
+            processingStatus: filesTable.processingStatus,
+            createdAt: filesTable.createdAt,
+            updatedAt: filesTable.updatedAt,
+          })
+          .from(filesTable)
+          .where(
+            and(
+              eq(filesTable.tenantId, ctx.tenantId),
+              inArray(filesTable.processingStatus, ['processing', 'pending'])
+            )
+          )
+          .orderBy(desc(filesTable.createdAt));
+
+        const failedFiles = await ctx.db
+          .select({
+            id: filesTable.id,
+            fileName: filesTable.fileName,
+            mimeType: filesTable.mimeType,
+            size: filesTable.size,
+            processingStatus: filesTable.processingStatus,
+            createdAt: filesTable.createdAt,
+            updatedAt: filesTable.updatedAt,
+          })
+          .from(filesTable)
+          .where(
+            and(
+              eq(filesTable.tenantId, ctx.tenantId),
+              eq(filesTable.processingStatus, 'failed')
+            )
+          )
+          .orderBy(desc(filesTable.createdAt));
+
+        return {
+          processing: processingFiles,
+          failed: failedFiles,
+        };
+      } catch (error) {
+        logger.error("Failed to get processing status files", {
+          error,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve status files",
+        });
+      }
+    }),
+
+  getBySupplierAndYear: tenantProcedure
+    .input(
+      z.object({
+        year: z.string(),
+        supplierId: z.string().uuid().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { year, supplierId } = input;
+
+      try {
+        const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
+        const endOfYear = new Date(`${parseInt(year) + 1}-01-01T00:00:00.000Z`);
+
+        let query = ctx.db
+          .select({
+            id: filesTable.id,
+            fileName: filesTable.fileName,
+            mimeType: filesTable.mimeType,
+            size: filesTable.size,
+            processingStatus: filesTable.processingStatus,
+            createdAt: filesTable.createdAt,
+            updatedAt: filesTable.updatedAt,
+            extraction: {
+              id: documentExtractions.id,
+              documentType: documentExtractions.documentType,
+              overallConfidence: documentExtractions.overallConfidence,
+              validationStatus: documentExtractions.validationStatus,
+              extractedFields: documentExtractions.extractedFields,
+            },
+            supplier: {
+              id: suppliers.id,
+              displayName: suppliers.displayName,
+              legalName: suppliers.legalName,
+            },
+          })
+          .from(filesTable)
+          .leftJoin(documentExtractions, eq(documentExtractions.fileId, filesTable.id))
+          .leftJoin(suppliers, eq(suppliers.id, documentExtractions.matchedSupplierId))
+          .where(
+            and(
+              eq(filesTable.tenantId, ctx.tenantId),
+              sql`${filesTable.createdAt} >= ${startOfYear}`,
+              sql`${filesTable.createdAt} < ${endOfYear}`
+            )
+          );
+
+        if (supplierId) {
+          query = query.where(eq(documentExtractions.matchedSupplierId, supplierId));
+        }
+
+        const files = await query.orderBy(desc(filesTable.createdAt));
+
+        return files.map((file) => ({
+          id: file.id,
+          fileName: file.fileName,
+          mimeType: file.mimeType,
+          size: file.size,
+          processingStatus: file.processingStatus,
+          createdAt: file.createdAt,
+          updatedAt: file.updatedAt,
+          extraction: file.extraction.id ? file.extraction : null,
+          supplier: file.supplier.id ? file.supplier : null,
+        }));
+      } catch (error) {
+        logger.error("Failed to get files by supplier and year", {
+          error,
+          year,
+          supplierId,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve files",
+        });
+      }
     }),
 });
