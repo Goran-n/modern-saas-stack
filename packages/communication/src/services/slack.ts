@@ -15,9 +15,10 @@ export class SlackService {
     const configInstance = getConfig();
     const envConfig = configInstance.getForCommunication();
     
+    const signingSecret = config?.signingSecret || envConfig.SLACK_SIGNING_SECRET;
     this.config = {
       botToken: config?.botToken || envConfig.SLACK_BOT_TOKEN || '',
-      signingSecret: config?.signingSecret || envConfig.SLACK_SIGNING_SECRET
+      ...(signingSecret && { signingSecret })
     };
 
     if (!this.config.botToken) {

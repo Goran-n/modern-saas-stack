@@ -140,13 +140,7 @@ export class WhatsAppMessageHandler extends BaseMessageHandler {
 
       return payload;
     } catch (error) {
-      logger.error('Failed to parse WhatsApp webhook payload', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        rawPayload: JSON.stringify(rawPayload, null, 2),
-        rawPayloadType: typeof rawPayload,
-        rawPayloadKeys: rawPayload && typeof rawPayload === 'object' ? Object.keys(rawPayload) : undefined
-      });
+      logger.error('Failed to parse WhatsApp webhook payload', error);
       return null;
     }
   }

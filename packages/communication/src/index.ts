@@ -9,6 +9,7 @@ export * from './parsers/twilio';
 export * from './parsers/slack';
 export * from './services/twilio';
 export * from './services/slack';
+export * from './services/user-mapper';
 export * from './handlers';
 export * from './handlers/whatsapp.handler';
 export * from './handlers/slack.handler';

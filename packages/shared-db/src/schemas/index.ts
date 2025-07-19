@@ -20,3 +20,17 @@ export {
   supplierDataSourcesRelations,
   supplierAttributesRelations
 } from './suppliers'
+export {
+  whatsappVerifications,
+  whatsappMappings,
+  slackWorkspaces,
+  slackUserMappings,
+  type WhatsappVerification,
+  type NewWhatsappVerification,
+  type WhatsappMapping,
+  type NewWhatsappMapping,
+  type SlackWorkspace,
+  type NewSlackWorkspace,
+  type SlackUserMapping,
+  type NewSlackUserMapping
+} from './communication'

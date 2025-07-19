@@ -98,7 +98,7 @@ export function createHonoApp() {
       );
       
       // Get storage bucket from config
-      const storageBucket = config.STORAGE_BUCKET || 'vault';
+      const storageBucket = config.STORAGE_BUCKET;
       
       // Generate signed URL from Supabase
       const filePath = file.pathTokens.join("/");
@@ -141,21 +141,17 @@ export function createHonoApp() {
   // WhatsApp webhook endpoints
   app.post("/webhooks/whatsapp", async (c) => {
     try {
-      // For now, using hardcoded tenant/user - in production, this should come from webhook data
-      // or a mapping table based on the phone number
-      const tenantId = "00000000-0000-0000-0000-000000000000"; // TODO: Get from phone number mapping
-      const userId = "00000000-0000-0000-0000-000000000000"; // TODO: Get from phone number mapping
-      
       const body = await c.req.parseBody();
       logger.info("WhatsApp webhook received");
       
-      const result = await handleTwilioWhatsAppWebhook(body, tenantId, userId);
+      const result = await handleTwilioWhatsAppWebhook(body);
       
       if (result.success) {
         return c.json({ status: "success", fileId: result.fileId, jobId: result.jobId });
       } else {
         logger.warn("WhatsApp webhook processing failed", { error: result.error });
-        return c.json({ status: "error", error: result.error }, 400);
+        const statusCode = result.requiresRegistration ? 403 : 400;
+        return c.json({ status: "error", error: result.error, requiresRegistration: result.requiresRegistration }, statusCode);
       }
     } catch (error) {
       // Use pino's built-in error serialization for better error handling
@@ -176,7 +172,8 @@ export function createHonoApp() {
     const token = c.req.query("hub.verify_token");
     const challenge = c.req.query("hub.challenge");
     
-    const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "kibly-whatsapp-verify";
+    const twilioConfig = getConfig().getForCommunication();
+    const verifyToken = twilioConfig.WHATSAPP_VERIFY_TOKEN;
     
     const result = handleWhatsAppVerification(mode, token, challenge, verifyToken);
     
@@ -224,12 +221,7 @@ export function createHonoApp() {
         event: body.event?.type 
       });
       
-      // TODO: Implement proper tenant/user identification based on workspace
-      // For now, using hardcoded values for testing
-      const tenantId = "00000000-0000-0000-0000-000000000000";
-      const userId = "00000000-0000-0000-0000-000000000000";
-      
-      const result = await handleSlackEventWebhook(body, tenantId, userId);
+      const result = await handleSlackEventWebhook(body);
       
       // Handle URL verification challenge
       if ('challenge' in result) {
@@ -241,7 +233,8 @@ export function createHonoApp() {
         return c.json({ ok: true });
       } else {
         logger.warn("Slack webhook processing failed", { error: result.error });
-        return c.json({ ok: false, error: result.error }, 400);
+        const statusCode = result.requiresRegistration ? 403 : 400;
+        return c.json({ ok: false, error: result.error, requiresRegistration: result.requiresRegistration }, statusCode);
       }
     } catch (error) {
       logger.error("Slack webhook error", { error });

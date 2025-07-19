@@ -551,7 +551,7 @@ export const filesRouter = createTRPCRouter({
             processingStatus: file.processingStatus,
             createdAt: file.createdAt,
             updatedAt: file.updatedAt,
-            extraction: file.extraction.id ? file.extraction : null,
+            extraction: file.extraction?.id ? file.extraction : null,
           };
 
           groupedData[year].suppliers[supplierName].files.push(fileData);
@@ -651,7 +651,17 @@ export const filesRouter = createTRPCRouter({
         const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
         const endOfYear = new Date(`${parseInt(year) + 1}-01-01T00:00:00.000Z`);
 
-        let query = ctx.db
+        const baseConditions = [
+          eq(filesTable.tenantId, ctx.tenantId),
+          sql`${filesTable.createdAt} >= ${startOfYear}`,
+          sql`${filesTable.createdAt} < ${endOfYear}`
+        ];
+
+        if (supplierId) {
+          baseConditions.push(eq(documentExtractions.matchedSupplierId, supplierId));
+        }
+
+        const query = ctx.db
           .select({
             id: filesTable.id,
             fileName: filesTable.fileName,
@@ -676,17 +686,7 @@ export const filesRouter = createTRPCRouter({
           .from(filesTable)
           .leftJoin(documentExtractions, eq(documentExtractions.fileId, filesTable.id))
           .leftJoin(suppliers, eq(suppliers.id, documentExtractions.matchedSupplierId))
-          .where(
-            and(
-              eq(filesTable.tenantId, ctx.tenantId),
-              sql`${filesTable.createdAt} >= ${startOfYear}`,
-              sql`${filesTable.createdAt} < ${endOfYear}`
-            )
-          );
-
-        if (supplierId) {
-          query = query.where(eq(documentExtractions.matchedSupplierId, supplierId));
-        }
+          .where(and(...baseConditions));
 
         const files = await query.orderBy(desc(filesTable.createdAt));
 
@@ -698,8 +698,8 @@ export const filesRouter = createTRPCRouter({
           processingStatus: file.processingStatus,
           createdAt: file.createdAt,
           updatedAt: file.updatedAt,
-          extraction: file.extraction.id ? file.extraction : null,
-          supplier: file.supplier.id ? file.supplier : null,
+          extraction: file.extraction?.id ? file.extraction : null,
+          supplier: file.supplier?.id ? file.supplier : null,
         }));
       } catch (error) {
         logger.error("Failed to get files by supplier and year", {

@@ -14,6 +14,7 @@ export interface ProcessingResult {
   fileId?: string | undefined;
   jobId?: string | undefined;
   error?: string | undefined;
+  requiresRegistration?: boolean | undefined;
 }
 
 // WhatsApp webhook payload schemas

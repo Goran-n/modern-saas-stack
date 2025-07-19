@@ -198,7 +198,7 @@
             "id": 2,
             "title": "Create Minimal Core Database Tables",
             "description": "Implement only the 4 essential tables: whatsapp_verifications, whatsapp_mappings, slack_workspaces, and slack_user_mappings",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -744,7 +744,7 @@
             "id": 4,
             "title": "Create User ID Mapping System",
             "description": "Build simple database lookup system to map platform-specific user identifiers to Kibly user accounts",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2
             ],
@@ -1055,7 +1055,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T16:00:12.502Z",
-      "updated": "2025-07-19T11:01:11.487Z",
+      "updated": "2025-07-19T12:44:32.782Z",
       "description": "Tasks for master context"
     }
   }

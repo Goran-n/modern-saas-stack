@@ -1,7 +1,9 @@
 import { createLogger } from '@kibly/utils';
+import { getConfig } from '@kibly/config';
 import { WhatsAppMessageHandler } from './handlers/whatsapp.handler';
 import { SlackMessageHandler } from './handlers/slack.handler';
 import { MessageProcessingError } from './interfaces/message-handler';
+import { UserMapperService } from './services/user-mapper';
 import type { ProcessingResult } from './types';
 
 const logger = createLogger('communication-handlers');
@@ -9,6 +11,7 @@ const logger = createLogger('communication-handlers');
 // Lazy-loaded handlers to avoid config initialization issues
 let whatsAppHandler: WhatsAppMessageHandler | null = null;
 let slackHandler: SlackMessageHandler | null = null;
+let userMapper: UserMapperService | null = null;
 
 function getWhatsAppHandler(): WhatsAppMessageHandler {
   if (!whatsAppHandler) {
@@ -24,29 +27,50 @@ function getSlackHandler(): SlackMessageHandler {
   return slackHandler;
 }
 
+async function getUserMapper(): Promise<UserMapperService> {
+  if (!userMapper) {
+    const configManager = getConfig();
+    // Config is validated during initialization
+    await configManager.validate();
+    const config = configManager.getCore();
+    userMapper = new UserMapperService(config.DATABASE_URL);
+  }
+  return userMapper;
+}
+
 /**
  * Handle incoming Twilio WhatsApp webhook
  * This function should be called from the API server's webhook endpoint
  */
 export async function handleTwilioWhatsAppWebhook(
-  payload: unknown,
-  tenantId: string,
-  userId: string
+  payload: unknown
 ): Promise<ProcessingResult> {
   try {
     // Parse webhook payload to platform-agnostic format
     const messagePayload = WhatsAppMessageHandler.parseWebhookPayload(payload);
     
     if (!messagePayload) {
-      logger.error({
-        payload: JSON.stringify(payload, null, 2),
-        payloadType: typeof payload,
-        payloadKeys: payload && typeof payload === 'object' ? Object.keys(payload) : undefined,
-        msg: 'Failed to parse WhatsApp webhook payload - parseWebhookPayload returned null'
-      });
+      logger.error('Failed to parse WhatsApp webhook payload');
       return {
         success: false,
         error: 'Invalid Twilio WhatsApp payload'
+      };
+    }
+    
+    // Look up user based on phone number
+    const mapper = await getUserMapper();
+    const userMapping = await mapper.lookupWhatsAppUser(messagePayload.sender);
+    
+    if (UserMapperService.isError(userMapping)) {
+      logger.warn('WhatsApp user lookup failed', {
+        phoneNumber: messagePayload.sender,
+        error: userMapping.error,
+        details: userMapping.details
+      });
+      return {
+        success: false,
+        error: `User not registered: ${userMapping.error}`,
+        requiresRegistration: true
       };
     }
     
@@ -64,8 +88,8 @@ export async function handleTwilioWhatsAppWebhook(
       };
     }
     
-    // Process the message
-    return await handler.process(messagePayload, tenantId, userId);
+    // Process the message with looked up user info
+    return await handler.process(messagePayload, userMapping.tenantId, userMapping.userId);
   } catch (error) {
     if (error instanceof MessageProcessingError) {
       logger.error('WhatsApp processing error', {
@@ -92,9 +116,7 @@ export async function handleTwilioWhatsAppWebhook(
  * This function should be called from the API server's webhook endpoint
  */
 export async function handleSlackEventWebhook(
-  payload: unknown,
-  tenantId: string,
-  userId: string
+  payload: unknown
 ): Promise<ProcessingResult | { challenge: string }> {
   try {
     // Check if this is a URL verification challenge
@@ -113,6 +135,36 @@ export async function handleSlackEventWebhook(
       };
     }
     
+    // Extract workspace ID and user ID from metadata
+    const workspaceId = messagePayload.metadata?.workspaceId as string;
+    const slackUserId = messagePayload.sender;
+    
+    if (!workspaceId) {
+      logger.error('No workspace ID in Slack payload');
+      return {
+        success: false,
+        error: 'Missing workspace information'
+      };
+    }
+    
+    // Look up user based on Slack IDs
+    const mapper = await getUserMapper();
+    const userMapping = await mapper.lookupSlackUser(workspaceId, slackUserId);
+    
+    if (UserMapperService.isError(userMapping)) {
+      logger.warn('Slack user lookup failed', {
+        workspaceId,
+        slackUserId,
+        error: userMapping.error,
+        details: userMapping.details
+      });
+      return {
+        success: false,
+        error: `User not registered: ${userMapping.error}`,
+        requiresRegistration: true
+      };
+    }
+    
     // Validate the payload
     const handler = getSlackHandler();
     const validation = await handler.validate(messagePayload);
@@ -127,8 +179,8 @@ export async function handleSlackEventWebhook(
       };
     }
     
-    // Process the message
-    return await handler.process(messagePayload, tenantId, userId);
+    // Process the message with looked up user info
+    return await handler.process(messagePayload, userMapping.tenantId, userMapping.userId);
   } catch (error) {
     if (error instanceof MessageProcessingError) {
       logger.error('Slack processing error', {

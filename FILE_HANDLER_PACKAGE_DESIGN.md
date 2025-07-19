@@ -317,7 +317,6 @@ export * from './storage';
 - `drizzle-orm` - Database ORM
 - `@supabase/supabase-js` - Supabase client
 - `zod` - Schema validation
-- `@vepler/logger` - Logging
+- `@kibly/utils` - Logging and common utilities
 - `@kibly/supabase/storage` - **[NEEDS CREATION]** Supabase Storage wrapper
-- `@kibly/utils` - **[NEEDS CREATION]** Common utilities
 - `@kibly/supabase/types` - **[NEEDS CREATION]** Supabase TypeScript types

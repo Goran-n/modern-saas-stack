@@ -102,7 +102,7 @@ The API will be available at `http://localhost:3000` and the web app at `http://
 - **Database**: PostgreSQL with Drizzle ORM
 - **Queue**: BullMQ with Redis
 - **Authentication**: JWT with Supabase integration
-- **Logging**: @vepler/logger with Pino
+- **Logging**: @kibly/utils with Pino
 
 ### Clean Architecture
 
