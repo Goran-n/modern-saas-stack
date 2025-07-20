@@ -16,21 +16,11 @@ export function getPortkeyClient(): Portkey {
 
     // Validate Portkey configuration
     if (!config.PORTKEY_API_KEY) {
-      logger.error(
-        "PORTKEY_API_KEY is not configured. LLM services will not work.",
-      );
-      throw new Error(
-        "PORTKEY_API_KEY is required for LLM services. Please run: doppler secrets set PORTKEY_API_KEY=<your-key>",
-      );
+      throw new Error("PORTKEY_API_KEY is not configured");
     }
 
     if (!config.PORTKEY_VIRTUAL_KEY) {
-      logger.error(
-        "PORTKEY_VIRTUAL_KEY is not configured. LLM services will not work.",
-      );
-      throw new Error(
-        "PORTKEY_VIRTUAL_KEY is required for LLM services. Please run: doppler secrets set PORTKEY_VIRTUAL_KEY=<your-key>",
-      );
+      throw new Error("PORTKEY_VIRTUAL_KEY is not configured");
     }
 
     // Construct Portkey client with virtual key as per their guide
