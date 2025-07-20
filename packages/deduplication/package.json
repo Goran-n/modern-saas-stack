@@ -15,8 +15,5 @@
     "@kibly/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
   }
 }

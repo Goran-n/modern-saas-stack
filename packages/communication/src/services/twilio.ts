@@ -1,5 +1,5 @@
 import { getConfig } from "@kibly/config";
-import { createLogger } from "@kibly/utils";
+import { createLogger, logAndRethrow } from "@kibly/utils";
 import twilio from "twilio";
 
 const logger = createLogger("twilio-service");
@@ -60,8 +60,11 @@ export class TwilioService {
 
       return message.sid;
     } catch (error) {
-      logger.error("Failed to send WhatsApp message", error);
-      throw error;
+      logAndRethrow(logger, "Failed to send WhatsApp message", error, {
+        to,
+        bodyLength: body.length,
+        accountSid: this.config.accountSid,
+      });
     }
   }
 

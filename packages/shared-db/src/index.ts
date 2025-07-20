@@ -1,6 +1,25 @@
 // Re-export Drizzle types and operations
 export type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-export { and, desc, eq, gt, gte, inArray, isNull, like, ne, sql } from "drizzle-orm";
+export { 
+  and, 
+  between,
+  count, 
+  desc, 
+  eq, 
+  gt, 
+  gte, 
+  ilike,
+  inArray, 
+  isNull, 
+  like,
+  lt,
+  lte, 
+  ne, 
+  or,
+  sql 
+} from "drizzle-orm";
+export type { SQL } from "drizzle-orm";
+export type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 export * from "./helpers";
 export * from "./schemas";
 export type { DrizzleClient } from "./singleton";

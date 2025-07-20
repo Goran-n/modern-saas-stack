@@ -19,9 +19,7 @@
     "date-fns": "^3.6.0"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.8",
-    "@types/node": "^22.14.1",
-    "typescript": "^5.8.3"
+    "@types/jsonwebtoken": "^9.0.8"
   },
   "exports": {
     ".": "./src/index.ts",

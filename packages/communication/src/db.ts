@@ -9,7 +9,11 @@ let dbInstance: DrizzleClient | null = null;
  */
 export function getDb(): DrizzleClient {
   if (!dbInstance) {
-    const config = getConfig().getForCommunication();
+    const configManager = getConfig();
+    if (!configManager.isValid()) {
+      throw new Error("Configuration not validated. Database connection requires valid configuration.");
+    }
+    const config = configManager.getForCommunication();
     dbInstance = getDatabaseConnection(config.DATABASE_URL);
   }
   return dbInstance;

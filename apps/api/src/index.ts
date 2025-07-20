@@ -2,7 +2,7 @@
 import { serve } from "@hono/node-server";
 import { bootstrap } from "@kibly/config";
 import { checkDatabaseHealth, getDatabaseConnection } from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+import { logger, logError } from "@kibly/utils";
 import { createHonoApp } from "./server";
 
 async function waitForDatabase(
@@ -135,6 +135,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  logger.error("Failed to start server", { error });
+  logError(logger, "Failed to start server", error);
   process.exit(1);
 });

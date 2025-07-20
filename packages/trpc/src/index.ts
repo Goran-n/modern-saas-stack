@@ -24,9 +24,8 @@ export {
   createCallerFactory,
   createTRPCRouter,
   middleware,
-  publicProcedure,
 } from "./trpc";
 export type { Context } from "./trpc/context";
 // Context and middleware
 export { createContext } from "./trpc/context";
-export { protectedProcedure, tenantProcedure } from "./trpc/procedures";
+export { publicProcedure, protectedProcedure, tenantProcedure } from "./trpc/procedures";

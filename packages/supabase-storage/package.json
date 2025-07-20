@@ -12,11 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7",
     "@kibly/utils": "workspace:*"
   },
-  "devDependencies": {
-    "@types/node": "^22.14.1",
-    "typescript": "^5.8.3"
-  }
+  "devDependencies": {}
 }

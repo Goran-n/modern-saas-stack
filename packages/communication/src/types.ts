@@ -8,6 +8,9 @@ export enum Platform {
 
 // Removed MessageSource - use Platform enum or FILE_SOURCES from file-manager instead
 
+// Re-export from interfaces to avoid duplication
+export type { MessagePayload, MessageAttachment } from "./interfaces/message-handler";
+
 // Processing result
 export interface ProcessingResult {
   success: boolean;
@@ -15,6 +18,7 @@ export interface ProcessingResult {
   jobId?: string | undefined;
   error?: string | undefined;
   requiresRegistration?: boolean | undefined;
+  metadata?: Record<string, any> | undefined;
 }
 
 // WhatsApp webhook payload schemas
@@ -77,6 +81,7 @@ export const SlackEventPayloadSchema = z.object({
     user: z.string(),
     ts: z.string(),
     channel: z.string(),
+    text: z.string().optional(),
     files: z
       .array(
         z.object({
@@ -113,6 +118,7 @@ export interface ParsedSlackMessage {
   channelId: string;
   workspaceId: string;
   timestamp: Date;
+  text?: string;
   files: Array<{
     id: string;
     name: string;
@@ -121,3 +127,6 @@ export interface ParsedSlackMessage {
     downloadUrl: string;
   }>;
 }
+
+// Export error types (but not MessageProcessingError which comes from interfaces)
+export { CommunicationError, ERROR_CODES, ERROR_MESSAGES } from "./types/errors";

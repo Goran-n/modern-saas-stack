@@ -11,14 +11,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.2",
     "jsonwebtoken": "^9.0.2",
     "@kibly/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^22.14.1",
-    "typescript": "^5.8.3"
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "exports": {
     ".": {

@@ -1,0 +1,16 @@
+{
+  "name": "@kibly/nlq",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kibly/config": "workspace:*",
+    "@kibly/shared-db": "workspace:*",
+    "@kibly/utils": "workspace:*",
+    "@kibly/llm-utils": "workspace:*"
+  },
+  "devDependencies": {}
+}

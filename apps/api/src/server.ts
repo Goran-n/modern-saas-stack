@@ -3,11 +3,12 @@ import {
   handleSlackEventWebhook,
   handleTwilioWhatsAppWebhook,
   handleWhatsAppVerification,
+  WhatsAppResponseService,
 } from "@kibly/communication";
 import { getConfig } from "@kibly/config";
 import { files, getDatabaseConnection, and, eq } from "@kibly/shared-db";
 import { appRouter, createContext } from "@kibly/trpc";
-import { logger } from "@kibly/utils";
+import { logger, logError } from "@kibly/utils";
 import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -15,7 +16,13 @@ import { logger as honoLogger } from "hono/logger";
 
 export function createHonoApp() {
   const app = new Hono();
-  const config = getConfig().getCore();
+  
+  // Ensure configuration is validated
+  const configManager = getConfig();
+  if (!configManager.isValid()) {
+    configManager.validate();
+  }
+  const config = configManager.getCore();
   // Use process.env directly since webConfig is not available in API context
   const productionAppUrl =
     process.env.PRODUCTION_APP_URL || "https://app.kibly.com";
@@ -181,10 +188,35 @@ export function createHonoApp() {
       const result = await handleTwilioWhatsAppWebhook(body);
 
       if (result.success) {
+        // Check if we have a response to send back
+        if (result.metadata?.responseText) {
+          // Extract sender from the webhook payload
+          const from = (body as any).From || (body as any).from;
+          try {
+            if (from) {
+              const responseService = new WhatsAppResponseService();
+              await responseService.sendMessage(
+                from,
+                result.metadata.responseText,
+                {
+                  quickReplies: result.metadata.quickReplies,
+                },
+              );
+            }
+          } catch (responseError) {
+            logError(logger, "Failed to send WhatsApp response", responseError, {
+              responseTextLength: result.metadata?.responseText?.length,
+              from,
+              hasQuickReplies: !!(result.metadata?.quickReplies?.length),
+            });
+          }
+        }
+
         return c.json({
           status: "success",
           fileId: result.fileId,
           jobId: result.jobId,
+          queryId: result.metadata?.queryId,
         });
       } else {
         logger.warn("WhatsApp webhook processing failed", {
@@ -312,15 +344,13 @@ export function createHonoApp() {
         >;
       },
       onError({ error, path, type, ctx, input }) {
-        logger.error({
-          err: error,
+        logError(logger, `tRPC error: ${error.message}`, error, {
           path,
           type,
-          input: input,
+          input,
           userId: ctx?.user?.id,
           tenantId: ctx?.tenantId,
           requestId: ctx?.requestId,
-          msg: `tRPC error: ${error.message}`,
         });
       },
     }),
@@ -357,9 +387,7 @@ export function createHonoApp() {
   });
 
   app.onError((err, c) => {
-    logger.error("Unhandled error", {
-      error: err.message,
-      stack: err.stack,
+    logError(logger, "Unhandled error", err, {
       url: c.req.url,
       method: c.req.method,
     });

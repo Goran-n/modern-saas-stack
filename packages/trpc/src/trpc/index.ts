@@ -40,9 +40,8 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const createTRPCRouter = t.router;
-export const publicProcedure = t.procedure;
 export const createCallerFactory = t.createCallerFactory;
 export const middleware = t.middleware;
 
-// Re-export for internal use
+// Base procedure for internal use only - should not be exported directly
 export const baseProcedure = t.procedure;

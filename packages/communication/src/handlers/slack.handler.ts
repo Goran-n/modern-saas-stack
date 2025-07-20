@@ -11,15 +11,21 @@ import {
   MessageProcessingError,
   type ValidationResult,
 } from "../interfaces/message-handler";
-import { processSlackFiles } from "../operations";
 import { parseSlackPayload } from "../parsers/slack";
+import { MessageRouter } from "../services/message-router";
+import { SlackResponseFormatter } from "../services/response-formatter";
 import { Platform, type ProcessingResult } from "../types";
 
 const logger = createLogger("slack-handler");
 
 export class SlackMessageHandler extends BaseMessageHandler {
+  private messageRouter: MessageRouter;
+  private responseFormatter: SlackResponseFormatter;
+
   constructor() {
     super([Platform.SLACK]);
+    this.messageRouter = new MessageRouter();
+    this.responseFormatter = new SlackResponseFormatter();
   }
 
   protected async validatePlatformSpecific(
@@ -27,8 +33,12 @@ export class SlackMessageHandler extends BaseMessageHandler {
   ): Promise<ValidationResult> {
     const errors: string[] = [];
 
-    if (!payload.attachments || payload.attachments.length === 0) {
-      errors.push("Slack event must contain file attachments");
+    // Allow either text content or file attachments
+    if (
+      !payload.content &&
+      (!payload.attachments || payload.attachments.length === 0)
+    ) {
+      errors.push("Slack event must contain either text or file attachments");
     }
 
     if (!payload.metadata?.channelId) {
@@ -80,50 +90,22 @@ export class SlackMessageHandler extends BaseMessageHandler {
     userId: string,
   ): Promise<ProcessingResult> {
     try {
-      logger.info("Processing Slack file event", {
+      logger.info("Processing Slack event", {
         messageId: payload.messageId,
         sender: payload.sender,
         channelId: payload.metadata?.channelId,
+        hasContent: !!payload.content,
         fileCount: payload.attachments.length,
       });
 
-      const parsedMessage = {
-        messageId: payload.messageId,
-        userId: payload.sender,
-        channelId: payload.metadata?.channelId || "",
-        workspaceId: payload.metadata?.workspaceId || "",
-        timestamp: payload.timestamp,
-        files: payload.attachments.map((att) => ({
-          id: att.id,
-          name: att.fileName || "unknown",
-          mimeType: att.mimeType,
-          size: att.size || 0,
-          downloadUrl: att.url || "",
-        })),
-      };
+      // Use the central message router
+      const result = await this.messageRouter.route(payload, {
+        tenantId,
+        userId,
+        responseFormatter: this.responseFormatter,
+      });
 
-      const results = await processSlackFiles(parsedMessage, tenantId, userId);
-
-      const successCount = results.filter((r) => r.success).length;
-      const failureCount = results.filter((r) => !r.success).length;
-
-      if (successCount === 0) {
-        throw new MessageProcessingError(
-          `All ${failureCount} files failed to process`,
-          ERROR_CODES.ALL_FILES_FAILED,
-          { results },
-        );
-      }
-
-      return {
-        success: true,
-        fileId: results.find((r) => r.success)?.fileId,
-        jobId: results.find((r) => r.success)?.jobId,
-        error:
-          failureCount > 0
-            ? `Processed ${successCount} files successfully, ${failureCount} failed`
-            : undefined,
-      };
+      return result;
     } catch (error) {
       if (error instanceof MessageProcessingError) {
         throw error;
@@ -151,14 +133,14 @@ export class SlackMessageHandler extends BaseMessageHandler {
         platform: Platform.SLACK,
         sender: parsed.userId,
         timestamp: parsed.timestamp,
-        content: undefined,
-        attachments: parsed.files.map((file) => ({
+        content: parsed.text || undefined,
+        attachments: parsed.files ? parsed.files.map((file) => ({
           id: file.id,
           fileName: file.name,
           mimeType: file.mimeType,
           size: file.size,
           url: file.downloadUrl,
-        })),
+        })) : [],
         metadata: {
           channelId: parsed.channelId,
           workspaceId: parsed.workspaceId,

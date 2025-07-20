@@ -230,3 +230,4 @@ export class UserMapperService {
     return "error" in result;
   }
 }
+

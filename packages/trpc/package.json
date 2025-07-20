@@ -10,8 +10,6 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.0",
-    "@hono/trpc-server": "^0.3.2",
     "@kibly/communication": "workspace:*",
     "@kibly/config": "workspace:*",
     "@kibly/deduplication": "workspace:*",
@@ -20,17 +18,10 @@
     "@kibly/supabase-storage": "workspace:*",
     "@kibly/tenant": "workspace:*",
     "@kibly/utils": "workspace:*",
-    "@supabase/supabase-js": "^2.47.10",
-    "@trigger.dev/sdk": "^3.3.17",
-    "@trpc/server": "^10.45.2",
-    "hono": "^4.6.13",
-    "superjson": "^2.2.2",
-    "zod": "^3.24.1"
+    "@trigger.dev/sdk": "^3.3.17"
   },
   "devDependencies": {
     "@trpc/client": "^10.45.2",
-    "@types/bun": "latest",
-    "@types/node": "^22.10.1",
-    "typescript": "^5.7.2"
+    "@types/bun": "latest"
   }
 }

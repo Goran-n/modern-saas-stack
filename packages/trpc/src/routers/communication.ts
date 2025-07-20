@@ -1,13 +1,19 @@
 import {
   createWhatsAppVerification,
   getCommunicationStats,
+  getMessages,
   getRecentActivity,
+  getRecentQueries,
   getSlackWorkspaces,
   getWhatsAppVerifications,
   retryFileProcessing,
+  searchMessages,
+  setDb as setCommunicationDb,
   updateWhatsAppVerification,
   verifyWhatsAppCode,
-  setDb as setCommunicationDb,
+  MessageRouter,
+  ApiResponseFormatter,
+  Platform,
 } from "@kibly/communication";
 import { createLogger } from "@kibly/utils";
 import { TRPCError } from "@trpc/server";
@@ -295,6 +301,196 @@ export const communicationRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message:
             error instanceof Error ? error.message : "Failed to verify code",
+        });
+      }
+    }),
+
+  // Process natural language query
+  processQuery: communicationProcedure
+    .input(
+      z.object({
+        query: z.string().min(1).max(500),
+        platform: z.enum(["whatsapp", "slack", "api"]).default("api"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { tenantId, user } = ctx;
+      const { query, platform } = input;
+
+      logger.info("processQuery called", {
+        query,
+        platform,
+        tenantId,
+        userId: user?.id,
+        requestId: ctx.requestId,
+      });
+
+      try {
+        const messageRouter = new MessageRouter();
+        const responseFormatter = new ApiResponseFormatter();
+
+        // Create a message payload for the router
+        const payload = {
+          messageId: `api-${Date.now()}`,
+          platform: platform === "api" ? Platform.WHATSAPP : platform === "whatsapp" ? Platform.WHATSAPP : Platform.SLACK,
+          sender: user?.id || "anonymous",
+          timestamp: new Date(),
+          content: query,
+          attachments: [],
+        };
+
+        // Use the unified message router
+        const result = await messageRouter.route(payload, {
+          tenantId,
+          userId: user?.id || "anonymous",
+          responseFormatter,
+        });
+
+        if (result.metadata?.metadata) {
+          // Return the full response from API formatter
+          return result.metadata.metadata;
+        }
+
+        // Fallback to basic response
+        return {
+          summary: result.metadata?.responseText || "Query processed",
+          data: [],
+          metadata: {
+            queryId: result.metadata?.queryId,
+          },
+        };
+      } catch (error) {
+        logger.error("Failed to process query", {
+          error,
+          query,
+          tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to process your query. Please try rephrasing.",
+        });
+      }
+    }),
+
+  // Get recent queries
+  getRecentQueries: communicationProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(50).default(10),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { tenantId } = ctx;
+      const { limit } = input;
+
+      logger.info("getRecentQueries called", {
+        limit,
+        tenantId,
+        userId: ctx.user?.id,
+        requestId: ctx.requestId,
+      });
+
+      try {
+        return await getRecentQueries(tenantId, limit);
+      } catch (error) {
+        logger.error("Failed to get recent queries", {
+          error,
+          tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get recent queries",
+        });
+      }
+    }),
+
+  // Get messages
+  getMessages: communicationProcedure
+    .input(
+      z.object({
+        platform: z.enum(["whatsapp", "slack"]).optional(),
+        isQuery: z.boolean().optional(),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+        startDate: z.date().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { tenantId } = ctx;
+
+      logger.info("getMessages called", {
+        ...input,
+        tenantId,
+        userId: ctx.user?.id,
+        requestId: ctx.requestId,
+      });
+
+      try {
+        const options = {
+          limit: input.limit,
+          offset: input.offset,
+          ...(input.platform && { platform: input.platform }),
+          ...(input.isQuery !== undefined && { isQuery: input.isQuery }),
+          ...(input.startDate && { startDate: input.startDate }),
+        };
+        return await getMessages(tenantId, options);
+      } catch (error) {
+        logger.error("Failed to get messages", {
+          error,
+          tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get messages",
+        });
+      }
+    }),
+
+  // Search messages
+  searchMessages: communicationProcedure
+    .input(
+      z.object({
+        searchTerm: z.string().min(1).max(100),
+        platform: z.enum(["whatsapp", "slack"]).optional(),
+        limit: z.number().min(1).max(50).default(20),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { tenantId } = ctx;
+      const { searchTerm, platform, limit } = input;
+
+      logger.info("searchMessages called", {
+        searchTerm,
+        platform,
+        limit,
+        tenantId,
+        userId: ctx.user?.id,
+        requestId: ctx.requestId,
+      });
+
+      try {
+        const options = {
+          limit,
+          ...(platform && { platform }),
+        };
+        return await searchMessages(tenantId, searchTerm, options);
+      } catch (error) {
+        logger.error("Failed to search messages", {
+          error,
+          searchTerm,
+          tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to search messages",
         });
       }
     }),

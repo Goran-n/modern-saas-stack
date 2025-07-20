@@ -11,15 +11,21 @@ import {
   MessageProcessingError,
   type ValidationResult,
 } from "../interfaces/message-handler";
-import { processWhatsAppDocument } from "../operations";
 import { parseTwilioWhatsAppPayload } from "../parsers/twilio";
+import { MessageRouter } from "../services/message-router";
+import { WhatsAppResponseFormatter } from "../services/response-formatter";
 import { Platform, type ProcessingResult } from "../types";
 
 const logger = createLogger("whatsapp-handler");
 
 export class WhatsAppMessageHandler extends BaseMessageHandler {
+  private messageRouter: MessageRouter;
+  private responseFormatter: WhatsAppResponseFormatter;
+
   constructor() {
     super([Platform.WHATSAPP]);
+    this.messageRouter = new MessageRouter();
+    this.responseFormatter = new WhatsAppResponseFormatter();
   }
 
   protected async validatePlatformSpecific(
@@ -77,52 +83,13 @@ export class WhatsAppMessageHandler extends BaseMessageHandler {
         attachmentCount: payload.attachments.length,
       });
 
-      if (!payload.attachments || payload.attachments.length === 0) {
-        logger.info("Received text-only WhatsApp message", {
-          from: payload.sender,
-          content: payload.content,
-        });
-
-        return {
-          success: true,
-          error: ERROR_MESSAGES.TEXT_ONLY_MESSAGE,
-        };
-      }
-
-      const attachment = payload.attachments[0];
-
-      if (!attachment) {
-        throw new MessageProcessingError(
-          ERROR_MESSAGES.NO_ATTACHMENT,
-          ERROR_CODES.NO_ATTACHMENT,
-        );
-      }
-
-      const parsedMessage = {
-        messageId: payload.messageId,
-        phoneNumber: payload.sender,
-        timestamp: payload.timestamp,
-        type: attachment.mimeType.includes("pdf")
-          ? ("document" as const)
-          : ("image" as const),
-        content: payload.content,
-        mediaId: attachment.id,
-        fileName: attachment.fileName,
-        mimeType: attachment.mimeType,
-      };
-
-      const result = await processWhatsAppDocument(
-        parsedMessage,
+      // Use the central message router
+      const result = await this.messageRouter.route(payload, {
         tenantId,
         userId,
-      );
+        responseFormatter: this.responseFormatter,
+      });
 
-      if (!result.success) {
-        throw new MessageProcessingError(
-          result.error || ERROR_MESSAGES.PROCESSING_FAILED,
-          ERROR_CODES.PROCESSING_FAILED,
-        );
-      }
 
       return result;
     } catch (error) {

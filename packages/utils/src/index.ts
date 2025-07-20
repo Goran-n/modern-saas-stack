@@ -8,3 +8,4 @@ export {
 } from "./logger";
 export * from "./string";
 export * from "./validation";
+export * from "./error-handler";

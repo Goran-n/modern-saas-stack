@@ -1,10 +1,16 @@
 // Export all schemas
 
 export {
+  type CommunicationMessage,
+  communicationMessages,
+  type NewCommunicationMessage,
+  type NewQueryAnalytic,
   type NewSlackUserMapping,
   type NewSlackWorkspace,
   type NewWhatsappMapping,
   type NewWhatsappVerification,
+  type QueryAnalytic,
+  queryAnalytics,
   type SlackUserMapping,
   type SlackWorkspace,
   slackUserMappings,

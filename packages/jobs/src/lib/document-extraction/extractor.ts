@@ -1,7 +1,7 @@
 import type { ExtractedFields } from "@kibly/shared-db";
 import { logger } from "@kibly/utils";
 import { CONFIDENCE_THRESHOLDS, PROCESSING_CONFIG } from "./constants";
-import { getPortkeyClient } from "./portkey-client";
+import { getPortkeyClient } from "@kibly/llm-utils";
 import {
   AccountingDocumentExtractor,
   CompanyProfileExtractor,
