@@ -10,10 +10,6 @@ export default defineAppConfig({
     notifications: {
       position: "top-0 right-0",
     },
-    // Make containers full width by default
-    container: {
-      constrained: "max-w-none",
-    },
   },
 
   // Application branding - Apple style

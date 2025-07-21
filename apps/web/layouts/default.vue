@@ -1,11 +1,8 @@
 <template>
   <UApp class="min-h-screen bg-slate-50">
     <!-- Header -->
-    <UHeader 
-      title="" 
-      class="bg-white shadow-sm border-b border-slate-200"
-    >
-      <div class="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+    <header class="w-full bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+      <div class="flex justify-between items-center h-16 w-full px-4 sm:px-6 lg:px-8">
         <!-- Logo and Navigation -->
         <div class="flex items-center space-x-8">
           <!-- Logo -->
@@ -35,7 +32,7 @@
           <UserDropdown />
         </div>
       </div>
-    </UHeader>
+    </header>
 
     <!-- Main Content -->
     <UMain>

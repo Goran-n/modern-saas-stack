@@ -3,9 +3,43 @@
     <UCard
       v-for="file in files"
       :key="file.id"
-      class="cursor-pointer hover:shadow-md transition-shadow duration-200"
+      class="hover:shadow-md transition-shadow duration-200 group relative cursor-grab active:cursor-grabbing"
+      :class="{ 'opacity-50': isDragging }"
+      :draggable="true"
       @click="emit('file-selected', file)"
+      @dragstart="handleDragStart($event, file)"
+      @dragend="handleDragEnd()"
     >
+      <!-- Action Buttons -->
+      <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+        <!-- Copy Button -->
+        <button
+          @click.stop="handleCopyFile(file)"
+          class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500 hover:bg-primary-50 transition-colors"
+          title="Copy file for Xero"
+        >
+          <svg v-if="copiedFileId !== file.id" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.5 2H5.5C4.67157 2 4 2.67157 4 3.5V10.5C4 11.3284 4.67157 12 5.5 12H10.5C11.3284 12 12 11.3284 12 10.5V3.5C12 2.67157 11.3284 2 10.5 2Z" stroke="currentColor" stroke-width="1.5" class="text-primary-500"/>
+            <path d="M8 4H11.5C12.3284 4 13 4.67157 13 5.5V12.5C13 13.3284 12.3284 14 11.5 14H6.5C5.67157 14 5 13.3284 5 12.5V12" stroke="currentColor" stroke-width="1.5" class="text-primary-500"/>
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 5L6 12L3 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"/>
+          </svg>
+        </button>
+        
+        <!-- Drag Indicator -->
+        <div class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500 pointer-events-none">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 4.5C7 5.32843 6.32843 6 5.5 6C4.67157 6 4 5.32843 4 4.5C4 3.67157 4.67157 3 5.5 3C6.32843 3 7 3.67157 7 4.5Z" fill="currentColor" class="text-primary-500"/>
+            <path d="M7 10C7 10.8284 6.32843 11.5 5.5 11.5C4.67157 11.5 4 10.8284 4 10C4 9.17157 4.67157 8.5 5.5 8.5C6.32843 8.5 7 9.17157 7 10Z" fill="currentColor" class="text-primary-500"/>
+            <path d="M7 15.5C7 16.3284 6.32843 17 5.5 17C4.67157 17 4 16.3284 4 15.5C4 14.6716 4.67157 14 5.5 14C6.32843 14 7 14.6716 7 15.5Z" fill="currentColor" class="text-primary-500"/>
+            <path d="M14.5 4.5C14.5 5.32843 13.8284 6 13 6C12.1716 6 11.5 5.32843 11.5 4.5C11.5 3.67157 12.1716 3 13 3C13.8284 3 14.5 3.67157 14.5 4.5Z" fill="currentColor" class="text-primary-500"/>
+            <path d="M14.5 10C14.5 10.8284 13.8284 11.5 13 11.5C12.1716 11.5 11.5 10.8284 11.5 10C11.5 9.17157 12.1716 8.5 13 8.5C13.8284 8.5 14.5 9.17157 14.5 10Z" fill="currentColor" class="text-primary-500"/>
+            <path d="M14.5 15.5C14.5 16.3284 13.8284 17 13 17C12.1716 17 11.5 16.3284 11.5 15.5C11.5 14.6716 12.1716 14 13 14C13.8284 14 14.5 14.6716 14.5 15.5Z" fill="currentColor" class="text-primary-500"/>
+          </svg>
+        </div>
+      </div>
+      
       <div class="aspect-square flex flex-col items-center justify-center p-4">
         <!-- File Icon or Thumbnail -->
         <div class="w-12 h-12 mb-3 flex items-center justify-center">
@@ -116,7 +150,111 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// No longer needed since overlay was removed
+// Copy handling
+const copiedFileId = ref<string | null>(null)
+
+async function handleCopyFile(file: FileItem) {
+  try {
+    const fileName = file.metadata?.displayName || file.fileName
+    const tenantId = useTenantStore().selectedTenantId
+    
+    // Prepare data for clipboard
+    const clipboardData = {
+      type: 'kibly-file',
+      fileId: file.id,
+      fileName: fileName,
+      tenantId: tenantId,
+      mimeType: file.metadata?.mimeType || 'application/octet-stream',
+      timestamp: Date.now()
+    }
+    
+    // Write to clipboard
+    await navigator.clipboard.writeText(JSON.stringify(clipboardData))
+    
+    // Show success feedback
+    copiedFileId.value = file.id
+    
+    // Notify extension if it's installed
+    if (window.postMessage) {
+      window.postMessage({
+        type: 'kibly-file-copied',
+        data: clipboardData
+      }, '*')
+    }
+    
+    // Reset checkmark after 2 seconds
+    setTimeout(() => {
+      if (copiedFileId.value === file.id) {
+        copiedFileId.value = null
+      }
+    }, 2000)
+    
+    // Show success feedback
+    const notifications = useNotifications()
+    notifications.general.success(`${fileName} copied!`, 'Paste in Xero with Ctrl+V')
+  } catch (error) {
+    const notifications = useNotifications()
+    notifications.general.error('Failed to copy file')
+  }
+}
+
+// Drag handling
+const isDragging = ref(false)
+
+const handleDragStart = (event: DragEvent, file: FileItem) => {
+  isDragging.value = true
+  
+  const fileName = file.metadata?.displayName || file.fileName
+  const tenantId = useTenantStore().selectedTenantId
+  
+  // Set drag data for the file
+  const dragData = {
+    type: 'kibly-file',
+    fileId: file.id,
+    fileName: fileName,
+    tenantId: tenantId,
+  }
+  
+  // Set multiple data types to maximize compatibility
+  event.dataTransfer!.effectAllowed = 'copy'
+  
+  // 1. Custom data for our extension
+  event.dataTransfer!.setData('application/x-kibly-file', JSON.stringify(dragData))
+  
+  // 2. Text/plain fallback
+  event.dataTransfer!.setData('text/plain', JSON.stringify(dragData))
+  
+  // 4. Set a proper drag image that looks like a file
+  const dragImage = document.createElement('div')
+  dragImage.className = 'drag-ghost'
+  dragImage.innerHTML = `
+    <div style="
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-family: system-ui, -apple-system, sans-serif;
+    ">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M9 1H3C2.44772 1 2 1.44772 2 2V14C2 14.5523 2.44772 15 3 15H13C13.5523 15 14 14.5523 14 14V6L9 1Z" stroke="#666" stroke-width="1.5"/>
+        <path d="M9 1V6H14" stroke="#666" stroke-width="1.5"/>
+      </svg>
+      <span style="color: #333; font-size: 14px;">${fileName}</span>
+    </div>
+  `
+  dragImage.style.position = 'absolute'
+  dragImage.style.top = '-1000px'
+  document.body.appendChild(dragImage)
+  event.dataTransfer!.setDragImage(dragImage, 0, 0)
+  setTimeout(() => dragImage.remove(), 0)
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+}
 
 // Methods
 const getFileIcon = (fileName: string): string => {

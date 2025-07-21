@@ -1,0 +1,27 @@
+{
+  "name": "@kibly/browser-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "doppler run -- wxt",
+    "dev:firefox": "doppler run -- wxt -b firefox",
+    "dev:local": "wxt",
+    "build": "doppler run -- wxt build",
+    "build:firefox": "doppler run -- wxt build -b firefox",
+    "build:local": "wxt build",
+    "build:prod": "wxt build --mode production",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .output .wxt dist"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.254",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@wxt-dev/module-vue": "^1.0.2",
+    "typescript": "*",
+    "vue": "^3.5.13",
+    "wxt": "^0.20.7"
+  }
+}
