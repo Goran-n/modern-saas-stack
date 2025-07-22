@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { errorTracker } from "../services/error-tracker";

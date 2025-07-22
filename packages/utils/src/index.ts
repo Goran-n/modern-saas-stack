@@ -1,3 +1,4 @@
+export * from "./error-handler";
 export {
   configureLogger,
   createLogger,
@@ -8,4 +9,3 @@ export {
 } from "./logger";
 export * from "./string";
 export * from "./validation";
-export * from "./error-handler";

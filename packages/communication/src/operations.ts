@@ -1,6 +1,6 @@
-import { getConfig } from "@kibly/config";
-import { FILE_SOURCES, type FileSource, uploadFile } from "@kibly/file-manager";
-import { createLogger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { FILE_SOURCES, type FileSource, uploadFile } from "@figgy/file-manager";
+import { createLogger } from "@figgy/utils";
 import { ERROR_MESSAGES, FILE_LIMITS, SUPPORTED_MIME_TYPES } from "./constants";
 import { getSlackService } from "./services/slack";
 import { getTwilioService } from "./services/twilio";

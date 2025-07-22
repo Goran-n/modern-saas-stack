@@ -1,8 +1,8 @@
 {
-  "name": "@kibly/tsconfig",
+  "name": "@figgy/tsconfig",
   "version": "0.0.0",
   "private": true,
-  "description": "Shared TypeScript configuration for Kibly monorepo",
+  "description": "Shared TypeScript configuration for Figgy monorepo",
   "main": "index.js",
   "files": [
     "base.json",

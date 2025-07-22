@@ -1,14 +1,14 @@
 # Product Requirements Document (PRD)
-# Kibly Communication Interface - Phase 2
+# Figgy Communication Interface - Phase 2
 
 ## Executive Summary
 
-This PRD outlines the development of a communication interface for Kibly that enables users to submit documents via WhatsApp and Slack. The interface will integrate with Kibly's existing document processing pipeline, allowing users to send PDF files through messaging platforms for automatic ingestion and processing.
+This PRD outlines the development of a communication interface for Figgy that enables users to submit documents via WhatsApp and Slack. The interface will integrate with Figgy's existing document processing pipeline, allowing users to send PDF files through messaging platforms for automatic ingestion and processing.
 
 ## Background and Context
 
 ### Current State
-- Kibly is a multi-tenant SaaS platform for accounting document processing
+- Figgy is a multi-tenant SaaS platform for accounting document processing
 - Users currently upload documents through the web interface
 - The system automatically classifies, extracts data, and manages suppliers
 - File ingestion triggers background jobs for AI-powered extraction
@@ -45,7 +45,7 @@ This PRD outlines the development of a communication interface for Kibly that en
 2. Slack Integration
    - OAuth2-based workspace connection
    - Channel-based document submission
-   - User mapping to Kibly accounts
+   - User mapping to Figgy accounts
 
 3. Communication Interface Service
    - Unified message handling architecture
@@ -90,7 +90,7 @@ This PRD outlines the development of a communication interface for Kibly that en
          └───────────┬───────────┘
                      │
          ┌───────────▼───────────┐
-         │ Existing Kibly Pipeline│
+         │ Existing Figgy Pipeline│
          │ - File Manager         │
          │ - Document Extraction  │
          │ - Supplier Management  │
@@ -194,7 +194,7 @@ CREATE TABLE communication_logs (
 **Key Features**:
 - OAuth2 workspace connection
 - Channel selection for document submission
-- User mapping to Kibly accounts
+- User mapping to Figgy accounts
 - File event handling
 
 **Technical Requirements**:
@@ -227,7 +227,7 @@ CREATE TABLE slack_user_mappings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slack_connection_id UUID NOT NULL REFERENCES slack_connections(id),
   slack_user_id VARCHAR(255) NOT NULL,
-  kibly_user_id UUID REFERENCES users(id),
+  figgy_user_id UUID REFERENCES users(id),
   email VARCHAR(255),
   display_name VARCHAR(255),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -316,7 +316,7 @@ communications.getCommunicationLogs({ limit, offset })
    - Sees confirmation of verified number
 
 2. **Usage Phase**:
-   - User sends PDF to Kibly WhatsApp number
+   - User sends PDF to Figgy WhatsApp number
    - Receives: "Document received. Processing..."
    - Document appears in web UI
    - User receives: "Document processed successfully"
@@ -326,13 +326,13 @@ communications.getCommunicationLogs({ limit, offset })
 1. **Setup Phase**:
    - Admin navigates to Settings > Integrations
    - Clicks "Connect to Slack"
-   - Authorizes Kibly app in Slack
+   - Authorizes Figgy app in Slack
    - Selects channel for document submission
    - Sees confirmation in web UI
 
 2. **Usage Phase**:
    - Team member uploads file to designated channel
-   - Kibly bot responds: "Document received"
+   - Figgy bot responds: "Document received"
    - Document appears in web UI for all team members
    - Bot updates with processing status
 

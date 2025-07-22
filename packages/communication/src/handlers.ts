@@ -1,5 +1,5 @@
-import { getConfig } from "@kibly/config";
-import { createLogger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { createLogger } from "@figgy/utils";
 import { SlackMessageHandler } from "./handlers/slack.handler";
 import { WhatsAppMessageHandler } from "./handlers/whatsapp.handler";
 import { MessageProcessingError } from "./interfaces/message-handler";
@@ -8,34 +8,21 @@ import type { ProcessingResult } from "./types";
 
 const logger = createLogger("communication-handlers");
 
-// Lazy-loaded handlers to avoid config initialization issues
-let whatsAppHandler: WhatsAppMessageHandler | null = null;
-let slackHandler: SlackMessageHandler | null = null;
-let userMapper: UserMapperService | null = null;
-
-function getWhatsAppHandler(): WhatsAppMessageHandler {
-  if (!whatsAppHandler) {
-    whatsAppHandler = new WhatsAppMessageHandler();
-  }
-  return whatsAppHandler;
+// Handler factory functions for dependency injection
+export function createWhatsAppHandler(): WhatsAppMessageHandler {
+  return new WhatsAppMessageHandler();
 }
 
-function getSlackHandler(): SlackMessageHandler {
-  if (!slackHandler) {
-    slackHandler = new SlackMessageHandler();
-  }
-  return slackHandler;
+export function createSlackHandler(): SlackMessageHandler {
+  return new SlackMessageHandler();
 }
 
-async function getUserMapper(): Promise<UserMapperService> {
-  if (!userMapper) {
-    const configManager = getConfig();
-    // Config is validated during initialization
-    await configManager.validate();
-    const config = configManager.getCore();
-    userMapper = new UserMapperService(config.DATABASE_URL);
-  }
-  return userMapper;
+export async function createUserMapper(): Promise<UserMapperService> {
+  const configManager = getConfig();
+  // Config is validated during initialization
+  await configManager.validate();
+  const config = configManager.getCore();
+  return new UserMapperService(config.DATABASE_URL);
 }
 
 /**
@@ -58,7 +45,7 @@ export async function handleTwilioWhatsAppWebhook(
     }
 
     // Look up user based on phone number
-    const mapper = await getUserMapper();
+    const mapper = await createUserMapper();
     const userMapping = await mapper.lookupWhatsAppUser(messagePayload.sender);
 
     if (UserMapperService.isError(userMapping)) {
@@ -75,7 +62,7 @@ export async function handleTwilioWhatsAppWebhook(
     }
 
     // Validate the payload
-    const handler = getWhatsAppHandler();
+    const handler = createWhatsAppHandler();
     const validation = await handler.validate(messagePayload);
     if (!validation.isValid) {
       logger.warn("WhatsApp payload validation failed", {
@@ -153,7 +140,7 @@ export async function handleSlackEventWebhook(
     }
 
     // Look up user based on Slack IDs
-    const mapper = await getUserMapper();
+    const mapper = await createUserMapper();
     const userMapping = await mapper.lookupSlackUser(workspaceId, slackUserId);
 
     if (UserMapperService.isError(userMapping)) {
@@ -171,7 +158,7 @@ export async function handleSlackEventWebhook(
     }
 
     // Validate the payload
-    const handler = getSlackHandler();
+    const handler = createSlackHandler();
     const validation = await handler.validate(messagePayload);
     if (!validation.isValid) {
       logger.warn("Slack payload validation failed", {
@@ -229,3 +216,6 @@ export function handleWhatsAppVerification(
   logger.warn("WhatsApp webhook verification failed", { mode, token });
   return { verified: false };
 }
+
+// Export the multi-tenant handler
+export { handleSlackMultiTenantWebhook } from "./handlers/slack-multi-tenant";

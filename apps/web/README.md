@@ -1,6 +1,6 @@
-# Kibly Web - Nuxt UI Pro
+# Figgy Web - Nuxt UI Pro
 
-This is the Nuxt 3 frontend for Kibly, built with Nuxt UI Pro components.
+This is the Nuxt 3 frontend for Figgy, built with Nuxt UI Pro components.
 
 ## Features
 

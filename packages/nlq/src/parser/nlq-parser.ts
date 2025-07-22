@@ -1,13 +1,13 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
+import { AnthropicProvider } from "../llm/anthropic-provider";
 import {
+  type LLMProvider,
   NLQError,
   NLQErrorCodes,
-  QueryIntent,
-  type LLMProvider,
   type ParsedQuery,
   type QueryContext,
+  QueryIntent,
 } from "../types";
-import { AnthropicProvider } from "../llm/anthropic-provider";
 import { validateParsedQuery } from "./validation";
 
 const logger = createLogger("nlq-parser");
@@ -19,10 +19,7 @@ export class NLQParser {
     this.provider = provider || new AnthropicProvider();
   }
 
-  async parseQuery(
-    query: string,
-    context: QueryContext,
-  ): Promise<ParsedQuery> {
+  async parseQuery(query: string, context: QueryContext): Promise<ParsedQuery> {
     try {
       // Parse with LLM - let the LLM determine if it's a valid query
       const parsed = await this.provider.parseQuery(query, context);
@@ -58,13 +55,12 @@ export class NLQParser {
     }
   }
 
-
   async isQuerySupported(query: string): Promise<boolean> {
     try {
       // Use LLM to check if query is supported
       // We'll attempt to parse it and check the intent
       const parsed = await this.provider.parseQuery(query);
-      
+
       // If parsing succeeds and we get a valid intent (not unknown), it's supported
       return parsed.intent !== QueryIntent.UNKNOWN && parsed.confidence > 0.5;
     } catch {

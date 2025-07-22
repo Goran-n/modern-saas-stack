@@ -1,51 +1,109 @@
 <template>
   <div class="popup">
-    <header>
-      <h1>Kibly → Xero</h1>
-      <p>Drag files between apps</p>
-    </header>
+    <!-- Show login if not authenticated -->
+    <Login v-if="!isAuthenticated" />
     
-    <main>
-      <!-- Status -->
-      <div class="status success">
-        <span>Ready to transfer files</span>
-      </div>
+    <!-- Show main interface if authenticated -->
+    <template v-else>
+      <header>
+        <h1>Figgy → Xero</h1>
+        <p>Drag files between apps</p>
+      </header>
       
-      <!-- Instructions -->
-      <div class="instructions">
-        <h2>How to use:</h2>
-        <ol>
-          <li>Open your files in Kibly</li>
-          <li>Drag any file from the page</li>
-          <li>Drop it into Xero</li>
-        </ol>
-      </div>
+      <main>
+        <!-- Status -->
+        <div class="status success">
+          <span>Ready to transfer files</span>
+        </div>
+        
+        <!-- User info -->
+        <div class="user-info">
+          <span class="user-email">{{ userEmail }}</span>
+          <button @click="handleSignOut" class="btn-link">Sign out</button>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="instructions">
+          <h2>How to use:</h2>
+          <ol>
+            <li>Open your files in Figgy</li>
+            <li>Drag any file from the page</li>
+            <li>Drop it into Xero</li>
+          </ol>
+        </div>
+        
+        <!-- Quick Links -->
+        <div class="links">
+          <button @click="openFiggy" class="btn">Open Figgy</button>
+          <button @click="openXero" class="btn">Open Xero</button>
+        </div>
+      </main>
       
-      <!-- Quick Links -->
-      <div class="links">
-        <button @click="openKibly" class="btn">Open Kibly</button>
-        <button @click="openXero" class="btn">Open Xero</button>
-      </div>
-    </main>
-    
-    <footer>
-      <span class="version">v{{ version }}</span>
-    </footer>
+      <footer>
+        <span class="version">v{{ version }}</span>
+      </footer>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { getConfig } from '../../utils/config';
+import { useAuthStore } from '../../stores/auth';
+import { createConsole } from '../../utils/console';
+import Login from './Login.vue';
 
 const version = chrome.runtime.getManifest().version;
 const config = getConfig().getApiConfig();
+const console = createConsole('popup');
 
-function openKibly() {
+const { isAuthenticated, userEmail, initAuth, signOut, onAuthStateChange } = useAuthStore();
+
+// Initialize auth on mount
+onMounted(async () => {
+  console.info('Popup mounted, initializing auth...');
+  
+  await initAuth();
+  
+  // Listen for auth state changes
+  const unsubscribe = onAuthStateChange();
+  
+  // Listen for messages from background script about auth updates
+  const messageListener = (message: any) => {
+    if (message.type === 'AUTH_UPDATED') {
+      console.info('Received auth update message from background:', message.payload);
+      // Refresh auth state
+      initAuth();
+    }
+  };
+  
+  chrome.runtime.onMessage.addListener(messageListener);
+  
+  // Add a periodic check for auth state in case something was missed
+  const authCheckInterval = setInterval(async () => {
+    console.debug('Periodic auth check...');
+    await initAuth();
+  }, 5000); // Check every 5 seconds
+  
+  // Clean up on unmount
+  return () => {
+    console.info('Cleaning up auth listeners...');
+    unsubscribe.subscription.unsubscribe();
+    chrome.runtime.onMessage.removeListener(messageListener);
+    clearInterval(authCheckInterval);
+  };
+});
+
+function openFiggy() {
   chrome.tabs.create({ url: `${config.APP_URL}/files` });
 }
 
 function openXero() {
   chrome.tabs.create({ url: 'https://go.xero.com/app/files' });
+}
+
+async function handleSignOut() {
+  await signOut();
 }
 </script>
 
@@ -92,6 +150,36 @@ main {
   background: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
+}
+
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.user-email {
+  color: #495057;
+  font-weight: 500;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #0066cc;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #0052a3;
 }
 
 .instructions {

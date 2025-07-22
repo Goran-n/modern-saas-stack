@@ -1,4 +1,4 @@
-# Kibly Service Development Style Guide
+# Figgy Service Development Style Guide
 
 ## Philosophy
 
@@ -78,7 +78,7 @@ apps/[module]/
 ```typescript
 // src/actions/invoice.ts
 
-import { db } from '@kibly/shared-db'
+import { db } from '@figgy/shared-db'
 import { z } from 'zod'
 
 // Input validation with Zod

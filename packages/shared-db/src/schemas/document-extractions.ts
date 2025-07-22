@@ -86,7 +86,10 @@ export const documentExtractions = pgTable("document_extractions", {
 
   // Deduplication fields
   invoiceFingerprint: text("invoice_fingerprint"),
-  duplicateConfidence: numeric("duplicate_confidence", { precision: 5, scale: 2 }),
+  duplicateConfidence: numeric("duplicate_confidence", {
+    precision: 5,
+    scale: 2,
+  }),
   duplicateCandidateId: uuid("duplicate_candidate_id"),
   duplicateStatus: duplicateStatusEnum("duplicate_status").default("unique"),
 

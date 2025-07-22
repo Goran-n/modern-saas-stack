@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { serve } from "@hono/node-server";
-import { bootstrap } from "@kibly/config";
-import { checkDatabaseHealth, getDatabaseConnection } from "@kibly/shared-db";
-import { logger, logError } from "@kibly/utils";
+import { bootstrap } from "@figgy/config";
+import { checkDatabaseHealth, getDatabaseConnection } from "@figgy/shared-db";
+import { logError, logger } from "@figgy/utils";
 import { createHonoApp } from "./server";
 
 async function waitForDatabase(
@@ -53,6 +53,14 @@ async function main() {
     process.exit(1);
   }
 
+  // Validate BASE_URL for OAuth and webhook callbacks
+  if (!config.BASE_URL) {
+    logger.warn(
+      "BASE_URL not configured. This is required for Slack OAuth and other integrations. " +
+        "Set BASE_URL to your API's public URL (e.g., https://your-ngrok-url.ngrok-free.app)",
+    );
+  }
+
   // Initialize database connection with pool
   logger.info("Initializing database connection pool...");
   try {
@@ -72,22 +80,13 @@ async function main() {
     process.exit(1);
   }
 
-  // Wait for database to be ready (can be skipped in dev with SKIP_DB_CHECK=true)
-  const skipDbCheck = process.env.SKIP_DB_CHECK === "true";
-
-  if (skipDbCheck) {
-    logger.warn("⚠️  Database check skipped due to SKIP_DB_CHECK=true");
-  } else {
-    const isDatabaseReady = await waitForDatabase();
-    if (!isDatabaseReady) {
-      logger.error(
-        "Failed to establish database connection after multiple retries",
-      );
-      logger.info(
-        "💡 Hint: You can skip database checks by setting SKIP_DB_CHECK=true",
-      );
-      process.exit(1);
-    }
+  // Wait for database to be ready
+  const isDatabaseReady = await waitForDatabase();
+  if (!isDatabaseReady) {
+    logger.error(
+      "Failed to establish database connection after multiple retries",
+    );
+    process.exit(1);
   }
 
   // Create Hono app with tRPC
@@ -119,11 +118,19 @@ async function main() {
 
     try {
       // Close database connections
-      const { closeDatabaseConnection } = await import("@kibly/shared-db");
+      const { closeDatabaseConnection } = await import("@figgy/shared-db");
       await closeDatabaseConnection();
       logger.info("Database connections closed");
+
+      // Clean up tRPC monitoring services
+      const { cleanupErrorTracker } = await import("@figgy/trpc");
+      const { cleanupPerformanceMonitor } = await import("@figgy/trpc");
+
+      cleanupErrorTracker();
+      cleanupPerformanceMonitor();
+      logger.info("tRPC monitoring services cleaned up");
     } catch (error) {
-      logger.error("Error during database cleanup", { error });
+      logger.error("Error during cleanup", { error });
     }
 
     logger.info("Shutdown complete");

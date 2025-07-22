@@ -86,7 +86,8 @@
 import { z } from 'zod'
 
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: 'guest'
 })
 
 const authStore = useAuthStore()

@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import { z } from "zod";
 import { type EnvironmentConfig, getEnvironmentSchema } from "./environments";
 import {

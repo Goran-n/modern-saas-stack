@@ -1,5 +1,5 @@
-import type { CompanyProfile } from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+import type { CompanyProfile } from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
 import type { AccountingDocument } from "../types";
 
 export class CompanyProfileExtractor {

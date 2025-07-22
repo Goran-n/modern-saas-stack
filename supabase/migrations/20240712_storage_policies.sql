@@ -1,4 +1,4 @@
--- Storage bucket and RLS policies for Kibly
+-- Storage bucket and RLS policies for Figgy
 -- This migration sets up the storage policies for the vault bucket
 
 -- Enable RLS on storage.objects table (if not already enabled)

@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/shared-auth",
+  "name": "@figgy/shared-auth",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,12 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.2",
-    "@kibly/utils": "workspace:*"
+    "@figgy/utils": "workspace:*"
   },
-  "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10"
-  },
+  "devDependencies": {},
   "exports": {
     ".": {
       "types": "./src/index.ts",

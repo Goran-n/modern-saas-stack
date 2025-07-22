@@ -13,9 +13,9 @@ export const ValidationConfig = {
     "casual",
     "financial",
     "help",
-    "unknown"
+    "unknown",
   ],
-  
+
   // Valid entity values
   entities: {
     status: ["pending", "processing", "completed", "failed"],
@@ -28,10 +28,10 @@ export const ValidationConfig = {
       "quote",
       "contract",
       "statement",
-      "other"
-    ]
+      "other",
+    ],
   },
-  
+
   // Valid field names for different operations
   fields: {
     aggregation: [
@@ -39,37 +39,31 @@ export const ValidationConfig = {
       "subtotalAmount",
       "taxAmount",
       "size",
-      "count"
+      "count",
     ],
-    groupBy: [
-      "status",
-      "source",
-      "documentType",
-      "vendor",
-      "date"
-    ],
+    groupBy: ["status", "source", "documentType", "vendor", "date"],
     sorting: [
       "createdAt",
       "updatedAt",
       "size",
       "totalAmount",
       "confidence",
-      "fileName"
-    ]
+      "fileName",
+    ],
   },
-  
+
   // Limits and constraints
   constraints: {
     limit: {
       min: 1,
       max: 100,
-      default: 20
+      default: 20,
     },
     confidence: {
       min: 0,
-      max: 1
-    }
-  }
+      max: 1,
+    },
+  },
 };
 
 // Field mappings for database columns
@@ -77,31 +71,40 @@ export const FieldMappings = {
   // Maps sort fields to their database columns
   sortFields: {
     createdAt: "files.createdAt",
-    updatedAt: "files.updatedAt", 
+    updatedAt: "files.updatedAt",
     size: "files.size",
     fileName: "files.fileName",
     confidence: "documentExtractions.overallConfidence",
-    totalAmount: "extractedFields.totalAmount"
+    totalAmount: "extractedFields.totalAmount",
   },
-  
+
   // Maps aggregation fields to their JSON paths
   aggregationFields: {
-    totalAmount: { table: "documentExtractions", path: "extractedFields->>'totalAmount'->>'value'" },
-    subtotalAmount: { table: "documentExtractions", path: "extractedFields->>'subtotalAmount'->>'value'" },
-    taxAmount: { table: "documentExtractions", path: "extractedFields->>'taxAmount'->>'value'" },
+    totalAmount: {
+      table: "documentExtractions",
+      path: "extractedFields->>'totalAmount'->>'value'",
+    },
+    subtotalAmount: {
+      table: "documentExtractions",
+      path: "extractedFields->>'subtotalAmount'->>'value'",
+    },
+    taxAmount: {
+      table: "documentExtractions",
+      path: "extractedFields->>'taxAmount'->>'value'",
+    },
     size: { table: "files", path: "size" },
-    count: { table: "files", path: "*" }
+    count: { table: "files", path: "*" },
   },
-  
+
   // Fields that require joining with document_extractions
   extractionRequiredFields: [
     "documentType",
-    "vendor", 
+    "vendor",
     "confidence",
     "totalAmount",
     "subtotalAmount",
-    "taxAmount"
-  ]
+    "taxAmount",
+  ],
 };
 
 // Helper to get config dynamically (could be extended to load from DB/env)

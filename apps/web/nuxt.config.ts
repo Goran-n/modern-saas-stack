@@ -28,6 +28,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://localhost:5000",
+      oauthApiUrl:
+        process.env.NUXT_PUBLIC_OAUTH_API_URL ||
+        process.env.NUXT_PUBLIC_API_URL ||
+        "http://localhost:5000",
     },
   },
 
@@ -72,12 +76,11 @@ export default defineNuxtConfig({
 
   pinia: {
     storesDirs: ["./stores/**"],
-    disableVuex: true,
   },
 
   app: {
     head: {
-      title: "Kibly",
+      title: "Figgy",
       link: [
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {
@@ -125,7 +128,34 @@ export default defineNuxtConfig({
       },
     },
     optimizeDeps: {
-      include: ["cookie"],
+      include: ["cookie", "pinia", "vue"],
+      exclude: [],
+      esbuildOptions: {
+        keepNames: true,
+      },
+    },
+    server: {
+      hmr: {
+        overlay: false,
+        timeout: 60000,
+      },
+      watch: {
+        usePolling: false,
+        interval: 1000,
+      },
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ["vue", "vue-router", "pinia"],
+          },
+        },
+      },
+    },
+    esbuild: {
+      keepNames: true,
+      minifyIdentifiers: false,
     },
   },
 });

@@ -1,9 +1,14 @@
 import {
+  and,
+  desc,
+  eq,
   files,
+  gt,
+  gte,
+  sql,
   whatsappVerifications,
-} from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
-import { and, desc, eq, gt, gte, sql } from "@kibly/shared-db";
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import { getDb } from "../db";
 
 const logger = createLogger("communication-stats");
@@ -178,7 +183,9 @@ export async function getRecentActivity(tenantId: string): Promise<
         platform: "whatsapp" as const,
         type: "verification" as const,
         description: `Phone verification ${verification.verified ? "completed" : "requested"} for ${verification.phoneNumber}`,
-        status: verification.verified ? ("success" as const) : ("pending" as const),
+        status: verification.verified
+          ? ("success" as const)
+          : ("pending" as const),
         timestamp: verification.createdAt.toISOString(),
         metadata: {},
       });

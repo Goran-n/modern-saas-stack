@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import {
   ERROR_CODES,
   ERROR_MESSAGES,
@@ -89,7 +89,6 @@ export class WhatsAppMessageHandler extends BaseMessageHandler {
         userId,
         responseFormatter: this.responseFormatter,
       });
-
 
       return result;
     } catch (error) {

@@ -24,9 +24,9 @@ export const webSchema = z.object({
 
   /**
    * Production web application URL (used for CORS)
-   * @default 'https://app.kibly.com'
+   * @default 'https://app.figgy.com'
    */
-  PRODUCTION_APP_URL: z.string().url().default("https://app.kibly.com"),
+  PRODUCTION_APP_URL: z.string().url().default("https://app.figgy.com"),
 
   /**
    * Additional allowed CORS origins (comma-separated)

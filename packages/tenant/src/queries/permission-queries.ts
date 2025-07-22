@@ -1,5 +1,4 @@
-import { tenantMembers } from "@kibly/shared-db";
-import { and, eq } from "@kibly/shared-db";
+import { and, eq, tenantMembers } from "@figgy/shared-db";
 import { getDb } from "../db";
 import type { CheckPermissionInput, Permission } from "../types";
 import { checkPermissionSchema, rolePermissions } from "../types";

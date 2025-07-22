@@ -1,4 +1,4 @@
-import { suppliers, and, eq, like } from "@kibly/shared-db";
+import { and, eq, like, suppliers } from "@figgy/shared-db";
 
 /**
  * Generate a unique slug for a supplier within a tenant
@@ -40,7 +40,9 @@ export async function generateSlug(
 
   // Find the highest numbered suffix
   let maxSuffix = 0;
-  const baseSlugExact = existingSlugs.some((s: any) => (s.slug as string) === baseSlug);
+  const baseSlugExact = existingSlugs.some(
+    (s: any) => (s.slug as string) === baseSlug,
+  );
   if (baseSlugExact) {
     maxSuffix = 0;
   }

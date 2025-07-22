@@ -9,7 +9,10 @@ export enum Platform {
 // Removed MessageSource - use Platform enum or FILE_SOURCES from file-manager instead
 
 // Re-export from interfaces to avoid duplication
-export type { MessagePayload, MessageAttachment } from "./interfaces/message-handler";
+export type {
+  MessageAttachment,
+  MessagePayload,
+} from "./interfaces/message-handler";
 
 // Processing result
 export interface ProcessingResult {
@@ -82,6 +85,7 @@ export const SlackEventPayloadSchema = z.object({
     ts: z.string(),
     channel: z.string(),
     text: z.string().optional(),
+    bot_id: z.string().optional(), // Present when message is from a bot
     files: z
       .array(
         z.object({
@@ -129,4 +133,8 @@ export interface ParsedSlackMessage {
 }
 
 // Export error types (but not MessageProcessingError which comes from interfaces)
-export { CommunicationError, ERROR_CODES, ERROR_MESSAGES } from "./types/errors";
+export {
+  CommunicationError,
+  ERROR_CODES,
+  ERROR_MESSAGES,
+} from "./types/errors";

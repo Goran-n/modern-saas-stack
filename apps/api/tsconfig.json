@@ -1,5 +1,5 @@
 {
-  "extends": "@kibly/tsconfig/base.json",
+  "extends": "@figgy/tsconfig/base.json",
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,

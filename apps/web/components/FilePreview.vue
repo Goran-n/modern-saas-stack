@@ -41,6 +41,17 @@
               Download
             </UButton>
             <UButton
+              v-if="file.processingStatus !== 'processing'"
+              icon="i-heroicons-arrow-path"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              @click="handleReprocess"
+              :loading="isReprocessing"
+            >
+              Reprocess
+            </UButton>
+            <UButton
               icon="i-heroicons-x-mark"
               size="sm"
               color="neutral"
@@ -254,6 +265,54 @@
       </div>
     </UCard>
     </UModal>
+
+    <!-- Reprocess Confirmation Modal -->
+    <UModal v-model:open="showReprocessModal" title="Confirm Reprocess">
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600">
+            Are you sure you want to reprocess this file?
+          </p>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-400" />
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                  <ul class="list-disc list-inside space-y-1">
+                    <li>All extracted data will be deleted</li>
+                    <li>Supplier links will be removed</li>
+                    <li>The file will be processed from scratch</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer="{ close }">
+        <div class="flex justify-end gap-3">
+          <UButton
+            color="neutral"
+            variant="solid"
+            @click="close"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="primary"
+            variant="solid"
+            @click="reprocessFile"
+            :loading="isReprocessing"
+          >
+            Reprocess File
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -294,10 +353,14 @@ const emit = defineEmits<Emits>()
 // Composables
 const tenantStore = useTenantStore()
 const config = useRuntimeConfig()
+const toast = useToast()
+const trpc = useTrpc()
 
 // State
 const isOpen = ref(true)
 const iframeError = ref(false)
+const showReprocessModal = ref(false)
+const isReprocessing = ref(false)
 
 // Debug logging
 console.log('FilePreview mounted with file:', props.file)
@@ -465,6 +528,42 @@ const downloadFile = async () => {
     window.open(downloadUrl, '_blank')
   } catch (error) {
     console.error('Download failed:', error)
+  }
+}
+
+const handleReprocess = () => {
+  showReprocessModal.value = true
+}
+
+const reprocessFile = async () => {
+  isReprocessing.value = true
+  
+  try {
+    await trpc.files.reprocess.mutate({ fileId: props.file.id })
+    
+    toast.add({
+      title: 'Reprocessing started',
+      description: 'The file will be processed again from scratch',
+      color: 'primary',
+      icon: 'i-heroicons-arrow-path',
+    })
+    
+    // Close modals
+    showReprocessModal.value = false
+    isOpen.value = false
+    
+    // Emit close to trigger refresh
+    emit('close')
+  } catch (error) {
+    console.error('Reprocess failed:', error)
+    toast.add({
+      title: 'Reprocess failed',
+      description: error instanceof Error ? error.message : 'Failed to reprocess file',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    })
+  } finally {
+    isReprocessing.value = false
   }
 }
 

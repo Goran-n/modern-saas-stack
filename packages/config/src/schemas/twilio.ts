@@ -43,7 +43,7 @@ export const twilioSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z
     .string()
     .optional()
-    .default("kibly-whatsapp-verify")
+    .default("figgy-whatsapp-verify")
     .describe("Token for webhook verification"),
 });
 

@@ -4,7 +4,7 @@ export default defineConfig({
   project: process.env.TRIGGER_PROJECT_ID!,
   runtime: "node",
   logLevel: "log",
-  maxDuration: 60,
+  maxDuration: "1 minute",
   retries: {
     enabledInDev: false,
     default: {
@@ -17,6 +17,8 @@ export default defineConfig({
   },
   dirs: ["./src/tasks"],
   build: {
-    external: ["pino", "thread-stream", "pino-pretty"],
+    external: [],
+    // Ensure proper ESM handling
+    conditions: ["import", "node"],
   },
 });

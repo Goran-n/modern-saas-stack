@@ -1,28 +1,28 @@
 import {
   NLQParser,
-  QueryExecutor,
   type ParsedQuery,
   type QueryContext,
+  QueryExecutor,
   type QueryResult,
   type UnifiedResponse,
-} from "@kibly/nlq";
+} from "@figgy/nlq";
 import {
   and,
   communicationMessages,
   eq,
-  queryAnalytics,
   type NewCommunicationMessage,
   type NewQueryAnalytic,
-} from "@kibly/shared-db";
-import { createLogger, logError } from "@kibly/utils";
+  queryAnalytics,
+} from "@figgy/shared-db";
+import { createLogger, logError } from "@figgy/utils";
 import { getDb } from "../db";
-import {
-  UnifiedResponseGenerator,
-  type ResponseGeneratorOptions,
-} from "../response/unified-response";
-import { WhatsAppFormatter } from "../response/formatters/whatsapp";
 import type { FormattedMessage } from "../response/formatters/base";
-import { NLQError, ERROR_CODES } from "../types/errors";
+import { WhatsAppFormatter } from "../response/formatters/whatsapp";
+import {
+  type ResponseGeneratorOptions,
+  UnifiedResponseGenerator,
+} from "../response/unified-response";
+import { ERROR_CODES, NLQError } from "../types/errors";
 
 const logger = createLogger("communication-query");
 
@@ -56,7 +56,7 @@ export async function processNaturalQuery(
   platform: "whatsapp" | "slack" = "whatsapp",
 ): Promise<{ response: UnifiedResponse; parsedQuery: ParsedQuery }> {
   const startTime = Date.now();
-  
+
   try {
     logger.info("STEP 1: Starting natural language query processing", {
       query,
@@ -76,13 +76,13 @@ export async function processNaturalQuery(
 
     // Parse the query
     const { nlqParser: parser } = getComponents();
-    
+
     logger.info("STEP 3: Components retrieved, starting parse", {
       hasParser: !!parser,
     });
-    
+
     const parsedQuery = await parser.parseQuery(query, context);
-    
+
     logger.info("STEP 4: Query parsed successfully", {
       intent: parsedQuery.intent,
       confidence: parsedQuery.confidence,
@@ -91,21 +91,30 @@ export async function processNaturalQuery(
     });
 
     // Handle conversational intents without database queries
-    if (["greeting", "casual", "financial", "help", "unknown"].includes(parsedQuery.intent)) {
+    if (
+      ["greeting", "casual", "financial", "help", "unknown"].includes(
+        parsedQuery.intent,
+      )
+    ) {
       logger.info("STEP 5: Detected conversational intent - handling locally", {
         intent: parsedQuery.intent,
         confidence: parsedQuery.confidence,
         query: query.length > 50 ? query.substring(0, 50) + "..." : query,
       });
-      
-      const response = handleConversationalIntent(query, parsedQuery, platform, Date.now() - startTime);
-      
+
+      const response = handleConversationalIntent(
+        query,
+        parsedQuery,
+        platform,
+        Date.now() - startTime,
+      );
+
       logger.info("STEP 6: Conversational response generated successfully", {
         intent: parsedQuery.intent,
         hasResponseText: !!(response.metadata as any).responseText,
         responseLength: (response.metadata as any).responseText?.length || 0,
       });
-      
+
       return { response, parsedQuery };
     }
 
@@ -115,15 +124,23 @@ export async function processNaturalQuery(
       tenantId,
       entityCount: Object.keys(parsedQuery.entities).length,
     });
-    
+
     const db = getDb();
     const { queryExecutor: executor } = getComponents();
-    const queryResult = await executor.execute(parsedQuery, db as any, tenantId);
-    
+    const queryResult = await executor.execute(
+      parsedQuery,
+      db as any,
+      tenantId,
+    );
+
     logger.info("Database query executed", {
       intent: parsedQuery.intent,
       hasData: !!queryResult.data,
-      dataLength: Array.isArray(queryResult.data) ? queryResult.data.length : (queryResult.data ? 1 : 0),
+      dataLength: Array.isArray(queryResult.data)
+        ? queryResult.data.length
+        : queryResult.data
+          ? 1
+          : 0,
       hasError: !!queryResult.error,
     });
 
@@ -148,23 +165,28 @@ export async function processNaturalQuery(
       // Access the LLM provider through the parser
       const llmResponse = await (parser as any).provider.generateSummary({
         query: parsedQuery,
-        results: Array.isArray(queryResult.data) ? queryResult.data : [queryResult.data],
+        results: Array.isArray(queryResult.data)
+          ? queryResult.data
+          : [queryResult.data],
       });
-      
+
       if (llmResponse) {
         // Add the LLM-generated response as responseText to bypass formatter templates
         (response.metadata as any).responseText = llmResponse;
-        
+
         logger.info("LLM conversational response generated for file query", {
           intent: parsedQuery.intent,
           responseLength: llmResponse.length,
         });
       }
     } catch (llmError) {
-      logger.warn("Failed to generate LLM summary, falling back to structured response", {
-        error: llmError instanceof Error ? llmError.message : llmError,
-        intent: parsedQuery.intent,
-      });
+      logger.warn(
+        "Failed to generate LLM summary, falling back to structured response",
+        {
+          error: llmError instanceof Error ? llmError.message : llmError,
+          intent: parsedQuery.intent,
+        },
+      );
       // Continue with structured response if LLM fails
     }
 
@@ -179,10 +201,10 @@ export async function processNaturalQuery(
     return { response, parsedQuery };
   } catch (error) {
     const processingTimeMs = Date.now() - startTime;
-    
+
     // Convert to NLQError for better categorisation
     const nlqError = NLQError.fromError(error);
-    
+
     logError(logger, "Failed to process natural language query", error, {
       nlqErrorCode: nlqError.code,
       nlqUserMessage: nlqError.userFriendlyMessage,
@@ -197,10 +219,10 @@ export async function processNaturalQuery(
         responseGenerator: !!responseGenerator,
       },
     });
-    
+
     // Create meaningful error response - use responseText to bypass result formatting
     const errorResponseText = createErrorResponseText(nlqError);
-    
+
     const errorResponse: UnifiedResponse = {
       query,
       intent: "unknown" as any,
@@ -218,13 +240,13 @@ export async function processNaturalQuery(
         suggestions: nlqError.suggestions,
       } as any,
     };
-    
+
     const errorParsedQuery: ParsedQuery = {
       intent: "unknown" as any,
       confidence: 0,
       entities: {},
     };
-    
+
     return { response: errorResponse, parsedQuery: errorParsedQuery };
   }
 }
@@ -245,22 +267,58 @@ export async function isNaturalQuery(content: string): Promise<boolean> {
 /**
  * Store a communication message
  */
-export async function storeMessage(
-  data: {
-    messageId: string;
-    platform: "whatsapp" | "slack";
-    sender: string;
-    content: string;
-    tenantId: string;
-    userId?: string;
-  },
-): Promise<string> {
+export async function storeMessage(data: {
+  messageId: string;
+  platform: "whatsapp" | "slack";
+  sender: string;
+  content: string;
+  tenantId: string;
+  userId?: string;
+}): Promise<string> {
+  const db = getDb();
+
   try {
-    const db = getDb();
-    
-    // Check if this is a query
-    const isQuery = await isNaturalQuery(data.content);
-    
+    // Always check for existing message first
+    const existing = await db
+      .select()
+      .from(communicationMessages)
+      .where(eq(communicationMessages.messageId, data.messageId))
+      .limit(1);
+
+    if (existing.length > 0 && existing[0]) {
+      logger.info("Message already exists, returning existing ID", {
+        messageId: data.messageId,
+        existingId: existing[0].id,
+      });
+      return existing[0].id;
+    }
+
+    // Ensure content is never null or undefined
+    if (!data.content || data.content.trim() === "") {
+      logger.warn("storeMessage received empty content, using default", {
+        messageId: data.messageId,
+        platform: data.platform,
+        sender: data.sender,
+      });
+      data.content = "[Empty message]";
+    }
+
+    logger.info("Storing new message", {
+      messageId: data.messageId,
+      platform: data.platform,
+      sender: data.sender,
+      contentLength: data.content.length,
+      tenantId: data.tenantId,
+      userId: data.userId,
+    });
+
+    // Check if this is a query (only for messages with actual content)
+    const isQuery =
+      data.content !== "[Empty message]" &&
+      data.content !== "[Message with no text content]" &&
+      !data.content.startsWith("Uploaded ") &&
+      (await isNaturalQuery(data.content));
+
     const message: NewCommunicationMessage = {
       messageId: data.messageId,
       platform: data.platform,
@@ -271,40 +329,39 @@ export async function storeMessage(
       isQuery,
     };
 
+    // Use atomic upsert to handle race conditions
     const result = await db
       .insert(communicationMessages)
       .values(message)
+      .onConflictDoUpdate({
+        target: communicationMessages.messageId,
+        set: {
+          // Update timestamp on conflict to show it was accessed again
+          updatedAt: new Date(),
+        },
+      })
       .returning();
 
-    const inserted = result[0];
-    if (!inserted) {
-      throw new Error("Failed to insert message");
+    const upserted = result[0];
+    if (!upserted) {
+      throw new Error("Failed to upsert message");
     }
 
-    logger.info("Message stored", {
-      id: inserted.id,
+    logger.info("Message stored successfully", {
+      id: upserted.id,
+      messageId: data.messageId,
       isQuery,
+      wasExisting: upserted.createdAt.getTime() < Date.now() - 1000, // Check if this was an existing record
     });
 
-    return inserted.id;
+    return upserted.id;
   } catch (error) {
-    const errorDetails: any = {
+    logger.error("Failed to store message", {
       error: error instanceof Error ? error.message : error,
-      data,
-    };
-    
-    // Add more details for database errors
-    if (error instanceof Error) {
-      errorDetails.stack = error.stack;
-      errorDetails.name = error.name;
-      
-      // Check for common database errors
-      if (error.message.includes('relation') && error.message.includes('does not exist')) {
-        errorDetails.hint = 'The communication_messages table may not exist. Run database migrations.';
-      }
-    }
-    
-    logger.error("Failed to store message", errorDetails);
+      messageId: data.messageId,
+      platform: data.platform,
+    });
+
     throw error;
   }
 }
@@ -320,7 +377,7 @@ export async function updateMessageWithQueryResult(
 ): Promise<void> {
   try {
     const db = getDb();
-    
+
     await db
       .update(communicationMessages)
       .set({
@@ -356,7 +413,7 @@ async function trackQueryAnalytics(data: {
 }): Promise<void> {
   try {
     const db = getDb();
-    
+
     if (!data.messageId) {
       // Skip analytics if no messageId
       return;
@@ -367,15 +424,17 @@ async function trackQueryAnalytics(data: {
       intent: data.parsedQuery.intent,
       entities: data.parsedQuery.entities as any,
       executionTimeMs: data.executionTimeMs,
-      resultCount: Array.isArray(data.queryResult.data) 
-        ? data.queryResult.data.length 
-        : data.queryResult.data ? 1 : 0,
+      resultCount: Array.isArray(data.queryResult.data)
+        ? data.queryResult.data.length
+        : data.queryResult.data
+          ? 1
+          : 0,
       error: data.queryResult.error,
       llmTokensUsed: 0, // TODO: Track actual token usage
     };
 
     await db.insert(queryAnalytics).values(analytics);
-    
+
     logger.info("Query analytics tracked", {
       intent: analytics.intent,
       executionTimeMs: analytics.executionTimeMs,
@@ -389,7 +448,9 @@ async function trackQueryAnalytics(data: {
 /**
  * Format response for WhatsApp
  */
-export function formatResponseForWhatsApp(response: UnifiedResponse): FormattedMessage {
+export function formatResponseForWhatsApp(
+  response: UnifiedResponse,
+): FormattedMessage {
   const { whatsappFormatter: formatter } = getComponents();
   return formatter.format(response);
 }
@@ -400,17 +461,19 @@ export function formatResponseForWhatsApp(response: UnifiedResponse): FormattedM
 export async function getRecentQueries(
   tenantId: string,
   limit = 10,
-): Promise<Array<{
-  id: string;
-  content: string;
-  intent: string;
-  confidence: number;
-  resultCount: number;
-  createdAt: Date;
-}>> {
+): Promise<
+  Array<{
+    id: string;
+    content: string;
+    intent: string;
+    confidence: number;
+    resultCount: number;
+    createdAt: Date;
+  }>
+> {
   try {
     const db = getDb();
-    
+
     const results = await db
       .select({
         id: communicationMessages.id,
@@ -421,7 +484,10 @@ export async function getRecentQueries(
         analytics: queryAnalytics,
       })
       .from(communicationMessages)
-      .leftJoin(queryAnalytics, eq(communicationMessages.id, queryAnalytics.messageId))
+      .leftJoin(
+        queryAnalytics,
+        eq(communicationMessages.id, queryAnalytics.messageId),
+      )
       .where(
         and(
           eq(communicationMessages.tenantId, tenantId),
@@ -431,7 +497,7 @@ export async function getRecentQueries(
       .orderBy(communicationMessages.createdAt)
       .limit(limit);
 
-    return results.map(r => ({
+    return results.map((r) => ({
       id: r.id,
       content: r.content,
       intent: (r.parsedQuery as any)?.intent || "unknown",
@@ -450,22 +516,25 @@ export async function getRecentQueries(
  */
 function createErrorResponseText(nlqError: NLQError): string {
   let responseText = `❌ ${nlqError.userFriendlyMessage}`;
-  
+
   if (nlqError.suggestions && nlqError.suggestions.length > 0) {
     responseText += "\n\n💡 *Suggestions:*";
     nlqError.suggestions.forEach((suggestion) => {
       responseText += `\n• ${suggestion}`;
     });
   }
-  
+
   // Add helpful examples based on error type
-  if (nlqError.code === ERROR_CODES.NLQ_PARSING_FAILED || nlqError.code === ERROR_CODES.NLQ_INVALID_QUERY) {
+  if (
+    nlqError.code === ERROR_CODES.NLQ_PARSING_FAILED ||
+    nlqError.code === ERROR_CODES.NLQ_INVALID_QUERY
+  ) {
     responseText += "\n\n*Example questions:*";
     responseText += "\n• How many files do I have?";
     responseText += "\n• Show me invoices from this month";
     responseText += "\n• List pending documents";
   }
-  
+
   return responseText;
 }
 
@@ -488,29 +557,36 @@ function handleConversationalIntent(
 
   switch (parsedQuery.intent) {
     case "greeting":
-      responseText = "Hi there! I'm here to help you manage your files and documents. You can ask me things like 'How many unprocessed files do I have?' or 'Show me invoices from this month'.";
-      logger.info("CONVERSATIONAL HANDLER: Greeting response prepared", { responseLength: responseText.length });
+      responseText =
+        "Hi there! I'm here to help you manage your files and documents. You can ask me things like 'How many unprocessed files do I have?' or 'Show me invoices from this month'.";
+      logger.info("CONVERSATIONAL HANDLER: Greeting response prepared", {
+        responseLength: responseText.length,
+      });
       break;
-    
+
     case "help":
-      responseText = "I can help you find and manage your documents! Try asking me:\n\n• How many files are pending?\n• Show me invoices from OpenAI\n• What's the total of my receipts this month?\n• List failed file uploads\n\nWhat would you like to know?";
+      responseText =
+        "I can help you find and manage your documents! Try asking me:\n\n• How many files are pending?\n• Show me invoices from OpenAI\n• What's the total of my receipts this month?\n• List failed file uploads\n\nWhat would you like to know?";
       break;
-    
+
     case "casual":
-      responseText = "I'm designed to help with your files and documents. Is there something specific you'd like to find or check on your files?";
+      responseText =
+        "I'm designed to help with your files and documents. Is there something specific you'd like to find or check on your files?";
       break;
-    
+
     case "financial":
       if (parsedQuery.entities.vendor) {
         responseText = `I can help you find financial documents! Try asking "Show me invoices from ${parsedQuery.entities.vendor}" or "List receipts from ${parsedQuery.entities.vendor}".`;
       } else {
-        responseText = "I can help you find financial documents like invoices and receipts. Try asking for specific vendors or date ranges, like 'Show me invoices from this month'.";
+        responseText =
+          "I can help you find financial documents like invoices and receipts. Try asking for specific vendors or date ranges, like 'Show me invoices from this month'.";
       }
       break;
-    
+
     case "unknown":
     default:
-      responseText = "I'm not sure I understand. I can help you find files, check document status, or search for invoices and receipts. What would you like to look for?";
+      responseText =
+        "I'm not sure I understand. I can help you find files, check document status, or search for invoices and receipts. What would you like to look for?";
       break;
   }
 

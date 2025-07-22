@@ -67,9 +67,6 @@ export class SupplierValidator {
       enhancedData,
     );
 
-    if (!hasValidIdentifier) {
-      warnings.push(createError.missingIdentifier());
-    }
 
     // Contact validation
     if (data.email) {

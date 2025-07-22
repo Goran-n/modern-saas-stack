@@ -1,7 +1,7 @@
 # Permissions Architecture Style Guide
 
 ## Overview
-This document explains the permission handling architecture for the Kibly platform, specifically how permissions should be structured across different layers of the system.
+This document explains the permission handling architecture for the Figgy platform, specifically how permissions should be structured across different layers of the system.
 
 ## Core Principle: Multi-Layered Permission Architecture
 
@@ -99,12 +99,12 @@ const fileQuery = db
   .where(eq(files.tenantId, ctx.teamId)); // ✅ Automatic tenant isolation
 ```
 
-## Current Kibly Architecture Analysis
+## Current Figgy Architecture Analysis
 
 Based on the existing codebase patterns:
 
 ### **Existing Strengths**:
-- ✅ JWT-based authentication with `@kibly/shared-auth`
+- ✅ JWT-based authentication with `@figgy/shared-auth`
 - ✅ Tenant isolation through `tenantId` in user metadata
 - ✅ tRPC middleware for protected procedures
 - ✅ Scope-based permission system (from Midday reference)
@@ -208,7 +208,7 @@ if (!file || file.tenantId !== teamId) {
 
 ## Summary
 
-The Kibly permission architecture follows a clear separation of concerns:
+The Figgy permission architecture follows a clear separation of concerns:
 - **tRPC Layer**: Handles authentication, authorization, and request validation
 - **Domain Layer**: Implements pure business logic with validated contexts
 - **Infrastructure Layer**: Manages external dependencies and storage

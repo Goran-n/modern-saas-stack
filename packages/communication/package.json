@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/communication",
+  "name": "@figgy/communication",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -14,11 +14,13 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@kibly/config": "workspace:*",
-    "@kibly/file-manager": "workspace:*",
-    "@kibly/nlq": "workspace:*",
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/utils": "workspace:*",
+    "@figgy/config": "workspace:*",
+    "@figgy/file-manager": "workspace:*",
+    "@figgy/nlq": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/utils": "workspace:*",
+    "@slack/oauth": "^3.0.3",
+    "@slack/web-api": "^7.9.3",
     "twilio": "^5.7.3"
   },
   "devDependencies": {

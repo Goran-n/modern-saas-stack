@@ -1,4 +1,9 @@
-import type { LLMProvider, QueryContext, ParsedQuery, SummaryRequest } from "../types";
+import type {
+  LLMProvider,
+  ParsedQuery,
+  QueryContext,
+  SummaryRequest,
+} from "../types";
 
 export abstract class BaseLLMProvider implements LLMProvider {
   abstract name: string;
@@ -8,9 +13,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
     context?: QueryContext,
   ): Promise<ParsedQuery>;
 
-  abstract generateSummary(
-    data: SummaryRequest,
-  ): Promise<string>;
+  abstract generateSummary(data: SummaryRequest): Promise<string>;
 
   abstract generateFollowUp(
     query: ParsedQuery,
@@ -66,13 +69,25 @@ export abstract class BaseLLMProvider implements LLMProvider {
       },
       "this month": () => {
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const endOfMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0,
+        );
         endOfMonth.setHours(23, 59, 59, 999);
         return { start: startOfMonth, end: endOfMonth };
       },
       "last month": () => {
-        const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        const startOfLastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1,
+        );
+        const endOfLastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          0,
+        );
         endOfLastMonth.setHours(23, 59, 59, 999);
         return { start: startOfLastMonth, end: endOfLastMonth };
       },

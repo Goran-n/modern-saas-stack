@@ -31,6 +31,14 @@ export const baseSchema = z.object({
    * @default 'localhost'
    */
   HOST: z.string().default("localhost"),
+
+  /**
+   * Base URL for the API server
+   * Used for OAuth callbacks and other external-facing URLs
+   * Required for Slack OAuth, WhatsApp webhooks, and other integrations
+   * @example "http://localhost:5001" or "https://api.yourdomain.com"
+   */
+  BASE_URL: z.string().url().min(1, "BASE_URL is required"),
 });
 
 export type BaseConfig = z.infer<typeof baseSchema>;

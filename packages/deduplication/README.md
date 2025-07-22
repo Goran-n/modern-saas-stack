@@ -45,7 +45,7 @@ packages/deduplication/
 ### Basic Usage
 
 ```typescript
-import { DeduplicationService } from '@kibly/deduplication';
+import { DeduplicationService } from '@figgy/deduplication';
 
 const service = new DeduplicationService();
 

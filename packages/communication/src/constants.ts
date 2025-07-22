@@ -1,5 +1,5 @@
-import type { CommunicationConfig } from "@kibly/config";
-import { getConfig } from "@kibly/config";
+import type { CommunicationConfig } from "@figgy/config";
+import { getConfig } from "@figgy/config";
 
 // Lazy-loaded configuration
 let _config: CommunicationConfig | null = null;

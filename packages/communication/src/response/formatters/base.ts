@@ -1,4 +1,4 @@
-import type { UnifiedResponse } from "@kibly/nlq";
+import type { UnifiedResponse } from "@figgy/nlq";
 
 export interface FormattedMessage {
   text: string;

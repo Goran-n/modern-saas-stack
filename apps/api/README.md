@@ -1,6 +1,6 @@
-# @kibly/api
+# @figgy/api
 
-The main API server for Kibly, built with Hono and tRPC.
+The main API server for Figgy, built with Hono and tRPC.
 
 ## Features
 
@@ -31,7 +31,7 @@ PORT=5001
 HOST=0.0.0.0
 
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/kibly
+DATABASE_URL=postgresql://user:password@localhost:5432/figgy
 
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co

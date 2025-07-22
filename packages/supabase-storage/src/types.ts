@@ -40,4 +40,6 @@ export interface SignedUrlOptions {
   path: string;
   /** URL expiration time in seconds */
   expireIn: number;
+  /** Whether to download the file or view inline */
+  download?: boolean;
 }

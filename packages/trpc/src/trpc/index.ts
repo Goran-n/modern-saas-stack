@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { errorTracker } from "../services/error-tracker";

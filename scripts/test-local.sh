@@ -13,7 +13,7 @@ docker-compose -f docker-compose.test.yml up -d
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
 for i in {1..30}; do
-  if docker-compose -f docker-compose.test.yml exec -T postgres-test pg_isready -U test -d kibly_test &>/dev/null; then
+  if docker-compose -f docker-compose.test.yml exec -T postgres-test pg_isready -U test -d figgy_test &>/dev/null; then
     echo -e "${GREEN}Database is ready!${NC}"
     break
   fi
@@ -22,7 +22,7 @@ for i in {1..30}; do
 done
 
 # Set test database URL
-export TEST_DATABASE_URL="postgresql://test:test@localhost:5433/kibly_test"
+export TEST_DATABASE_URL="postgresql://test:test@localhost:5433/figgy_test"
 
 # Run migrations if needed
 if [ -d "packages/shared-db" ]; then

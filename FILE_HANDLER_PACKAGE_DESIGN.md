@@ -7,7 +7,7 @@ Implement a Turborepo package for internal file management that will manage file
 - Store files in Supabase Storage
 - Track file source (integration, user upload, WhatsApp)
 - Support multi-tenancy
-- Follow Kibly style guide
+- Follow Figgy style guide
 - Document processing pipeline
 
 ## Design
@@ -91,13 +91,13 @@ export type CreateFileInput = z.infer<typeof createFileSchema>;
 ```typescript
 // packages/file-manager/src/operations.ts
 
-import { upload, download, remove, signedUrl } from '@kibly/supabase/storage';
+import { upload, download, remove, signedUrl } from '@figgy/supabase/storage';
 
-import { stripSpecialCharacters } from '@kibly/utils';
+import { stripSpecialCharacters } from '@figgy/utils';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { Database } from '@kibly/supabase/types';
+import type { Database } from '@figgy/supabase/types';
 
 export async function uploadFile(
   client: SupabaseClient,
@@ -216,7 +216,7 @@ export async function updateProcessingStatus(
 
 The file manager package depends on three internal packages that need to be created:
 
-### 1. `@kibly/supabase/storage`
+### 1. `@figgy/supabase/storage`
 **Purpose**: Wrapper for Supabase Storage operations with consistent error handling and logging.
 
 **Package Structure**:
@@ -263,8 +263,8 @@ export async function remove(client: SupabaseClient, options: RemoveOptions): Pr
 export async function signedUrl(client: SupabaseClient, options: SignedUrlOptions): Promise<{ data: { signedUrl: string } }>;
 ```
 
-### 2. `@kibly/utils`
-**Purpose**: Common utility functions used across the Kibly platform.
+### 2. `@figgy/utils`
+**Purpose**: Common utility functions used across the Figgy platform.
 
 **Package Structure**:
 ```
@@ -287,7 +287,7 @@ export * from './string';
 export * from './validation';
 ```
 
-### 3. `@kibly/supabase/types`
+### 3. `@figgy/supabase/types`
 **Purpose**: TypeScript types for Supabase integration, including database schema types.
 
 **Package Structure**:
@@ -317,6 +317,6 @@ export * from './storage';
 - `drizzle-orm` - Database ORM
 - `@supabase/supabase-js` - Supabase client
 - `zod` - Schema validation
-- `@kibly/utils` - Logging and common utilities
-- `@kibly/supabase/storage` - **[NEEDS CREATION]** Supabase Storage wrapper
-- `@kibly/supabase/types` - **[NEEDS CREATION]** Supabase TypeScript types
+- `@figgy/utils` - Logging and common utilities
+- `@figgy/supabase/storage` - **[NEEDS CREATION]** Supabase Storage wrapper
+- `@figgy/supabase/types` - **[NEEDS CREATION]** Supabase TypeScript types

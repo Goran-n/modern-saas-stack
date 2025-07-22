@@ -1,25 +1,33 @@
 import {
+  ApiResponseFormatter,
+  consumeLinkingToken,
+  createSlackUserTenantMapping,
   createWhatsAppVerification,
   getCommunicationStats,
   getMessages,
   getRecentActivity,
   getRecentQueries,
   getSlackWorkspaces,
+  getUserAvailableTenants,
   getWhatsAppVerifications,
+  MessageRouter,
+  Platform,
   retryFileProcessing,
   searchMessages,
   setDb as setCommunicationDb,
   updateWhatsAppVerification,
+  verifyLinkingToken,
   verifyWhatsAppCode,
-  MessageRouter,
-  ApiResponseFormatter,
-  Platform,
-} from "@kibly/communication";
-import { createLogger } from "@kibly/utils";
+} from "@figgy/communication";
+import { createLogger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
-import { tenantProcedure } from "../trpc/procedures";
+import {
+  protectedProcedure,
+  publicProcedure,
+  tenantProcedure,
+} from "../trpc/procedures";
 
 const logger = createLogger("communication-router");
 
@@ -35,10 +43,10 @@ export const communicationRouter = createTRPCRouter({
   getStats: communicationProcedure.query(async ({ ctx }) => {
     const { tenantId } = ctx;
 
-    logger.info("getStats called", { 
-      tenantId, 
+    logger.info("getStats called", {
+      tenantId,
       userId: ctx.user?.id,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
 
     try {
@@ -49,7 +57,7 @@ export const communicationRouter = createTRPCRouter({
         tenantId,
         requestId: ctx.requestId,
       });
-      
+
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get communication statistics",
@@ -75,7 +83,7 @@ export const communicationRouter = createTRPCRouter({
         tenantId,
         requestId: ctx.requestId,
       });
-      
+
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get recent activity",
@@ -101,7 +109,7 @@ export const communicationRouter = createTRPCRouter({
         tenantId,
         requestId: ctx.requestId,
       });
-      
+
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get verifications",
@@ -132,8 +140,9 @@ export const communicationRouter = createTRPCRouter({
       try {
         return await updateWhatsAppVerification(id, tenantId, verified);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
         if (errorMessage === "Verification not found") {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -147,7 +156,7 @@ export const communicationRouter = createTRPCRouter({
           tenantId,
           requestId: ctx.requestId,
         });
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update verification",
@@ -173,7 +182,7 @@ export const communicationRouter = createTRPCRouter({
         tenantId,
         requestId: ctx.requestId,
       });
-      
+
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get workspaces",
@@ -202,8 +211,9 @@ export const communicationRouter = createTRPCRouter({
       try {
         return await retryFileProcessing(activityId, tenantId);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
         if (errorMessage === "File not found") {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -217,7 +227,7 @@ export const communicationRouter = createTRPCRouter({
           tenantId,
           requestId: ctx.requestId,
         });
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to retry processing",
@@ -255,7 +265,7 @@ export const communicationRouter = createTRPCRouter({
           tenantId,
           requestId: ctx.requestId,
         });
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
@@ -296,7 +306,7 @@ export const communicationRouter = createTRPCRouter({
           tenantId,
           requestId: ctx.requestId,
         });
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
@@ -332,7 +342,12 @@ export const communicationRouter = createTRPCRouter({
         // Create a message payload for the router
         const payload = {
           messageId: `api-${Date.now()}`,
-          platform: platform === "api" ? Platform.WHATSAPP : platform === "whatsapp" ? Platform.WHATSAPP : Platform.SLACK,
+          platform:
+            platform === "api"
+              ? Platform.WHATSAPP
+              : platform === "whatsapp"
+                ? Platform.WHATSAPP
+                : Platform.SLACK,
           sender: user?.id || "anonymous",
           timestamp: new Date(),
           content: query,
@@ -494,4 +509,153 @@ export const communicationRouter = createTRPCRouter({
         });
       }
     }),
+
+  // Verify Slack linking token (public endpoint)
+  verifySlackLinkingToken: publicProcedure
+    .input(
+      z.object({
+        token: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { token } = input;
+
+      logger.info("verifySlackLinkingToken called", {
+        tokenPrefix: token.substring(0, 10) + "...",
+      });
+
+      try {
+        setCommunicationDb(ctx.db);
+        const result = await verifyLinkingToken(token);
+
+        return {
+          valid: result.valid,
+          slackUserId: result.slackUserId,
+          workspaceId: result.workspaceId,
+          slackEmail: result.slackEmail,
+        };
+      } catch (error) {
+        logger.error("Failed to verify linking token", {
+          error,
+          tokenPrefix: token.substring(0, 10) + "...",
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to verify linking token",
+        });
+      }
+    }),
+
+  // Link Slack account to user's tenants
+  linkSlackAccount: protectedProcedure
+    .input(
+      z.object({
+        token: z.string().min(1),
+        tenantIds: z.array(z.string().uuid()).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { token, tenantIds } = input;
+      const userId = ctx.user.id;
+
+      logger.info("linkSlackAccount called", {
+        tokenPrefix: token.substring(0, 10) + "...",
+        tenantCount: tenantIds.length,
+        userId,
+        requestId: ctx.requestId,
+      });
+
+      try {
+        setCommunicationDb(ctx.db);
+
+        // Verify token again
+        const tokenInfo = await verifyLinkingToken(token);
+        if (
+          !tokenInfo.valid ||
+          !tokenInfo.slackUserId ||
+          !tokenInfo.workspaceId
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid or expired linking token",
+          });
+        }
+
+        // Create mappings for each tenant
+        // The createSlackUserTenantMapping function will handle tenant validation
+        const results = [];
+        for (const tenantId of tenantIds) {
+          const result = await createSlackUserTenantMapping(
+            tokenInfo.slackUserId,
+            tokenInfo.workspaceId,
+            userId,
+            tenantId,
+          );
+          results.push(result);
+        }
+
+        // Mark token as used
+        await consumeLinkingToken(token);
+
+        const success = results.every((r) => r.success);
+
+        logger.info("Slack account linked", {
+          success,
+          slackUserId: tokenInfo.slackUserId,
+          workspaceId: tokenInfo.workspaceId,
+          tenantCount: tenantIds.length,
+          userId,
+        });
+
+        return {
+          success,
+          linkedTenants: tenantIds.length,
+          error: success ? undefined : "Some tenants failed to link",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        logger.error("Failed to link Slack account", {
+          error,
+          userId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to link Slack account",
+        });
+      }
+    }),
+
+  // Get user's Slack mappings
+  getSlackMappings: tenantProcedure.query(async ({ ctx }) => {
+    const { tenantId, user } = ctx;
+
+    logger.info("getSlackMappings called", {
+      tenantId,
+      userId: user?.id,
+      requestId: ctx.requestId,
+    });
+
+    try {
+      const mappings = await getUserAvailableTenants(user?.id || "", "");
+
+      return mappings.filter((m) => m.tenantId === tenantId);
+    } catch (error) {
+      logger.error("Failed to get Slack mappings", {
+        error,
+        tenantId,
+        requestId: ctx.requestId,
+      });
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to get Slack mappings",
+      });
+    }
+  }),
 });

@@ -66,13 +66,13 @@ The test PostgreSQL is optimized for speed:
 Tests should:
 1. Use `createTestTenant()` to create isolated test data
 2. Call `cleanupTestData()` in `afterEach` hooks
-3. Import services from their respective packages (`@kibly/supplier`, etc.)
+3. Import services from their respective packages (`@figgy/supplier`, etc.)
 
 Example:
 ```typescript
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db';
-import { SupplierIngestionService } from '@kibly/supplier';
+import { SupplierIngestionService } from '@figgy/supplier';
 import { createTestTenant, cleanupTestData } from '../test-utils';
 
 describe('My Test', () => {

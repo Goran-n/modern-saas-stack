@@ -1,6 +1,6 @@
-import { withRetry } from "@kibly/shared-db";
-import { getUserTenants as getUserTenantsQuery, setDb } from "@kibly/tenant";
-import { logger } from "@kibly/utils";
+import { withRetry } from "@figgy/shared-db";
+import { getUserTenants as getUserTenantsQuery, setDb } from "@figgy/tenant";
+import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter } from "../trpc";
 import { protectedProcedure } from "../trpc/procedures";
@@ -50,10 +50,9 @@ export const authRouter = createTRPCRouter({
         },
       }));
     } catch (error) {
-      // Log with error as first parameter for better pino handling
       if (error instanceof Error) {
         logger.error({
-          err: error, // pino's standard error field
+          err: error,
           userId: ctx.user.id,
           requestId: ctx.requestId,
           msg: "getUserTenants failed",

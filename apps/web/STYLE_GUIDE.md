@@ -1,4 +1,4 @@
-# Kibly Nuxt UI Pro Style Guide
+# Figgy Nuxt UI Pro Style Guide
 
 ## Overview
 This guide documents the proper usage of Nuxt UI Pro components and styling patterns to ensure a consistent, beautiful interface.

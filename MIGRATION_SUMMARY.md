@@ -42,7 +42,7 @@ Successfully migrated the tRPC setup from `packages/trpc` to the proper monorepo
    - The tRPC package provides reusable definitions
 
 2. **Type Safety**: 
-   - Client applications can import types from `@kibly/trpc`
+   - Client applications can import types from `@figgy/trpc`
    - End-to-end type safety is maintained
 
 3. **Scalability**:
@@ -66,7 +66,7 @@ bun run start  # Production
 
 ### Using tRPC Types in Client:
 ```typescript
-import type { AppRouter } from "@kibly/trpc";
+import type { AppRouter } from "@figgy/trpc";
 import { createTRPCProxyClient } from "@trpc/client";
 
 const client = createTRPCProxyClient<AppRouter>({

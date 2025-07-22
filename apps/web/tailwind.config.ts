@@ -4,9 +4,71 @@ import defaultTheme from "tailwindcss/defaultTheme";
 export default (<Partial<Config>>{
   theme: {
     extend: {
+      colors: {
+        // Primary colour - figPurple
+        primary: {
+          DEFAULT: '#5E2B94',
+          50: '#F3E8FC',
+          100: '#E5D1F8',
+          200: '#CBAAF1',
+          300: '#B083EA',
+          400: '#8B52D6',
+          500: '#5E2B94',
+          600: '#4A2375',
+          700: '#3A1B5C',
+          800: '#2B1443',
+          900: '#1C0D2B',
+          950: '#0E0615',
+        },
+        // Secondary colour - sunburstOrange for CTAs
+        secondary: {
+          DEFAULT: '#F76B1C',
+          50: '#FEF3E7',
+          100: '#FDE7CF',
+          200: '#FBD09F',
+          300: '#F9B86F',
+          400: '#F8A13F',
+          500: '#F76B1C',
+          600: '#E85A0C',
+          700: '#C04A0A',
+          800: '#983B08',
+          900: '#702C06',
+        },
+        // Accent colour - figFlesh
+        accent: {
+          DEFAULT: '#FCA03D',
+          500: '#FCA03D',
+        },
+        // Semantic colours
+        success: {
+          DEFAULT: '#7AC943',
+          50: '#F0F9E8',
+          100: '#E1F3D1',
+          200: '#C3E7A3',
+          300: '#A5DB75',
+          400: '#87CF47',
+          500: '#7AC943',
+          600: '#62A136',
+          700: '#4A7929',
+          800: '#32511B',
+          900: '#1A290E',
+        },
+        warning: {
+          DEFAULT: '#F4C542',
+          500: '#F4C542',
+        },
+        error: {
+          DEFAULT: '#F76B1C',
+          500: '#F76B1C',
+        },
+        // Base colours
+        canvas: '#FAF2E8', // Background
+        ink: '#333333', // Text
+      },
       fontFamily: {
-        // Apple font stack
+        // Inter font stack with fallbacks
         sans: [
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           '"SF Pro Display"',
@@ -17,12 +79,14 @@ export default (<Partial<Config>>{
           ...defaultTheme.fontFamily.sans,
         ],
         display: [
+          "Inter",
           '"SF Pro Display"',
           "-apple-system",
           "BlinkMacSystemFont",
           ...defaultTheme.fontFamily.sans,
         ],
         text: [
+          "Inter",
           '"SF Pro Text"',
           "-apple-system",
           "BlinkMacSystemFont",

@@ -1,5 +1,5 @@
-import { getConfig } from "@kibly/config";
-import { createLogger, handleError } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { createLogger, handleError } from "@figgy/utils";
 import { Twilio } from "twilio";
 
 const logger = createLogger("whatsapp-response");
@@ -10,7 +10,7 @@ export class WhatsAppResponseService {
 
   constructor() {
     const config = getConfig().getForCommunication();
-    
+
     if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
       throw new Error("Twilio credentials not configured");
     }
@@ -85,13 +85,10 @@ export class WhatsAppResponseService {
         to,
         messageLength: message.length,
         hasMediaUrl: !!options?.mediaUrl,
-        hasQuickReplies: !!(options?.quickReplies?.length),
+        hasQuickReplies: !!options?.quickReplies?.length,
       });
     }
   }
-
-
-
 
   /**
    * Format phone number for WhatsApp
@@ -99,16 +96,16 @@ export class WhatsAppResponseService {
   static formatPhoneNumber(phoneNumber: string): string {
     // Remove whatsapp: prefix if present
     let cleaned = phoneNumber.replace("whatsapp:", "");
-    
+
     // Remove any non-digit characters except +
     cleaned = cleaned.replace(/[^\d+]/g, "");
-    
+
     // Ensure it starts with +
     if (!cleaned.startsWith("+")) {
       // Assume US number if no country code
       cleaned = "+1" + cleaned;
     }
-    
+
     return cleaned;
   }
 }

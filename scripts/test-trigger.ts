@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { getConfig } from "@kibly/config";
+import { getConfig } from "@figgy/config";
 import { configure, tasks } from "@trigger.dev/sdk/v3";
 
 async function main() {

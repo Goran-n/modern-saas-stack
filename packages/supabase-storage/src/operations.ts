@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   DownloadOptions,
@@ -121,13 +121,13 @@ export async function signedUrl(
   client: SupabaseClient,
   options: SignedUrlOptions,
 ): Promise<{ data: { signedUrl: string } }> {
-  const { bucket, path, expireIn } = options;
+  const { bucket, path, expireIn, download = false } = options;
 
-  logger.info(`Generating signed URL for ${bucket}/${path}`, { expireIn });
+  logger.info(`Generating signed URL for ${bucket}/${path}`, { expireIn, download });
 
   const { data, error } = await client.storage
     .from(bucket)
-    .createSignedUrl(path, expireIn);
+    .createSignedUrl(path, expireIn, { download });
 
   if (error) {
     logger.error("Failed to generate signed URL", { error, path, bucket });

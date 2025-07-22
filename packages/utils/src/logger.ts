@@ -1,117 +1,94 @@
-import type { Logger, LoggerOptions } from "pino";
-import pino from "pino";
+// Dead simple console wrapper
+export interface Logger {
+  info: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  debug: (...args: any[]) => void;
+  trace: (...args: any[]) => void;
+  fatal: (...args: any[]) => void;
+  child: (bindings: Record<string, any>) => Logger;
+  level: string;
+  silent: (...args: any[]) => void;
+}
 
-let cachedLogger: Logger | null = null;
-let currentConfig: LoggerConfig | null = null;
-
-/**
- * Logger configuration interface
- */
 export interface LoggerConfig {
   level?: string;
   nodeEnv?: string;
   pretty?: boolean;
 }
 
-/**
- * Get default logger options based on environment
- */
-function getDefaultOptions(config?: LoggerConfig): LoggerOptions {
-  const level = config?.level || process.env.LOG_LEVEL || "info";
-  const nodeEnv = config?.nodeEnv || process.env.NODE_ENV || "development";
-  const isDevelopment = nodeEnv === "development";
-  const usePretty =
-    config?.pretty !== undefined ? config.pretty : isDevelopment;
+function getTimestamp(): string {
+  const now = new Date();
+  return `[${now.toTimeString().slice(0, 8)}]`;
+}
 
-  const baseOptions: LoggerOptions = {
-    level,
-    timestamp: pino.stdTimeFunctions.isoTime,
-    serializers: {
-      err: pino.stdSerializers.err,
-    },
-  };
-
-  if (usePretty) {
-    // Development configuration with pretty printing
-    return {
-      ...baseOptions,
-      transport: {
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          colorizeObjects: true,
-          translateTime: "HH:MM:ss",
-          ignore: "pid,hostname",
-          messageKey: "msg",
-          errorLikeObjectKeys: ["err", "error"],
-          singleLine: false,
-          sync: true,
-          hideObject: false,
-        },
-      },
-    };
-  } else {
-    // Production configuration (structured JSON)
-    return {
-      ...baseOptions,
-      formatters: {
-        level: (label) => ({ level: label }),
-      },
-    };
+class ConsoleLogger implements Logger {
+  private prefix: string;
+  public level: string = 'debug';
+  
+  constructor(name?: string) {
+    this.prefix = name ? `${name}: ` : '';
+  }
+  
+  info(...args: any[]) {
+    console.log(getTimestamp(), 'INFO:', this.prefix, ...args);
+  }
+  
+  error(...args: any[]) {
+    // Special handling for objects to ensure they're fully displayed
+    const processedArgs = args.map(arg => {
+      if (arg && typeof arg === 'object') {
+        // For error objects, include the full error
+        if (arg instanceof Error) {
+          return `Error: ${arg.message}\nStack: ${arg.stack}`;
+        }
+        // For other objects, use JSON.stringify for full output
+        try {
+          return JSON.stringify(arg, null, 2);
+        } catch (e) {
+          return arg; // Fallback if circular reference
+        }
+      }
+      return arg;
+    });
+    console.error(getTimestamp(), 'ERROR:', this.prefix, ...processedArgs);
+  }
+  
+  warn(...args: any[]) {
+    console.warn(getTimestamp(), 'WARN:', this.prefix, ...args);
+  }
+  
+  debug(...args: any[]) {
+    console.log(getTimestamp(), 'DEBUG:', this.prefix, ...args);
+  }
+  
+  trace(...args: any[]) {
+    console.log(getTimestamp(), 'TRACE:', this.prefix, ...args);
+  }
+  
+  fatal(...args: any[]) {
+    console.error(getTimestamp(), 'FATAL:', this.prefix, ...args);
+  }
+  
+  silent(..._args: any[]) {
+    // No-op - silent logging
+  }
+  
+  child(bindings: Record<string, any>): Logger {
+    return new ConsoleLogger(bindings.service || this.prefix);
   }
 }
 
-/**
- * Get or create the logger instance
- */
-function getLogger(): Logger {
-  if (!cachedLogger) {
-    const options = getDefaultOptions(currentConfig || undefined);
-    cachedLogger = pino(options);
-  }
-  return cachedLogger;
+export const logger = new ConsoleLogger();
+
+export function createLogger(name: string, _bindings?: Record<string, any>): Logger {
+  return new ConsoleLogger(name);
 }
 
-/**
- * Configure the logger with new settings
- * This will recreate the logger with the new configuration
- */
-export function configureLogger(config: LoggerConfig): void {
-  currentConfig = config;
-  cachedLogger = null; // Reset cached logger to force recreation
+export function configureLogger(_config: LoggerConfig): void {
+  // No-op
 }
 
-/**
- * Get the main logger instance
- */
-export const logger: Logger = new Proxy({} as Logger, {
-  get(_target, prop) {
-    const loggerInstance = getLogger();
-    const value = loggerInstance[prop as keyof Logger];
-    if (typeof value === "function") {
-      return value.bind(loggerInstance);
-    }
-    return value;
-  },
-});
-
-/**
- * Export child logger factory for scoped logging
- */
-export function createLogger(
-  name: string,
-  bindings?: Record<string, any>,
-): Logger {
-  return getLogger().child({ service: name, ...bindings });
-}
-
-/**
- * Reset logger (useful for testing)
- */
 export function resetLogger(): void {
-  cachedLogger = null;
-  currentConfig = null;
+  // No-op
 }
-
-// Re-export types for convenience
-export type { Logger } from "pino";

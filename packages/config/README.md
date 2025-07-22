@@ -1,6 +1,6 @@
-# @kibly/config
+# @figgy/config
 
-Centralized environment variable configuration and validation for Kibly applications.
+Centralized environment variable configuration and validation for Figgy applications.
 
 ## Features
 
@@ -14,7 +14,7 @@ Centralized environment variable configuration and validation for Kibly applicat
 ## Quick Start
 
 ```typescript
-import { bootstrap } from '@kibly/config';
+import { bootstrap } from '@figgy/config';
 
 // Bootstrap configuration at application startup
 const config = bootstrap();
@@ -27,7 +27,7 @@ console.log('Log Level:', config.LOG_LEVEL);
 ## Service-Specific Configuration
 
 ```typescript
-import { bootstrapForService } from '@kibly/config';
+import { bootstrapForService } from '@figgy/config';
 
 // For file manager service
 const fileManagerConfig = bootstrapForService('file-manager');
@@ -88,7 +88,7 @@ const webConfig = bootstrapForService('web-app');
 ### Manual Configuration
 
 ```typescript
-import { getConfig } from '@kibly/config';
+import { getConfig } from '@figgy/config';
 
 // Get config instance (must bootstrap first)
 const config = getConfig();
@@ -103,7 +103,7 @@ const fileManagerConfig = config.getForFileManager();
 ### Custom Environment Variables (Testing)
 
 ```typescript
-import { bootstrap } from '@kibly/config';
+import { bootstrap } from '@figgy/config';
 
 const testConfig = bootstrap({
   customEnv: {
@@ -119,7 +119,7 @@ const testConfig = bootstrap({
 ### Production Validation
 
 ```typescript
-import { validateProductionConfig } from '@kibly/config';
+import { validateProductionConfig } from '@figgy/config';
 
 // Validate production config in CI/CD
 if (!validateProductionConfig()) {
@@ -131,7 +131,7 @@ if (!validateProductionConfig()) {
 ### Configuration Summary
 
 ```typescript
-import { printConfigSummary } from '@kibly/config';
+import { printConfigSummary } from '@figgy/config';
 
 // Print configuration overview (no sensitive values)
 printConfigSummary();
@@ -139,11 +139,11 @@ printConfigSummary();
 
 ## Integration with Logger
 
-The config package automatically configures the `@kibly/utils` logger based on validated configuration:
+The config package automatically configures the `@figgy/utils` logger based on validated configuration:
 
 ```typescript
-import { bootstrap } from '@kibly/config';
-import { createLogger } from '@kibly/utils';
+import { bootstrap } from '@figgy/config';
+import { createLogger } from '@figgy/utils';
 
 // Bootstrap first - this configures the logger
 bootstrap();
@@ -177,10 +177,10 @@ Configuration validation failed:
 ## Package Dependencies
 
 - `zod` - Schema validation
-- `@kibly/utils` - Logging integration
+- `@figgy/utils` - Logging integration
 
 ## See Also
 
 - [Environment Variables Guide](../../.env.example)
-- [@kibly/utils Logger](../utils/README.md)
+- [@figgy/utils Logger](../utils/README.md)
 - [Bootstrap Examples](./src/bootstrap.ts)

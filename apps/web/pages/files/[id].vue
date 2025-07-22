@@ -32,6 +32,29 @@
             </div>
           </div>
         </div>
+        
+        <div class="flex items-center gap-2">
+          <UButton
+            v-if="downloadUrl"
+            :to="downloadUrl"
+            target="_blank"
+            icon="i-heroicons-arrow-down-tray"
+            color="neutral"
+            variant="solid"
+          >
+            Download
+          </UButton>
+          <UButton
+            v-if="file.processingStatus !== 'processing'"
+            icon="i-heroicons-arrow-path"
+            color="primary"
+            variant="solid"
+            @click="showReprocessModal = true"
+            :loading="isReprocessing"
+          >
+            Reprocess
+          </UButton>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -270,6 +293,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Reprocess Confirmation Modal -->
+    <UModal v-model:open="showReprocessModal" title="Confirm Reprocess">
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600">
+            Are you sure you want to reprocess this file?
+          </p>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-400" />
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                  <ul class="list-disc list-inside space-y-1">
+                    <li>All extracted data will be deleted</li>
+                    <li>Supplier links will be removed</li>
+                    <li>The file will be processed from scratch</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer="{ close }">
+        <div class="flex justify-end gap-3">
+          <UButton
+            color="neutral"
+            variant="solid"
+            @click="close"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="primary"
+            variant="solid"
+            @click="reprocessFile"
+            :loading="isReprocessing"
+          >
+            Reprocess File
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </UContainer>
 </template>
 
@@ -277,12 +348,17 @@
 import { useQuery } from '@tanstack/vue-query';
 
 const route = useRoute();
+const router = useRouter();
 const api = useApi();
 const tenantStore = useTenantStore();
+const toast = useToast();
+const trpc = useTrpc();
 
 const fileId = route.params.id as string;
 const selectedTenantId = computed(() => tenantStore.selectedTenantId);
 const iframeError = ref(false);
+const showReprocessModal = ref(false);
+const isReprocessing = ref(false);
 
 // Get file details with extractions
 const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
@@ -405,6 +481,39 @@ const getDisplayFields = (extractedFields: any) => {
   });
   
   return filtered;
+};
+
+const reprocessFile = async () => {
+  isReprocessing.value = true;
+  
+  try {
+    await trpc.files.reprocess.mutate({ fileId });
+    
+    toast.add({
+      title: 'Reprocessing started',
+      description: 'The file will be processed again from scratch',
+      color: 'primary',
+      icon: 'i-heroicons-arrow-path',
+    });
+    
+    // Close modal
+    showReprocessModal.value = false;
+    
+    // Redirect to files list after a short delay
+    setTimeout(() => {
+      router.push('/files');
+    }, 1500);
+  } catch (error) {
+    console.error('Reprocess failed:', error);
+    toast.add({
+      title: 'Reprocess failed',
+      description: error instanceof Error ? error.message : 'Failed to reprocess file',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    });
+  } finally {
+    isReprocessing.value = false;
+  }
 };
 
 </script>

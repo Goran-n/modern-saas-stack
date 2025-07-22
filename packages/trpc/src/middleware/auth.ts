@@ -1,6 +1,6 @@
-import { getConfig } from "@kibly/config";
-import { TenantService } from "@kibly/tenant";
-import { logger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { TenantService } from "@figgy/tenant";
+import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { middleware } from "../trpc";
 

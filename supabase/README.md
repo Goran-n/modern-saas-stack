@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kibly uses Supabase Storage with Row Level Security (RLS) policies to ensure secure, tenant-isolated file storage.
+Figgy uses Supabase Storage with Row Level Security (RLS) policies to ensure secure, tenant-isolated file storage.
 
 ## Storage Bucket
 

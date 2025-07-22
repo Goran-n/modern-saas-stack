@@ -1,21 +1,21 @@
-import { getConfig } from "@kibly/config";
-import { generateDisplayName } from "@kibly/file-manager";
+import { getConfig } from "@figgy/config";
+import { generateDisplayName } from "@figgy/file-manager";
 import {
   type CompanyProfile,
   documentExtractions,
+  eq,
   files as filesTable,
   getDatabaseConnection,
   suppliers,
-  eq,
-} from "@kibly/shared-db";
+} from "@figgy/shared-db";
 import {
   CONFIDENCE_SCORES,
-  extractVendorData,
+  extractVendorDataWithConfidence,
   PROCESSING_NOTES,
   SupplierIngestionService,
   transformInvoiceToSupplier,
-} from "@kibly/supplier";
-import { logger } from "@kibly/utils";
+} from "@figgy/supplier";
+import { logger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 
@@ -88,13 +88,14 @@ export const processInvoiceSupplier = task({
         }
 
         // Transform extraction data to supplier format
-        // Extract vendor data from JSONB fields using helper
-        const vendorData = extractVendorData(extraction.extractedFields);
+        // Extract vendor data from JSONB fields using helper with confidence scores
+        const vendorData = extractVendorDataWithConfidence(extraction.extractedFields);
         const supplierRequest = transformInvoiceToSupplier(
           {
             id: extraction.id,
             vendorData,
             companyProfile: extraction.companyProfile as CompanyProfile | null,
+            extractedFields: extraction.extractedFields,
           },
           tenantId,
           userId,
@@ -127,6 +128,7 @@ export const processInvoiceSupplier = task({
         const ingestionService = new SupplierIngestionService();
         const result = await ingestionService.ingest(supplierRequest);
 
+        // Handle successful creation or update
         if (result.success && result.supplierId) {
           // Update document extraction with matched supplier
           await tx
@@ -159,10 +161,12 @@ export const processInvoiceSupplier = task({
               .limit(1);
 
             if (file) {
-              const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+              const fileExtension = file.fileName.substring(
+                file.fileName.lastIndexOf("."),
+              );
               const displayName = generateDisplayName({
                 documentType: extraction.documentType,
-                extractedFields: extraction.extractedFields as any || null,
+                extractedFields: (extraction.extractedFields as any) || null,
                 supplierName: supplier.displayName,
                 originalFileName: file.fileName,
                 fileExtension,
@@ -172,7 +176,8 @@ export const processInvoiceSupplier = task({
                 .update(filesTable)
                 .set({
                   metadata: {
-                    ...(typeof file.metadata === "object" && file.metadata !== null
+                    ...(typeof file.metadata === "object" &&
+                    file.metadata !== null
                       ? file.metadata
                       : {}),
                     displayName,
@@ -195,8 +200,28 @@ export const processInvoiceSupplier = task({
             supplierId: result.supplierId,
             action: result.action,
           };
+        } else if (result.success && result.action === "skipped") {
+          // Handle skipped (low confidence match or insufficient data)
+          await tx
+            .update(documentExtractions)
+            .set({
+              matchedSupplierId: null,
+              matchConfidence: CONFIDENCE_SCORES.LOW_MATCH,
+              processingNotes: "Skipped for manual review - low confidence match",
+            })
+            .where(eq(documentExtractions.id, documentExtractionId));
+
+          logger.info("Supplier processing skipped", {
+            documentExtractionId,
+            reason: "Low confidence match requiring manual review",
+          });
+
+          return {
+            success: true,
+            action: "skipped",
+          };
         } else {
-          // Handle failure
+          // Handle actual failure
           await tx
             .update(documentExtractions)
             .set({

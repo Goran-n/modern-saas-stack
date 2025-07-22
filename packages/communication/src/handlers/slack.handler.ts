@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import {
   ERROR_CODES,
   ERROR_MESSAGES,
@@ -11,8 +11,11 @@ import {
   MessageProcessingError,
   type ValidationResult,
 } from "../interfaces/message-handler";
-import { parseSlackPayload } from "../parsers/slack";
-import { MessageRouter } from "../services/message-router";
+import { parseSlackPayloadWithResult } from "../parsers/slack";
+import {
+  MessageRouter,
+  type MessageRouterOptions,
+} from "../services/message-router";
 import { SlackResponseFormatter } from "../services/response-formatter";
 import { Platform, type ProcessingResult } from "../types";
 
@@ -88,6 +91,7 @@ export class SlackMessageHandler extends BaseMessageHandler {
     payload: MessagePayload,
     tenantId: string,
     userId: string,
+    botToken?: string,
   ): Promise<ProcessingResult> {
     try {
       logger.info("Processing Slack event", {
@@ -99,11 +103,17 @@ export class SlackMessageHandler extends BaseMessageHandler {
       });
 
       // Use the central message router
-      const result = await this.messageRouter.route(payload, {
+      const routerOptions: MessageRouterOptions = {
         tenantId,
         userId,
         responseFormatter: this.responseFormatter,
-      });
+      };
+
+      if (botToken) {
+        routerOptions.botToken = botToken;
+      }
+
+      const result = await this.messageRouter.route(payload, routerOptions);
 
       return result;
     } catch (error) {
@@ -120,13 +130,19 @@ export class SlackMessageHandler extends BaseMessageHandler {
     }
   }
 
-  static parseWebhookPayload(rawPayload: unknown): MessagePayload | null {
+  static parseWebhookPayloadWithResult(rawPayload: unknown): { payload: MessagePayload | null; skipped?: boolean; skipReason?: string } {
     try {
-      const parsed = parseSlackPayload(rawPayload);
+      const result = parseSlackPayloadWithResult(rawPayload);
 
-      if (!parsed) {
-        return null;
+      if (result.type === 'skipped') {
+        return { payload: null, skipped: true, skipReason: result.reason };
       }
+
+      if (result.type === 'error') {
+        throw result.error;
+      }
+
+      const parsed = result.message;
 
       const payload: MessagePayload = {
         messageId: parsed.messageId,
@@ -134,22 +150,41 @@ export class SlackMessageHandler extends BaseMessageHandler {
         sender: parsed.userId,
         timestamp: parsed.timestamp,
         content: parsed.text || undefined,
-        attachments: parsed.files ? parsed.files.map((file) => ({
-          id: file.id,
-          fileName: file.name,
-          mimeType: file.mimeType,
-          size: file.size,
-          url: file.downloadUrl,
-        })) : [],
+        attachments: parsed.files
+          ? parsed.files.map((file) => ({
+              id: file.id,
+              fileName: file.name,
+              mimeType: file.mimeType,
+              size: file.size,
+              url: file.downloadUrl,
+            }))
+          : [],
         metadata: {
           channelId: parsed.channelId,
           workspaceId: parsed.workspaceId,
         },
       };
 
-      return payload;
-    } catch (error) {
+      logger.info("Slack webhook payload parsed", {
+        messageId: payload.messageId,
+        hasContent: !!payload.content,
+        contentValue: payload.content,
+        attachmentCount: payload.attachments.length,
+        filesFromParsed: parsed.files?.length || 0,
+      });
+
+      return { payload };
+    } catch (error: any) {
       logger.error("Failed to parse Slack webhook payload", error);
+      throw error;
+    }
+  }
+
+  static parseWebhookPayload(rawPayload: unknown): MessagePayload | null {
+    try {
+      const result = SlackMessageHandler.parseWebhookPayloadWithResult(rawPayload);
+      return result.payload;
+    } catch (error) {
       return null;
     }
   }

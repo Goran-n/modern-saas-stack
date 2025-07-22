@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { createLogger } from "@kibly/utils/logger";
+import { createLogger } from "@figgy/utils/logger";
 import { getDatabaseConfig } from "../config/config";
 import { TriggerSyncUseCase } from "../core/usecases/sync/trigger-sync.usecase";
 import { drizzleClient, pgClient } from "../infrastructure/database/connection";

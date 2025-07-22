@@ -1,6 +1,6 @@
-# @kibly/trpc
+# @figgy/trpc
 
-Shared tRPC routers, procedures, and types for the Kibly API.
+Shared tRPC routers, procedures, and types for the Figgy API.
 
 ## Features
 
@@ -10,12 +10,12 @@ Shared tRPC routers, procedures, and types for the Kibly API.
 - 📁 File upload router with size and type validation
 - 🌐 Hono server integration
 - ⚡ Bun runtime support
-- 🔧 Centralised configuration via @kibly/config
+- 🔧 Centralised configuration via @figgy/config
 
 ## Installation
 
 ```bash
-bun add @kibly/trpc
+bun add @figgy/trpc
 ```
 
 ## Usage
@@ -24,8 +24,8 @@ bun add @kibly/trpc
 
 ```typescript
 import { serve } from "@hono/node-server";
-import { bootstrap } from "@kibly/config";
-import { createHonoApp } from "@kibly/trpc";
+import { bootstrap } from "@figgy/config";
+import { createHonoApp } from "@figgy/trpc";
 
 // Bootstrap configuration
 const config = bootstrap();
@@ -46,7 +46,7 @@ serve({
 ```typescript
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
-import type { AppRouter } from "@kibly/trpc";
+import type { AppRouter } from "@figgy/trpc";
 
 const trpc = createTRPCProxyClient<AppRouter>({
   transformer: superjson,
@@ -115,7 +115,7 @@ headers: {
 ### Creating Custom Routers
 
 ```typescript
-import { createTRPCRouter, tenantProcedure } from "@kibly/trpc";
+import { createTRPCRouter, tenantProcedure } from "@figgy/trpc";
 import { z } from "zod";
 
 export const customRouter = createTRPCRouter({
@@ -135,7 +135,7 @@ export const customRouter = createTRPCRouter({
 
 ## Configuration
 
-The package uses @kibly/config for centralised configuration. Required environment variables:
+The package uses @figgy/config for centralised configuration. Required environment variables:
 
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_ANON_KEY` - Supabase anonymous key

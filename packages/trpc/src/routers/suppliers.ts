@@ -1,5 +1,5 @@
-import { getFilesBySupplier } from "@kibly/file-manager";
-import { SupplierQueries } from "@kibly/supplier";
+import { getFilesBySupplier } from "@figgy/file-manager";
+import { SupplierQueries } from "@figgy/supplier";
 import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
 import { tenantProcedure } from "../trpc/procedures";

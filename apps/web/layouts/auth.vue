@@ -6,7 +6,7 @@
           <div class="h-10 w-10 bg-primary-600 rounded-xl flex items-center justify-center shadow-sm">
             <span class="text-white font-bold text-xl">K</span>
           </div>
-          <span class="ml-3 text-2xl font-semibold text-slate-900">Kibly</span>
+          <span class="ml-3 text-2xl font-semibold text-slate-900">Figgy</span>
         </NuxtLink>
       </div>
       

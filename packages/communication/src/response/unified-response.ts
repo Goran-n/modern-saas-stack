@@ -1,5 +1,9 @@
-import { QueryIntent, type QueryResult, type UnifiedResponse } from "@kibly/nlq";
-import { createLogger } from "@kibly/utils";
+import {
+  QueryIntent,
+  type QueryResult,
+  type UnifiedResponse,
+} from "@figgy/nlq";
+import { createLogger } from "@figgy/utils";
 import { v4 as uuidv4 } from "uuid";
 
 const logger = createLogger("unified-response");
@@ -23,7 +27,7 @@ export class UnifiedResponseGenerator {
     try {
       // Determine result type based on intent
       const resultType = this.getResultType(intent);
-      
+
       // Build visualization hints
       const visualization = this.getVisualizationHints(intent, result);
 
@@ -40,7 +44,8 @@ export class UnifiedResponseGenerator {
           ...(visualization && { visualization }),
         },
         metadata: {
-          processingTimeMs: Date.now() - startTime + (result.metadata.executionTimeMs || 0),
+          processingTimeMs:
+            Date.now() - startTime + (result.metadata.executionTimeMs || 0),
           confidence: result.metadata.confidence,
           filtersApplied,
           queryId: uuidv4(),
@@ -66,7 +71,7 @@ export class UnifiedResponseGenerator {
       return response;
     } catch (error) {
       logger.error("Failed to generate unified response", error);
-      
+
       // Return error response
       return {
         query,
@@ -116,7 +121,7 @@ export class UnifiedResponseGenerator {
             label: "Files",
           },
         };
-      
+
       case QueryIntent.LIST:
       case QueryIntent.SEARCH:
         return {
@@ -126,7 +131,7 @@ export class UnifiedResponseGenerator {
             pageSize: 10,
           },
         };
-      
+
       case QueryIntent.AGGREGATE:
         if (Array.isArray(result.data)) {
           return {
@@ -144,7 +149,7 @@ export class UnifiedResponseGenerator {
             label: "Total",
           },
         };
-      
+
       case QueryIntent.STATUS:
         return {
           type: "chart",
@@ -153,12 +158,11 @@ export class UnifiedResponseGenerator {
             data: result.data,
           },
         };
-      
+
       default:
         return undefined;
     }
   }
-
 
   private generateSuggestions(
     intent: QueryIntent,
@@ -171,7 +175,7 @@ export class UnifiedResponseGenerator {
         suggestions.push("Show me the list of these files");
         suggestions.push("Which files failed processing?");
         break;
-      
+
       case QueryIntent.LIST:
         if (result.metadata.totalCount && result.metadata.totalCount > 20) {
           suggestions.push("Show me the next page");
@@ -179,17 +183,17 @@ export class UnifiedResponseGenerator {
         suggestions.push("Filter by failed status");
         suggestions.push("Show only invoices");
         break;
-      
+
       case QueryIntent.SEARCH:
         suggestions.push("Narrow down by date");
         suggestions.push("Show high confidence results only");
         break;
-      
+
       case QueryIntent.AGGREGATE:
         suggestions.push("Break down by vendor");
         suggestions.push("Show monthly trend");
         break;
-      
+
       case QueryIntent.STATUS:
         suggestions.push("Show failed files");
         suggestions.push("Retry failed processing");
@@ -215,7 +219,7 @@ export class UnifiedResponseGenerator {
             action: "view_file",
             data: { fileId: result.data[0].id },
           });
-          
+
           if (result.data.length > 1) {
             actions.push({
               label: "Export list",
@@ -225,7 +229,7 @@ export class UnifiedResponseGenerator {
           }
         }
         break;
-      
+
       case QueryIntent.COUNT:
         if (result.data > 0) {
           actions.push({
@@ -234,9 +238,11 @@ export class UnifiedResponseGenerator {
           });
         }
         break;
-      
-      case QueryIntent.STATUS:
-        const failedStatus = result.data?.find((s: any) => s.status === "failed");
+
+      case QueryIntent.STATUS: {
+        const failedStatus = result.data?.find(
+          (s: any) => s.status === "failed",
+        );
         if (failedStatus && failedStatus.count > 0) {
           actions.push({
             label: "Retry failed",
@@ -244,6 +250,7 @@ export class UnifiedResponseGenerator {
           });
         }
         break;
+      }
     }
 
     // Platform-specific actions

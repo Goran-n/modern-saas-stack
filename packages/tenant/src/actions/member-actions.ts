@@ -1,7 +1,13 @@
-import { invitations, tenantMembers, users } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils/logger";
+import {
+  and,
+  eq,
+  invitations,
+  isNull,
+  tenantMembers,
+  users,
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils/logger";
 import { addDays } from "date-fns";
-import { and, eq, isNull } from "@kibly/shared-db";
 import { nanoid } from "nanoid";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";

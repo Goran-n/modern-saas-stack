@@ -1,4 +1,4 @@
-import type { Logger } from "pino";
+import type { Logger } from "./logger";
 
 /**
  * Standard error handler utility for consistent error logging across the application
@@ -7,12 +7,13 @@ export function logError(
   logger: Logger,
   message: string,
   error: unknown,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): void {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
-  const errorType = error instanceof Error ? error.constructor.name : typeof error;
-  
+  const errorType =
+    error instanceof Error ? error.constructor.name : typeof error;
+
   logger.error(message, {
     error: errorMessage,
     stack: errorStack,
@@ -29,13 +30,14 @@ export function handleError<T = any>(
   logger: Logger,
   message: string,
   error: unknown,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): { success: false; error: string; details?: T } {
   logError(logger, message, error, context);
-  
+
   return {
     success: false,
-    error: error instanceof Error ? error.message : "An unexpected error occurred",
+    error:
+      error instanceof Error ? error.message : "An unexpected error occurred",
   };
 }
 
@@ -47,7 +49,7 @@ export function logAndRethrow(
   logger: Logger,
   message: string,
   error: unknown,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): never {
   logError(logger, message, error, context);
   throw error;

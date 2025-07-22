@@ -32,7 +32,7 @@ async function validateTypesStrict(): Promise<void> {
     }
 
     try {
-      console.log(`\n📦 Validating @kibly/${app}...`);
+      console.log(`\n📦 Validating @figgy/${app}...`);
 
       const command =
         app === "api"
@@ -45,14 +45,14 @@ async function validateTypesStrict(): Promise<void> {
         encoding: "utf8",
       });
 
-      console.log(`✅ @kibly/${app} - TypeScript validation PASSED`);
-      results.push({ name: `@kibly/${app}`, status: "PASS" });
+      console.log(`✅ @figgy/${app} - TypeScript validation PASSED`);
+      results.push({ name: `@figgy/${app}`, status: "PASS" });
     } catch (error: any) {
       hasErrors = true;
-      console.log(`❌ @kibly/${app} - TypeScript validation FAILED`);
+      console.log(`❌ @figgy/${app} - TypeScript validation FAILED`);
 
       if (error.stdout) {
-        console.log(`\n📋 Errors in @kibly/${app}:`);
+        console.log(`\n📋 Errors in @figgy/${app}:`);
         console.log(error.stdout);
       }
       if (error.stderr) {
@@ -60,7 +60,7 @@ async function validateTypesStrict(): Promise<void> {
       }
 
       results.push({
-        name: `@kibly/${app}`,
+        name: `@figgy/${app}`,
         status: "FAIL",
         error: error.stdout || error.stderr || error.message,
       });
@@ -76,7 +76,7 @@ async function validateTypesStrict(): Promise<void> {
     }
 
     try {
-      console.log(`\n📦 Validating @kibly/${pkg}...`);
+      console.log(`\n📦 Validating @figgy/${pkg}...`);
 
       execSync("bunx tsc --noEmit", {
         cwd: pkgPath,
@@ -84,19 +84,19 @@ async function validateTypesStrict(): Promise<void> {
         encoding: "utf8",
       });
 
-      console.log(`✅ @kibly/${pkg} - TypeScript validation PASSED`);
-      results.push({ name: `@kibly/${pkg}`, status: "PASS" });
+      console.log(`✅ @figgy/${pkg} - TypeScript validation PASSED`);
+      results.push({ name: `@figgy/${pkg}`, status: "PASS" });
     } catch (error: any) {
       hasErrors = true;
-      console.log(`❌ @kibly/${pkg} - TypeScript validation FAILED`);
+      console.log(`❌ @figgy/${pkg} - TypeScript validation FAILED`);
 
       if (error.stdout) {
-        console.log(`\n📋 Errors in @kibly/${pkg}:`);
+        console.log(`\n📋 Errors in @figgy/${pkg}:`);
         console.log(error.stdout);
       }
 
       results.push({
-        name: `@kibly/${pkg}`,
+        name: `@figgy/${pkg}`,
         status: "FAIL",
         error: error.stdout || error.stderr || error.message,
       });

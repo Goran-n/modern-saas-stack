@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { getConfig } from "@kibly/config";
-import { files, getDatabaseConnection, eq } from "@kibly/shared-db";
+import { getConfig } from "@figgy/config";
+import { eq, files, getDatabaseConnection } from "@figgy/shared-db";
 
 async function main() {
   const fileId = process.argv[2];

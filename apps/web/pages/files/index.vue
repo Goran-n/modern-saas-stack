@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-gray-50 grid grid-cols-[320px_1fr]">
+  <div class="h-screen bg-canvas grid grid-cols-[320px_1fr]">
     <!-- Sidebar -->
     <div class="border-r border-gray-200 bg-white overflow-y-auto">
       <FileManagerSidebar
@@ -23,7 +23,7 @@
         <div class="mb-6">
           <div class="flex items-center justify-between">
             <div>
-              <h1 class="text-2xl font-semibold text-gray-900">Files</h1>
+              <h1 class="text-2xl font-semibold">Files</h1>
               <UBreadcrumb 
                 :links="breadcrumbLinks" 
                 class="mt-1"
@@ -55,16 +55,16 @@
 
         <!-- Error State -->
         <div v-else-if="error" class="text-center py-12">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-4xl text-red-500 mb-4" />
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Error Loading Files</h3>
-          <p class="text-gray-500">{{ error.message }}</p>
+          <UIcon name="i-heroicons-exclamation-triangle" class="text-4xl text-error mb-4" />
+          <h3 class="text-lg font-medium mb-2">Error Loading Files</h3>
+          <p class="text-muted">{{ error.message }}</p>
         </div>
 
         <!-- Supplier Folders Display -->
         <div v-else-if="currentSuppliers.length > 0">
           <!-- File Count -->
           <div class="mb-4">
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-muted">
               {{ currentSuppliers.length }} {{ currentSuppliers.length === 1 ? 'supplier' : 'suppliers' }}
               for {{ selectedYear }}
             </p>
@@ -76,20 +76,20 @@
               v-for="supplier in currentSuppliers"
               :key="supplier.id"
               @click="handleSupplierSelected(supplier.name)"
-              class="cursor-pointer hover:shadow-md transition-shadow duration-200 bg-white rounded-lg border border-gray-200 p-4"
+              class="cursor-pointer hover:shadow-md transition-all duration-200 bg-white rounded-lg border border-gray-200 hover:border-primary-300 p-4"
             >
               <div class="aspect-square flex flex-col items-center justify-center">
                 <!-- Folder Icon -->
                 <div class="w-12 h-12 mb-3 flex items-center justify-center">
                   <UIcon 
                     name="i-heroicons-folder" 
-                    class="text-3xl text-blue-500"
+                    class="text-3xl text-primary"
                   />
                 </div>
 
                 <!-- Supplier Name -->
                 <h3 
-                  class="text-sm font-medium text-gray-900 text-center line-clamp-2 hover:text-primary-600 transition-colors"
+                  class="text-sm font-medium text-center line-clamp-2 hover:text-primary transition-colors"
                   :title="supplier.name"
                 >
                   {{ supplier.name }}
@@ -97,7 +97,7 @@
 
                 <!-- File Count -->
                 <div class="mt-2 text-center">
-                  <p class="text-xs text-gray-500">
+                  <p class="text-xs text-muted">
                     {{ supplier.fileCount }} {{ supplier.fileCount === 1 ? 'file' : 'files' }}
                   </p>
                 </div>
@@ -108,9 +108,9 @@
 
         <!-- Empty State -->
         <div v-else-if="!currentFiles.length" class="text-center py-12">
-          <UIcon name="i-heroicons-folder-open" class="text-4xl text-gray-400 mb-4" />
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No Files Found</h3>
-          <p class="text-gray-500">
+          <UIcon name="i-heroicons-folder-open" class="text-4xl text-gray-500 mb-4" />
+          <h3 class="text-lg font-medium mb-2">No Files Found</h3>
+          <p class="text-muted">
             {{ currentView === 'status' 
               ? `No ${selectedStatus} files at the moment` 
               : 'Select a year and supplier to view files' 
@@ -122,7 +122,7 @@
         <div v-else>
           <!-- File Count -->
           <div class="mb-4">
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-muted">
               {{ currentFiles.length }} {{ currentFiles.length === 1 ? 'file' : 'files' }}
               {{ currentView === 'supplier' ? `from ${selectedSupplier}` : '' }}
               {{ currentView === 'status' ? selectedStatus : '' }}
@@ -278,7 +278,7 @@ const handleFileSelected = (file: any) => {
 
 // SEO
 useSeoMeta({
-  title: 'Files | Kibly',
+  title: 'Files | Figgy',
   description: 'Manage and view your uploaded files organised by year and supplier',
 })
 </script>

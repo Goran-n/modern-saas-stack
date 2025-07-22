@@ -587,7 +587,7 @@ const formatDate = (date: string) => {
 
 // SEO
 useSeoMeta({
-  title: 'Slack Workspaces | Kibly',
+  title: 'Slack Workspaces | Figgy',
   description: 'Manage connected Slack workspaces and their configurations',
 })
 </script>

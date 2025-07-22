@@ -1,10 +1,10 @@
-# Kibly - Multi-tenant Accounting Integration Platform
+# Figgy - Multi-tenant Accounting Integration Platform
 
 A modern, multi-tenant SaaS platform for integrating with accounting providers, built with TypeScript, Vue.js, and tRPC.
 
 ## 🏗️ Architecture Overview
 
-Kibly is built as a monorepo using Turborepo, featuring:
+Figgy is built as a monorepo using Turborepo, featuring:
 - **Backend**: Node.js API with tRPC, PostgreSQL, and Redis
 - **Frontend**: Nuxt 3 with Nuxt UI Pro components and Pinia state management
 - **Clean Architecture**: Domain-driven design with clear separation of concerns
@@ -14,7 +14,7 @@ Kibly is built as a monorepo using Turborepo, featuring:
 ## 📦 Project Structure
 
 ```
-kibly/
+figgy/
 ├── apps/
 │   ├── api/              # Backend tRPC API server
 │   └── web/              # Nuxt 3 frontend application
@@ -55,7 +55,7 @@ kibly/
    # In the root directory
    doppler setup
 
-   # Select project: kibly-be
+   # Select project: figgy-be
    # Select config: dev
    ```
 
@@ -64,7 +64,7 @@ kibly/
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd kibly
+   cd figgy
    ```
 
 2. **Install dependencies**:
@@ -102,7 +102,7 @@ The API will be available at `http://localhost:3000` and the web app at `http://
 - **Database**: PostgreSQL with Drizzle ORM
 - **Queue**: BullMQ with Redis
 - **Authentication**: JWT with Supabase integration
-- **Logging**: @kibly/utils with Pino
+- **Logging**: @figgy/utils
 
 ### Clean Architecture
 
@@ -192,13 +192,13 @@ bun run build            # Build all packages
 
 Environment variables are managed through Doppler. Key variables:
 
-**Backend** (`kibly-be`):
+**Backend** (`figgy-be`):
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_KEY` - JWT signing key
 - `REDIS_URL` - Redis connection (optional)
 - `XERO_CLIENT_ID/SECRET` - Xero OAuth credentials
 
-**Frontend** (`kibly-web`):
+**Frontend** (`figgy-web`):
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_ANON_KEY` - Supabase anonymous key
 - `NUXT_PUBLIC_API_URL` - Backend API URL
@@ -262,7 +262,7 @@ cd apps/web && bun run build
 
 Use Doppler for managing production secrets:
 ```bash
-doppler setup --project kibly-be --config prd
+doppler setup --project figgy-be --config prd
 doppler run -- bun run start
 ```
 

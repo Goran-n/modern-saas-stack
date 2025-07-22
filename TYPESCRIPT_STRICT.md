@@ -105,20 +105,20 @@ The strict validator provides detailed feedback:
 🔍 Running STRICT TypeScript validation across entire monorepo...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📦 Validating @kibly/api...
-✅ @kibly/api - TypeScript validation PASSED
+📦 Validating @figgy/api...
+✅ @figgy/api - TypeScript validation PASSED
 
-📦 Validating @kibly/web...  
-❌ @kibly/web - TypeScript validation FAILED
+📦 Validating @figgy/web...  
+❌ @figgy/web - TypeScript validation FAILED
 
-📋 Errors in @kibly/web:
+📋 Errors in @figgy/web:
 src/stores/integration.ts(265,11): error TS2322: Type 'null' is not assignable...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 VALIDATION SUMMARY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PASS @kibly/api
-❌ FAIL @kibly/web
+✅ PASS @figgy/api
+❌ FAIL @figgy/web
 
 🚨 STRICT VALIDATION FAILED
 ❌ Code execution is BLOCKED due to TypeScript errors

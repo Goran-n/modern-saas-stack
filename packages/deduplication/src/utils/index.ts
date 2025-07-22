@@ -1,2 +1,2 @@
-export * from './hash';
-export * from './scoring';
+export * from "./hash";
+export * from "./scoring";

@@ -2,24 +2,22 @@ import {
   between,
   count,
   desc,
+  documentExtractions,
   eq,
+  files,
   ilike,
   inArray,
   or,
-  sql,
   type SQL,
-} from "@kibly/shared-db";
-import { documentExtractions, files } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
+  sql,
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import type { ParsedQuery } from "../types";
 
 const logger = createLogger("nlq-query-builder");
 
 export class QueryBuilder {
-  buildFilters(
-    query: ParsedQuery,
-    tenantId: string,
-  ): SQL[] {
+  buildFilters(query: ParsedQuery, tenantId: string): SQL[] {
     const filters: SQL[] = [eq(files.tenantId, tenantId)];
 
     const { entities } = query;
@@ -53,15 +51,15 @@ export class QueryBuilder {
     return filters;
   }
 
-  buildDocumentFilters(
-    query: ParsedQuery,
-  ): SQL[] {
+  buildDocumentFilters(query: ParsedQuery): SQL[] {
     const filters: SQL[] = [];
     const { entities } = query;
 
     // Document type filter
     if (entities.documentType && entities.documentType.length > 0) {
-      filters.push(inArray(documentExtractions.documentType, entities.documentType as any));
+      filters.push(
+        inArray(documentExtractions.documentType, entities.documentType as any),
+      );
     }
 
     // Vendor filter (fuzzy match on company profile)
@@ -71,17 +69,17 @@ export class QueryBuilder {
         or(
           ilike(
             sql`${documentExtractions.extractedFields}->>'vendorName'->>'value'`,
-            `%${entities.vendor}%`
+            `%${entities.vendor}%`,
           ),
           ilike(
             sql`${documentExtractions.companyProfile}->>'normalizedName'`,
-            `%${entities.vendor}%`
+            `%${entities.vendor}%`,
           ),
           ilike(
             sql`${documentExtractions.companyProfile}->>'legalName'`,
-            `%${entities.vendor}%`
-          )
-        )!
+            `%${entities.vendor}%`,
+          ),
+        )!,
       );
     }
 
@@ -90,19 +88,29 @@ export class QueryBuilder {
       const { operator, value } = entities.confidence;
       switch (operator) {
         case "gt":
-          filters.push(sql`${documentExtractions.overallConfidence}::numeric > ${value}`);
+          filters.push(
+            sql`${documentExtractions.overallConfidence}::numeric > ${value}`,
+          );
           break;
         case "gte":
-          filters.push(sql`${documentExtractions.overallConfidence}::numeric >= ${value}`);
+          filters.push(
+            sql`${documentExtractions.overallConfidence}::numeric >= ${value}`,
+          );
           break;
         case "lt":
-          filters.push(sql`${documentExtractions.overallConfidence}::numeric < ${value}`);
+          filters.push(
+            sql`${documentExtractions.overallConfidence}::numeric < ${value}`,
+          );
           break;
         case "lte":
-          filters.push(sql`${documentExtractions.overallConfidence}::numeric <= ${value}`);
+          filters.push(
+            sql`${documentExtractions.overallConfidence}::numeric <= ${value}`,
+          );
           break;
         case "eq":
-          filters.push(sql`${documentExtractions.overallConfidence}::numeric = ${value}`);
+          filters.push(
+            sql`${documentExtractions.overallConfidence}::numeric = ${value}`,
+          );
           break;
       }
     }
@@ -134,7 +142,7 @@ export class QueryBuilder {
 
   private getAmountAggregation(type: string, field: string): SQL {
     const fieldPath = sql`${documentExtractions.extractedFields}->>'${sql.raw(field)}'->>'value'`;
-    
+
     switch (type) {
       case "sum":
         return sql`COALESCE(SUM(CAST(${fieldPath} AS NUMERIC)), 0)`;
@@ -194,7 +202,7 @@ export class QueryBuilder {
         break;
       case "totalAmount":
         orderResult = orderFn(
-          sql`CAST(${documentExtractions.extractedFields}->>'totalAmount'->>'value' AS NUMERIC)`
+          sql`CAST(${documentExtractions.extractedFields}->>'totalAmount'->>'value' AS NUMERIC)`,
         );
         break;
       default:
@@ -213,8 +221,12 @@ export class QueryBuilder {
       query.entities.documentType?.length ||
       query.entities.vendor ||
       query.entities.confidence ||
-      (query.aggregation && ["totalAmount", "subtotalAmount", "taxAmount"].includes(query.aggregation.field)) ||
-      (query.sorting && ["confidence", "totalAmount"].includes(query.sorting.field))
+      (query.aggregation &&
+        ["totalAmount", "subtotalAmount", "taxAmount"].includes(
+          query.aggregation.field,
+        )) ||
+      (query.sorting &&
+        ["confidence", "totalAmount"].includes(query.sorting.field))
     );
   }
 }

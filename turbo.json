@@ -3,12 +3,20 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".next/**", ".nuxt/**", ".output/**", ".wxt/**"],
+      "outputs": [
+        "dist/**",
+        "build/**",
+        ".next/**",
+        ".nuxt/**",
+        ".output/**",
+        ".wxt/**"
+      ],
       "env": ["NODE_ENV", "VITE_*"]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["*"]
     },
     "lint": {
       "outputs": []
@@ -48,5 +56,17 @@
     }
   },
   "globalDependencies": ["package.json", "bun.lockb", "turbo.json", ".env*"],
-  "globalEnv": ["NODE_ENV", "DATABASE_URL", "LOG_LEVEL", "PORT", "HOST", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "VITE_API_URL", "VITE_APP_URL"]
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "LOG_LEVEL",
+    "PORT",
+    "HOST",
+    "BASE_URL",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "NUXT_PUBLIC_API_URL",
+    "NUXT_PUBLIC_OAUTH_API_URL",
+    "VITE_*"
+  ]
 }

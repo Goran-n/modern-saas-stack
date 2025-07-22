@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const logger = createLogger("user-operations");
@@ -8,17 +8,17 @@ const logger = createLogger("user-operations");
  * @param supabase - Supabase client instance
  * @returns Promise resolving to formatted user list
  */
-export async function listUsers(
-  supabase: SupabaseClient,
-): Promise<Array<{
-  id: string;
-  email: string | undefined;
-  name: string;
-  avatar?: string | undefined;
-  createdAt: string;
-  lastSignIn?: string | undefined;
-  metadata?: any;
-}>> {
+export async function listUsers(supabase: SupabaseClient): Promise<
+  Array<{
+    id: string;
+    email: string | undefined;
+    name: string;
+    avatar?: string | undefined;
+    createdAt: string;
+    lastSignIn?: string | undefined;
+    metadata?: any;
+  }>
+> {
   logger.info("Listing all users");
 
   try {

@@ -1,5 +1,4 @@
-import { tenantMembers, users } from "@kibly/shared-db";
-import { desc, eq } from "@kibly/shared-db";
+import { desc, eq, tenantMembers, users } from "@figgy/shared-db";
 import { getDb } from "../db";
 import type { TenantMember, User } from "../types";
 

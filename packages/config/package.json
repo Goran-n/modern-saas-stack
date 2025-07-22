@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/config",
+  "name": "@figgy/config",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -12,8 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kibly/utils": "workspace:*"
+    "@figgy/utils": "workspace:*"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }

@@ -1,4 +1,4 @@
-import { configureLogger, createLogger } from "@kibly/utils";
+import { configureLogger, createLogger } from "@figgy/utils";
 import {
   Config,
   ConfigValidationError,

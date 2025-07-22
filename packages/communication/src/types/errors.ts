@@ -70,41 +70,56 @@ export class NLQError extends Error {
     this.name = "NLQError";
   }
 
-  static fromError(error: unknown, defaultCode: ERROR_CODES = ERROR_CODES.NLQ_EXECUTION_FAILED): NLQError {
+  static fromError(
+    error: unknown,
+    defaultCode: ERROR_CODES = ERROR_CODES.NLQ_EXECUTION_FAILED,
+  ): NLQError {
     if (error instanceof NLQError) {
       return error;
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Try to categorise the error
-    if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
+    if (
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("timed out")
+    ) {
       return new NLQError(
         errorMessage,
         ERROR_CODES.NLQ_TIMEOUT,
         ERROR_MESSAGES.NLQ_TIMEOUT,
         ["Try a simpler question", "Break your request into smaller parts"],
-        error
+        error,
       );
     }
 
-    if (errorMessage.includes("permission") || errorMessage.includes("access denied")) {
+    if (
+      errorMessage.includes("permission") ||
+      errorMessage.includes("access denied")
+    ) {
       return new NLQError(
         errorMessage,
         ERROR_CODES.NLQ_PERMISSION_DENIED,
         ERROR_MESSAGES.NLQ_PERMISSION_DENIED,
         ["Check your account permissions", "Contact your administrator"],
-        error
+        error,
       );
     }
 
-    if (errorMessage.includes("database") || errorMessage.includes("connection")) {
+    if (
+      errorMessage.includes("database") ||
+      errorMessage.includes("connection")
+    ) {
       return new NLQError(
         errorMessage,
         ERROR_CODES.NLQ_DATABASE_ERROR,
         ERROR_MESSAGES.NLQ_DATABASE_ERROR,
-        ["Please try again in a moment", "If the issue persists, contact support"],
-        error
+        [
+          "Please try again in a moment",
+          "If the issue persists, contact support",
+        ],
+        error,
       );
     }
 
@@ -116,13 +131,17 @@ export class NLQError extends Error {
         [
           "Try asking 'How many files do I have?'",
           "Ask 'Show me invoices from this month'",
-          "Try 'List my pending documents'"
+          "Try 'List my pending documents'",
         ],
-        error
+        error,
       );
     }
 
-    if (errorMessage.includes("no data") || errorMessage.includes("not found") || errorMessage.includes("no results")) {
+    if (
+      errorMessage.includes("no data") ||
+      errorMessage.includes("not found") ||
+      errorMessage.includes("no results")
+    ) {
       return new NLQError(
         errorMessage,
         ERROR_CODES.NLQ_NO_DATA_FOUND,
@@ -130,9 +149,9 @@ export class NLQError extends Error {
         [
           "Try broadening your search criteria",
           "Check if you have any files uploaded",
-          "Try asking about different time periods"
+          "Try asking about different time periods",
         ],
-        error
+        error,
       );
     }
 
@@ -144,9 +163,9 @@ export class NLQError extends Error {
       [
         "Please try rephrasing your question",
         "Try a simpler query",
-        "If the issue persists, contact support"
+        "If the issue persists, contact support",
       ],
-      error
+      error,
     );
   }
 }

@@ -1,19 +1,24 @@
-import { defineConfig } from 'wxt';
+import { defineConfig } from "wxt";
 
 export default defineConfig({
-  srcDir: 'src',
+  srcDir: "src",
   imports: false,
+  dev: {
+    openBrowser: false,
+  },
   manifest: {
-    name: 'Kibly File Transfer',
-    description: 'Seamlessly drag files from Kibly to Xero',
-    version: '1.0.0',
-    permissions: ['storage', 'tabs', 'activeTab'],
+    name: "Figgy File Transfer",
+    description: "Seamlessly drag files from Figgy to Xero",
+    version: "1.0.0",
+    permissions: ["storage", "tabs", "activeTab", "identity", "scripting"],
     host_permissions: [
-      'https://*.kibly.com/*',
-      'http://localhost:*/*',
-      'https://*.xero.com/*',
-      'https://*.supabase.co/*'
+      "https://*.figgy.com/*",
+      "*://localhost/*",
+      "*://127.0.0.1/*",
+      "https://*.xero.com/*",
+      "https://*.supabase.co/*",
+      "https://accounts.google.com/*",
     ],
   },
-  modules: ['@wxt-dev/module-vue'],
+  modules: ["@wxt-dev/module-vue"],
 });

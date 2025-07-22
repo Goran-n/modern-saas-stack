@@ -1,0 +1,61 @@
+# Slack App Manifest for FIGGY
+# 
+# IMPORTANT: Update the URLs below for your environment:
+# - Development: Use your ngrok URL or local URL (e.g., https://your-ngrok-id.ngrok-free.app)
+# - Production: Use your production API URL (e.g., https://api.yourdomain.com)
+#
+# After updating this file:
+# 1. Go to https://api.slack.com/apps
+# 2. Select your app
+# 3. Go to "App Manifest" in the left sidebar
+# 4. Copy and paste this YAML content
+# 5. Save the changes
+
+display_information:
+  name: FIGGY
+  description: Your AI-powered business intelligence assistant
+  background_color: "#4A154B"
+  long_description: FIGGY helps you query your business data using natural language. Ask questions about revenue, customers, inventory, and more - all within Slack!
+
+features:
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: FIGGY
+    always_online: true
+
+oauth_config:
+  redirect_urls:
+    # REPLACE WITH YOUR BASE_URL/oauth/slack/callback
+    - https://50ebd208c219.ngrok-free.app/oauth/slack/callback
+  scopes:
+    bot:
+      - app_mentions:read
+      - channels:history
+      - channels:read
+      - chat:write
+      - groups:history
+      - groups:read
+      - im:history
+      - im:read
+      - im:write
+      - mpim:history
+      - mpim:read
+      - users:read
+      - users:read.email
+
+settings:
+  event_subscriptions:
+    # REPLACE WITH YOUR BASE_URL/webhooks/slack
+    request_url: https://50ebd208c219.ngrok-free.app/webhooks/slack
+    bot_events:
+      - app_mention
+      - message.im
+      - message.mpim
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

@@ -1,5 +1,5 @@
-import { getConfig } from "@kibly/config";
-import { createLogger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { createLogger } from "@figgy/utils";
 import type { ParsedWhatsAppMessage } from "../types";
 import {
   extractTwilioMedia,

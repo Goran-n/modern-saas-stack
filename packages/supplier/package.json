@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/supplier",
+  "name": "@figgy/supplier",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "lint:fix": "biome check --fix src"
   },
   "dependencies": {
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/utils": "workspace:*"
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/utils": "workspace:*"
   },
   "devDependencies": {},
   "exports": {

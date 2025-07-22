@@ -109,4 +109,25 @@ export const MATCH_SCORES = {
     PHONE: 5,
     EMAIL: 5,
   },
+
+  /** Bank account matching scores */
+  BANK_ACCOUNT: {
+    IBAN_MATCH: 20, // IBAN is highly unique
+    ACCOUNT_NUMBER: 15, // Account number with bank code
+    PARTIAL_MATCH: 10, // Partial account or bank name only
+  },
+
+  /** Pattern matching scores */
+  PATTERNS: {
+    INVOICE_NUMBER_FORMAT: 10, // Consistent invoice numbering pattern
+    PAYMENT_TERMS: 5, // Consistent payment terms
+  },
+
+  /** Confidence weight multipliers */
+  CONFIDENCE_MULTIPLIERS: {
+    HIGH: 1.0, // 80-100% confidence
+    MEDIUM: 0.8, // 60-79% confidence
+    LOW: 0.6, // 40-59% confidence
+    VERY_LOW: 0.4, // Below 40% confidence
+  },
 } as const;

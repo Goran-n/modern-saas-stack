@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { middleware } from "../trpc";
 
 interface PerformanceMetrics {
@@ -15,8 +15,9 @@ interface PerformanceMetrics {
 
 class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
-  private readonly maxMetrics = 1000;
-  private readonly slowQueryThreshold = 1000; // 1 second
+  private readonly maxMetrics = Number(process.env.TRPC_MAX_METRICS) || 1000;
+  private readonly slowQueryThreshold =
+    Number(process.env.TRPC_SLOW_QUERY_THRESHOLD) || 1000; // 1 second
 
   recordMetric(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
@@ -139,16 +140,27 @@ export function getPerformanceStats() {
   return performanceMonitor.getStats();
 }
 
-// Log performance stats periodically (every 5 minutes)
-if (typeof setInterval !== "undefined") {
-  setInterval(
-    () => {
-      const stats = getPerformanceStats();
+// Track interval for cleanup
+let performanceInterval: NodeJS.Timeout | undefined;
 
-      if (stats.slowQueries > 0) {
-        logger.info("TRPC Performance Stats", stats);
-      }
-    },
-    5 * 60 * 1000,
-  );
+// Log performance stats periodically
+const performanceLogInterval =
+  Number(process.env.TRPC_PERFORMANCE_LOG_INTERVAL) || 5 * 60 * 1000; // Default: 5 minutes
+
+if (typeof setInterval !== "undefined" && performanceLogInterval > 0) {
+  performanceInterval = setInterval(() => {
+    const stats = getPerformanceStats();
+
+    if (stats.slowQueries > 0) {
+      logger.info("TRPC Performance Stats", stats);
+    }
+  }, performanceLogInterval);
+}
+
+// Export cleanup function for graceful shutdown
+export function cleanupPerformanceMonitor(): void {
+  if (performanceInterval) {
+    clearInterval(performanceInterval);
+    performanceInterval = undefined;
+  }
 }

@@ -1,4 +1,4 @@
-import type { DrizzleClient } from "@kibly/shared-db";
+import type { DrizzleClient } from "@figgy/shared-db";
 import {
   acceptInvitation as acceptInvitationAction,
   createTenant as createTenantAction,

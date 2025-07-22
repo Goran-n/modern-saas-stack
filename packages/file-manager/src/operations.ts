@@ -1,19 +1,19 @@
-import { getConfig } from "@kibly/config";
-import { DeduplicationService } from "@kibly/deduplication";
-import type { CategorizeFilePayload } from "@kibly/jobs";
-import { 
-  documentExtractions, 
-  files, 
-  suppliers,
+import { getConfig } from "@figgy/config";
+import { DeduplicationService, HashUtils } from "@figgy/deduplication";
+import type { CategorizeFilePayload } from "@figgy/jobs";
+import {
   and,
   desc,
+  documentExtractions,
   eq,
+  files,
   gte,
   inArray,
-  sql
-} from "@kibly/shared-db";
-import { download, remove, signedUrl, upload } from "@kibly/supabase-storage";
-import { createLogger, stripSpecialCharacters } from "@kibly/utils";
+  sql,
+  suppliers,
+} from "@figgy/shared-db";
+import { download, remove, signedUrl, upload } from "@figgy/supabase-storage";
+import { createLogger, stripSpecialCharacters } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { getClient } from "./client";
 import { getDb } from "./db";
@@ -56,17 +56,18 @@ export async function uploadFile(
 
   // Calculate file hash for deduplication
   const fileBuffer = await file.arrayBuffer();
-  const deduplicationService = new DeduplicationService();
-  const contentHash = await deduplicationService.calculateAndStoreFileHash(
-    '', // Temporary, will update after insert
-    Buffer.from(fileBuffer)
+  const db = getDb();
+  const deduplicationService = new DeduplicationService(db);
+  // Just calculate hash without storing (we'll store it during insert)
+  const contentHash = await HashUtils.calculateFileHash(
+    Buffer.from(fileBuffer),
   );
 
   // Check for duplicates
   const duplicateCheck = await deduplicationService.checkFileDuplicate(
     contentHash,
     file.size,
-    input.tenantId
+    input.tenantId,
   );
 
   if (duplicateCheck.isDuplicate) {
@@ -78,7 +79,6 @@ export async function uploadFile(
   }
 
   // Save to database
-  const db = getDb();
   const [record] = await db
     .insert(files)
     .values({
@@ -102,7 +102,7 @@ export async function uploadFile(
     tenantId: input.tenantId,
   });
 
-  // Trigger categorization job
+  // Trigger categorization job with tenant-based concurrency control
   try {
     await tasks.trigger("categorize-file", {
       fileId: record.id,
@@ -111,10 +111,15 @@ export async function uploadFile(
       size: record.size,
       pathTokens: record.pathTokens,
       source: record.source,
-    } satisfies CategorizeFilePayload);
+    } satisfies CategorizeFilePayload, {
+      queue: {
+        concurrencyKey: `tenant-${record.tenantId}`,
+      },
+    });
 
-    logger.info("File categorization job triggered", {
+    logger.info("File categorization job triggered with concurrency control", {
       fileId: record.id,
+      concurrencyKey: `tenant-${record.tenantId}`,
       tenantId: record.tenantId,
     });
   } catch (error) {
@@ -153,15 +158,15 @@ export async function uploadFileFromBase64(input: {
 }> {
   const sanitisedFileName = input.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
   const timestamp = Date.now();
-  const pathTokens = [
-    input.tenantId,
-    input.uploadedBy,
-    `${timestamp}_${sanitisedFileName}`,
-  ];
+  const fileName = `${timestamp}_${sanitisedFileName}`;
+  const pathTokens = [input.tenantId, input.uploadedBy, fileName];
   const fullPath = pathTokens.join("/");
 
   logger.info("Uploading file from base64", {
     fileName: input.fileName,
+    sanitisedFileName,
+    pathTokens,
+    fullPath,
     tenantId: input.tenantId,
     size: input.size,
   });
@@ -170,17 +175,28 @@ export async function uploadFileFromBase64(input: {
   const fileBuffer = Buffer.from(input.base64Data, "base64");
 
   // Calculate file hash for deduplication
-  const deduplicationService = new DeduplicationService();
-  const contentHash = await deduplicationService.calculateAndStoreFileHash(
-    '', // Temporary, will update after insert
-    fileBuffer
-  );
+  let contentHash: string;
+  const db = getDb();
+  const deduplicationService = new DeduplicationService(db);
+
+  try {
+    // Just calculate hash without storing (we'll store it during insert)
+    contentHash = await HashUtils.calculateFileHash(fileBuffer);
+  } catch (hashError) {
+    logger.error("Error calculating file hash", {
+      error: hashError instanceof Error ? hashError.message : String(hashError),
+      stack: hashError instanceof Error ? hashError.stack : undefined,
+      fileName: input.fileName,
+      bufferLength: fileBuffer.length,
+    });
+    throw hashError;
+  }
 
   // Check for duplicates
   const duplicateCheck = await deduplicationService.checkFileDuplicate(
     contentHash,
     fileBuffer.length,
-    input.tenantId
+    input.tenantId,
   );
 
   if (duplicateCheck.isDuplicate) {
@@ -195,6 +211,13 @@ export async function uploadFileFromBase64(input: {
   const config = getConfig().getForFileManager();
   const bucket = config.STORAGE_BUCKET || "vault";
 
+  logger.info("Uploading to Supabase Storage", {
+    bucket,
+    fullPath,
+    fileSize: fileBuffer.length,
+    mimeType: input.mimeType,
+  });
+
   // Upload to Supabase Storage
   const client = getClient();
   const { error: uploadError } = await client.storage
@@ -205,40 +228,87 @@ export async function uploadFileFromBase64(input: {
     });
 
   if (uploadError) {
+    logger.error("Supabase upload failed", {
+      error: uploadError.message,
+      bucket,
+      path: fullPath,
+      statusCode: (uploadError as any).statusCode,
+    });
     throw uploadError;
   }
 
-  const { data: { publicUrl } } = client.storage
-    .from(bucket)
-    .getPublicUrl(fullPath);
+  const {
+    data: { publicUrl },
+  } = client.storage.from(bucket).getPublicUrl(fullPath);
 
   // Save to database
-  const db = getDb();
-  const [fileRecord] = await db
-    .insert(files)
-    .values({
+  let fileRecord;
+  const insertData = {
+    tenantId: input.tenantId,
+    uploadedBy: input.uploadedBy,
+    fileName: fileName, // Use the timestamped filename
+    pathTokens,
+    mimeType: input.mimeType,
+    size: Number(input.size), // Ensure it's a number for bigint
+    source: (input.source || "user_upload") as
+      | "user_upload"
+      | "integration"
+      | "whatsapp"
+      | "slack",
+    metadata: {
+      originalName: input.fileName,
+      publicUrl,
+      isDuplicate: duplicateCheck.isDuplicate,
+      duplicateFileId: duplicateCheck.duplicateFileId,
+      ...input.metadata,
+    },
+    bucket,
+    contentHash,
+    fileSize: Number(fileBuffer.length), // Ensure it's a number for bigint
+  };
+
+  try {
+    logger.info("Inserting file record", {
+      fileName: fileName,
+      originalFileName: input.fileName,
       tenantId: input.tenantId,
       uploadedBy: input.uploadedBy,
-      fileName: input.fileName,
-      pathTokens,
-      mimeType: input.mimeType,
-      size: input.size,
-      source: (input.source || "user_upload") as "user_upload" | "integration" | "whatsapp" | "slack",
-      metadata: {
-        originalName: input.fileName,
-        publicUrl,
-        isDuplicate: duplicateCheck.isDuplicate,
-        duplicateFileId: duplicateCheck.duplicateFileId,
-        ...input.metadata,
-      },
-      bucket,
       contentHash,
       fileSize: fileBuffer.length,
-    })
-    .returning();
+      pathTokens,
+      source: input.source || "user_upload",
+      bucket,
+      mimeType: input.mimeType,
+      hasMetadata: !!insertData.metadata,
+      metadataKeys: insertData.metadata ? Object.keys(insertData.metadata) : [],
+    });
 
-  if (!fileRecord) {
-    throw new Error("Failed to create file record");
+    // Log the exact insert data for debugging
+    logger.debug("Insert data details", {
+      tenantIdType: typeof insertData.tenantId,
+      tenantIdValue: insertData.tenantId,
+      uploadedByType: typeof insertData.uploadedBy,
+      uploadedByValue: insertData.uploadedBy,
+      sizeType: typeof insertData.size,
+      sizeValue: insertData.size,
+      fileSizeType: typeof insertData.fileSize,
+      fileSizeValue: insertData.fileSize,
+    });
+
+    const result = await db.insert(files).values(insertData).returning();
+
+    fileRecord = result[0];
+
+    if (!fileRecord) {
+      throw new Error("Failed to create file record - no record returned");
+    }
+  } catch (dbError) {
+    logger.error("Database insert failed", dbError, {
+      fileName: input.fileName,
+      tenantId: input.tenantId,
+      insertData,
+    });
+    throw dbError;
   }
 
   logger.info("File uploaded successfully", {
@@ -246,7 +316,7 @@ export async function uploadFileFromBase64(input: {
     tenantId: input.tenantId,
   });
 
-  // Trigger categorization job
+  // Trigger categorization job with tenant-based concurrency control
   try {
     await tasks.trigger("categorize-file", {
       fileId: fileRecord.id,
@@ -255,10 +325,15 @@ export async function uploadFileFromBase64(input: {
       size: fileRecord.size,
       pathTokens: fileRecord.pathTokens,
       source: fileRecord.source,
-    } satisfies CategorizeFilePayload);
+    } satisfies CategorizeFilePayload, {
+      queue: {
+        concurrencyKey: `tenant-${fileRecord.tenantId}`,
+      },
+    });
 
-    logger.info("File categorization job triggered", {
+    logger.info("File categorization job triggered with concurrency control", {
       fileId: fileRecord.id,
+      concurrencyKey: `tenant-${fileRecord.tenantId}`,
     });
   } catch (error) {
     logger.error("Failed to trigger categorization job", {
@@ -343,12 +418,13 @@ export async function getFileUrl(
     throw new Error("File not found");
   }
 
-  // Generate signed URL
+  // Generate signed URL for inline viewing (not download)
   const client = getClient();
   const { data } = await signedUrl(client, {
     bucket: file.bucket,
     path: file.pathTokens.join("/"),
     expireIn: expiresIn,
+    download: false, // Inline viewing for browser extension
   });
 
   logger.info("Signed URL generated", { fileId, tenantId, expiresIn });
@@ -377,7 +453,12 @@ export async function generateSignedUrl(
   const expiresIn = options.expiresIn || 3600;
   const download = options.download || false;
 
-  logger.info("Generating signed URL", { fileId, tenantId, expiresIn, download });
+  logger.info("Generating signed URL", {
+    fileId,
+    tenantId,
+    expiresIn,
+    download,
+  });
 
   const db = getDb();
   const [file] = await db
@@ -392,7 +473,7 @@ export async function generateSignedUrl(
 
   const client = getClient();
   const filePath = file.pathTokens.join("/");
-  
+
   const { data, error } = await client.storage
     .from(file.bucket)
     .createSignedUrl(filePath, expiresIn, {
@@ -475,7 +556,11 @@ export async function deleteFileByUser(
     .limit(1);
 
   if (!file) {
-    logger.warn("File not found or user doesn't have permission", { fileId, tenantId, userId });
+    logger.warn("File not found or user doesn't have permission", {
+      fileId,
+      tenantId,
+      userId,
+    });
     return false;
   }
 
@@ -487,7 +572,10 @@ export async function deleteFileByUser(
     .remove([filePath]);
 
   if (removeError) {
-    logger.error("Failed to remove file from storage", { error: removeError, fileId });
+    logger.error("Failed to remove file from storage", {
+      error: removeError,
+      fileId,
+    });
     throw removeError;
   }
 
@@ -775,12 +863,7 @@ export async function processBatchFiles(
   const filesToProcess = await db
     .select()
     .from(files)
-    .where(
-      and(
-        eq(files.tenantId, tenantId),
-        inArray(files.id, fileIds),
-      ),
-    );
+    .where(and(eq(files.tenantId, tenantId), inArray(files.id, fileIds)));
 
   if (filesToProcess.length === 0) {
     throw new Error("No files found");
@@ -812,23 +895,119 @@ export async function processBatchFiles(
 }
 
 /**
+ * Reprocess a file by clearing existing extraction data and re-triggering categorization
+ * @param fileId - File ID to reprocess
+ * @param tenantId - Tenant ID for security
+ * @returns Promise resolving to the job handle
+ */
+export async function reprocessFile(
+  fileId: string,
+  tenantId: string,
+): Promise<{
+  jobHandle: string;
+}> {
+  logger.info("Reprocessing file", { fileId, tenantId });
+
+  const db = getDb();
+
+  // Get file details and verify ownership
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(and(eq(files.id, fileId), eq(files.tenantId, tenantId)));
+
+  if (!file) {
+    logger.error("File not found for reprocessing", { fileId, tenantId });
+    throw new Error("File not found");
+  }
+
+  // Check if file is already being processed
+  if (file.processingStatus === "processing") {
+    logger.warn("File is already being processed", { fileId, tenantId });
+    throw new Error("File is already being processed");
+  }
+
+  // Clean up existing data and reset status in a transaction
+  await db.transaction(async (tx) => {
+    // Delete existing document extractions
+    await tx
+      .delete(documentExtractions)
+      .where(eq(documentExtractions.fileId, fileId));
+
+    logger.info("Deleted existing extractions", { fileId });
+
+    // Reset file status and clear supplier linkage from metadata
+    const updatedMetadata = {
+      ...(typeof file.metadata === "object" && file.metadata !== null
+        ? file.metadata
+        : {}),
+      supplierName: null,
+      matchedSupplierId: null,
+      displayName: file.fileName, // Reset to original filename
+      reprocessedAt: new Date().toISOString(),
+      reprocessCount: ((file.metadata as any)?.reprocessCount || 0) + 1,
+    };
+
+    await tx
+      .update(files)
+      .set({
+        processingStatus: "pending" as ProcessingStatus,
+        metadata: updatedMetadata,
+        updatedAt: new Date(),
+      })
+      .where(eq(files.id, fileId));
+
+    logger.info("Reset file status and metadata", { fileId });
+  });
+
+  // Trigger new categorization job with tenant-based concurrency control
+  const jobHandle = await tasks.trigger("categorize-file", {
+    fileId: file.id,
+    tenantId: file.tenantId,
+    mimeType: file.mimeType,
+    size: file.size,
+    pathTokens: file.pathTokens,
+    source: file.source,
+  } satisfies CategorizeFilePayload, {
+    queue: {
+      concurrencyKey: `tenant-${file.tenantId}`,
+    },
+  });
+
+  logger.info("Triggered file reprocessing job with concurrency control", {
+    fileId,
+    concurrencyKey: `tenant-${file.tenantId}`,
+    tenantId,
+    jobHandle: jobHandle.id,
+  });
+
+  return {
+    jobHandle: jobHandle.id,
+  };
+}
+
+/**
  * Get files grouped by year and supplier
  * @param tenantId - Tenant ID
  * @returns Promise resolving to grouped file data
  */
-export async function getFilesGroupedByYear(
-  tenantId: string,
-): Promise<{
-  byYear: Record<string, {
-    year: string;
-    suppliers: Record<string, {
-      name: string;
-      supplierId: string | null;
-      files: any[];
-      fileCount: number;
-    }>;
-    totalFiles: number;
-  }>;
+export async function getFilesGroupedByYear(tenantId: string): Promise<{
+  byYear: Record<
+    string,
+    {
+      year: string;
+      suppliers: Record<
+        string,
+        {
+          name: string;
+          supplierId: string | null;
+          files: any[];
+          fileCount: number;
+        }
+      >;
+      totalFiles: number;
+    }
+  >;
   totalFiles: number;
 }> {
   logger.info("Getting files grouped by year", { tenantId });
@@ -857,10 +1036,7 @@ export async function getFilesGroupedByYear(
       },
     })
     .from(files)
-    .leftJoin(
-      documentExtractions,
-      eq(documentExtractions.fileId, files.id),
-    )
+    .leftJoin(documentExtractions, eq(documentExtractions.fileId, files.id))
     .leftJoin(
       suppliers,
       eq(suppliers.id, documentExtractions.matchedSupplierId),
@@ -922,9 +1098,7 @@ export async function getFilesGroupedByYear(
  * @param tenantId - Tenant ID
  * @returns Promise resolving to processing status data
  */
-export async function getFilesByProcessingStatus(
-  tenantId: string,
-): Promise<{
+export async function getFilesByProcessingStatus(tenantId: string): Promise<{
   processing: Array<{
     id: string;
     fileName: string;
@@ -978,10 +1152,7 @@ export async function getFilesByProcessingStatus(
     })
     .from(files)
     .where(
-      and(
-        eq(files.tenantId, tenantId),
-        eq(files.processingStatus, "failed"),
-      ),
+      and(eq(files.tenantId, tenantId), eq(files.processingStatus, "failed")),
     )
     .orderBy(desc(files.createdAt));
 
@@ -1002,18 +1173,24 @@ export async function getFilesBySupplierAndYear(
   tenantId: string,
   year: string,
   supplierId?: string,
-): Promise<Array<{
-  id: string;
-  fileName: string;
-  mimeType: string;
-  size: number;
-  processingStatus: ProcessingStatus | null;
-  createdAt: Date;
-  updatedAt: Date;
-  extraction: any | null;
-  supplier: any | null;
-}>> {
-  logger.info("Getting files by supplier and year", { tenantId, year, supplierId });
+): Promise<
+  Array<{
+    id: string;
+    fileName: string;
+    mimeType: string;
+    size: number;
+    processingStatus: ProcessingStatus | null;
+    createdAt: Date;
+    updatedAt: Date;
+    extraction: any | null;
+    supplier: any | null;
+  }>
+> {
+  logger.info("Getting files by supplier and year", {
+    tenantId,
+    year,
+    supplierId,
+  });
 
   const db = getDb();
   const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
@@ -1026,9 +1203,7 @@ export async function getFilesBySupplierAndYear(
   ];
 
   if (supplierId) {
-    baseConditions.push(
-      eq(documentExtractions.matchedSupplierId, supplierId),
-    );
+    baseConditions.push(eq(documentExtractions.matchedSupplierId, supplierId));
   }
 
   const query = db
@@ -1054,10 +1229,7 @@ export async function getFilesBySupplierAndYear(
       },
     })
     .from(files)
-    .leftJoin(
-      documentExtractions,
-      eq(documentExtractions.fileId, files.id),
-    )
+    .leftJoin(documentExtractions, eq(documentExtractions.fileId, files.id))
     .leftJoin(
       suppliers,
       eq(suppliers.id, documentExtractions.matchedSupplierId),

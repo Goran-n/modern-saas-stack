@@ -1,5 +1,5 @@
-import { getConfig } from "@kibly/config";
-import { createLogger, logAndRethrow } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { createLogger, logAndRethrow } from "@figgy/utils";
 import twilio from "twilio";
 
 const logger = createLogger("twilio-service");
@@ -105,7 +105,7 @@ export class TwilioService {
     phoneNumber: string,
     code: string,
   ): Promise<string> {
-    const message = `Your Kibly verification code is: ${code}\n\nThis code will expire in 10 minutes.`;
+    const message = `Your Figgy verification code is: ${code}\n\nThis code will expire in 10 minutes.`;
     return this.sendMessage(phoneNumber, message);
   }
 

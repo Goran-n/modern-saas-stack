@@ -1,10 +1,15 @@
-import { getConfig } from '@kibly/config';
-import { DeduplicationService } from '@kibly/deduplication';
-import { documentExtractions, files, getDatabaseConnection } from '@kibly/shared-db';
-import { eq, sql } from '@kibly/shared-db';
-import { z } from 'zod';
-import { createTRPCRouter } from '../trpc';
-import { protectedProcedure } from '../trpc/procedures';
+import { getConfig } from "@figgy/config";
+import { DeduplicationService } from "@figgy/deduplication";
+import {
+  documentExtractions,
+  eq,
+  files,
+  getDatabaseConnection,
+  sql,
+} from "@figgy/shared-db";
+import { z } from "zod";
+import { createTRPCRouter } from "../trpc";
+import { protectedProcedure } from "../trpc/procedures";
 
 export const duplicatesRouter = createTRPCRouter({
   /**
@@ -15,19 +20,19 @@ export const duplicatesRouter = createTRPCRouter({
       z.object({
         contentHash: z.string().length(64),
         fileSize: z.number().positive(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.tenantId) {
-        throw new Error('Tenant ID is required');
+        throw new Error("Tenant ID is required");
       }
-      
+
       const deduplicationService = new DeduplicationService();
-      
+
       const result = await deduplicationService.checkFileDuplicate(
         input.contentHash,
         input.fileSize,
-        ctx.tenantId
+        ctx.tenantId,
       );
 
       return {
@@ -44,13 +49,13 @@ export const duplicatesRouter = createTRPCRouter({
     .input(
       z.object({
         extractionId: z.string().uuid(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       if (!ctx.tenantId) {
-        throw new Error('Tenant ID is required');
+        throw new Error("Tenant ID is required");
       }
-      
+
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -66,14 +71,16 @@ export const duplicatesRouter = createTRPCRouter({
       `;
 
       const [extraction] = await db.execute(query);
-      
+
       if (!extraction) {
-        throw new Error('Document extraction not found');
+        throw new Error("Document extraction not found");
       }
 
       // Get duplicate chain if fingerprint exists
       const deduplicationService = new DeduplicationService();
-      const duplicateChain = await deduplicationService.getDuplicateChain(input.extractionId);
+      const duplicateChain = await deduplicationService.getDuplicateChain(
+        input.extractionId,
+      );
 
       return {
         extraction: {
@@ -83,7 +90,7 @@ export const duplicatesRouter = createTRPCRouter({
           duplicateCandidateId: extraction.duplicate_candidate_id,
           invoiceFingerprint: extraction.invoice_fingerprint,
         },
-        duplicateChain: duplicateChain.map(doc => ({
+        duplicateChain: duplicateChain.map((doc) => ({
           id: doc.id,
           fileId: doc.fileId,
           documentType: doc.documentType,
@@ -101,19 +108,19 @@ export const duplicatesRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(20),
         offset: z.number().min(0).default(0),
-        duplicateType: z.enum(['exact', 'likely', 'possible']).optional(),
-      })
+        duplicateType: z.enum(["exact", "likely", "possible"]).optional(),
+      }),
     )
     .query(async ({ ctx, input }) => {
       if (!ctx.tenantId) {
-        throw new Error('Tenant ID is required');
+        throw new Error("Tenant ID is required");
       }
-      
+
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
       let whereClause = sql`f.tenant_id = ${ctx.tenantId} AND de.duplicate_status != 'unique'`;
-      
+
       if (input.duplicateType) {
         whereClause = sql`${whereClause} AND de.duplicate_status = ${input.duplicateType}`;
       }
@@ -166,7 +173,7 @@ export const duplicatesRouter = createTRPCRouter({
           fileSize: row.size,
           documentType: row.document_type,
           duplicateStatus: row.duplicate_status,
-          duplicateConfidence: parseFloat(row.duplicate_confidence || '0'),
+          duplicateConfidence: parseFloat(row.duplicate_confidence || "0"),
           duplicateCandidateId: row.duplicate_candidate_id,
           invoiceFingerprint: row.invoice_fingerprint,
           createdAt: row.created_at,
@@ -184,15 +191,20 @@ export const duplicatesRouter = createTRPCRouter({
     .input(
       z.object({
         extractionId: z.string().uuid(),
-        duplicateStatus: z.enum(['unique', 'duplicate', 'possible_duplicate', 'reviewing']),
+        duplicateStatus: z.enum([
+          "unique",
+          "duplicate",
+          "possible_duplicate",
+          "reviewing",
+        ]),
         duplicateCandidateId: z.string().uuid().optional().nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.tenantId) {
-        throw new Error('Tenant ID is required');
+        throw new Error("Tenant ID is required");
       }
-      
+
       const config = getConfig().getCore();
       const db = getDatabaseConnection(config.DATABASE_URL);
 
@@ -207,7 +219,7 @@ export const duplicatesRouter = createTRPCRouter({
 
       const [exists] = await db.execute(verifyQuery);
       if (!exists) {
-        throw new Error('Document extraction not found');
+        throw new Error("Document extraction not found");
       }
 
       // Update status
@@ -226,16 +238,15 @@ export const duplicatesRouter = createTRPCRouter({
   /**
    * Get file duplicate statistics
    */
-  getDuplicateStats: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (!ctx.tenantId) {
-        throw new Error('Tenant ID is required');
-      }
-      
-      const config = getConfig().getCore();
-      const db = getDatabaseConnection(config.DATABASE_URL);
+  getDuplicateStats: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.tenantId) {
+      throw new Error("Tenant ID is required");
+    }
 
-      const statsQuery = sql`
+    const config = getConfig().getCore();
+    const db = getDatabaseConnection(config.DATABASE_URL);
+
+    const statsQuery = sql`
         SELECT 
           COUNT(DISTINCT f.id) as total_files,
           COUNT(DISTINCT CASE WHEN f.content_hash IS NOT NULL THEN f.id END) as files_with_hash,
@@ -249,7 +260,7 @@ export const duplicatesRouter = createTRPCRouter({
         WHERE f.tenant_id = ${ctx.tenantId}
       `;
 
-      const duplicatesByTypeQuery = sql`
+    const duplicatesByTypeQuery = sql`
         SELECT 
           de.document_type,
           COUNT(*) as count
@@ -260,29 +271,29 @@ export const duplicatesRouter = createTRPCRouter({
         GROUP BY de.document_type
       `;
 
-      const [[stats], duplicatesByType] = await Promise.all([
-        db.execute(statsQuery),
-        db.execute(duplicatesByTypeQuery),
-      ]);
+    const [[stats], duplicatesByType] = await Promise.all([
+      db.execute(statsQuery),
+      db.execute(duplicatesByTypeQuery),
+    ]);
 
-      if (!stats) {
-        throw new Error('Unable to retrieve duplicate statistics');
-      }
+    if (!stats) {
+      throw new Error("Unable to retrieve duplicate statistics");
+    }
 
-      return {
-        totalFiles: parseInt(stats.total_files as string),
-        filesWithHash: parseInt(stats.files_with_hash as string),
-        totalExtractions: parseInt(stats.total_extractions as string),
-        duplicates: {
-          exact: parseInt(stats.exact_duplicates as string),
-          likely: parseInt(stats.likely_duplicates as string),
-          possible: parseInt(stats.possible_duplicates as string),
-        },
-        uniqueInvoices: parseInt(stats.unique_invoices as string),
-        duplicatesByDocumentType: duplicatesByType.map((row: any) => ({
-          documentType: row.document_type,
-          count: parseInt(row.count),
-        })),
-      };
-    }),
+    return {
+      totalFiles: parseInt(stats.total_files as string),
+      filesWithHash: parseInt(stats.files_with_hash as string),
+      totalExtractions: parseInt(stats.total_extractions as string),
+      duplicates: {
+        exact: parseInt(stats.exact_duplicates as string),
+        likely: parseInt(stats.likely_duplicates as string),
+        possible: parseInt(stats.possible_duplicates as string),
+      },
+      uniqueInvoices: parseInt(stats.unique_invoices as string),
+      duplicatesByDocumentType: duplicatesByType.map((row: any) => ({
+        documentType: row.document_type,
+        count: parseInt(row.count),
+      })),
+    };
+  }),
 });

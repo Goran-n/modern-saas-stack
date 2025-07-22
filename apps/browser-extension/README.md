@@ -1,10 +1,10 @@
-# Kibly Browser Extension
+# Figgy Browser Extension
 
-A minimal Chrome/Firefox extension that enables drag-and-drop file transfer from Kibly to Xero.
+A minimal Chrome/Firefox extension that enables drag-and-drop file transfer from Figgy to Xero.
 
 ## Core Functionality
 
-The extension does ONE thing: allows users to drag files from Kibly and drop them into Xero's file upload areas.
+The extension does ONE thing: allows users to drag files from Figgy and drop them into Xero's file upload areas.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ src/
 │   └── env.ts          # Environment configuration
 ├── entrypoints/
 │   ├── background.ts   # Background service worker
-│   ├── content-kibly.ts # Detects file drags on Kibly
+│   ├── content-figgy.ts # Detects file drags on Figgy
 │   ├── content-xero.ts  # Handles file drops on Xero
 │   └── popup/          # Minimal status popup
 ├── types/
@@ -27,22 +27,22 @@ src/
 ```
 
 ### Message Flow
-1. User drags a file on Kibly
-2. `content-kibly.ts` detects the drag and notifies background
+1. User drags a file on Figgy
+2. `content-figgy.ts` detects the drag and notifies background
 3. User drops the file on Xero
 4. `content-xero.ts` requests the file from background
-5. `background.ts` fetches the file from Kibly API
+5. `background.ts` fetches the file from Figgy API
 6. File is delivered to Xero and uploaded
 
 ## Development
 
 ### Environment Setup
 
-The browser extension uses the same Doppler configuration as the main project (`kibly-be`).
+The browser extension uses the same Doppler configuration as the main project (`figgy-be`).
 
 Make sure you have Doppler set up:
 ```bash
-doppler setup  # Select kibly-be project
+doppler setup  # Select figgy-be project
 ```
 
 For local development without Doppler, create a `.env` file:
@@ -76,8 +76,8 @@ bun run clean
 
 1. Run `bun run dev` to start development mode
 2. Load the extension from `.output/chrome-mv3` in Chrome
-3. Navigate to Kibly and Xero in separate tabs
-4. Drag a file from Kibly and drop it on a file upload area in Xero
+3. Navigate to Figgy and Xero in separate tabs
+4. Drag a file from Figgy and drop it on a file upload area in Xero
 
 ## Production Build
 
@@ -94,7 +94,7 @@ The production build will be in `.output/chrome-mv3` (for Chrome) or `.output/fi
 ## Key Design Decisions
 
 1. **Minimal Scope**: Only handles file drag-drop, nothing else
-2. **No Auth Management**: Uses existing session from Kibly web app
+2. **No Auth Management**: Uses existing session from Figgy web app
 3. **Simple Message Protocol**: Direct request-response pattern
 4. **Environment Variables**: Proper separation of dev/prod configs
 5. **TypeScript**: Full type safety for messages and configs

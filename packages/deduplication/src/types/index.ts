@@ -10,7 +10,7 @@ export interface InvoiceDeduplicationResult {
   duplicateExtractionId?: string;
   invoiceFingerprint: string;
   duplicateConfidence: number;
-  duplicateType: 'exact' | 'likely' | 'possible' | 'unique';
+  duplicateType: "exact" | "likely" | "possible" | "unique";
   similarityScores?: {
     vendorMatch: number;
     invoiceNumberMatch: number;

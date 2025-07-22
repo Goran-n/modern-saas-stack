@@ -1,15 +1,15 @@
-import { getConfig } from "@kibly/config";
-import { DeduplicationService } from "@kibly/deduplication";
-import { generateDisplayName } from "@kibly/file-manager";
+import { getConfig } from "@figgy/config";
+import { DeduplicationService } from "@figgy/deduplication";
+import { generateDisplayName } from "@figgy/file-manager";
 import {
   documentExtractions,
+  eq,
   files as filesTable,
   getDatabaseConnection,
   type NewDocumentExtraction,
-  eq,
-} from "@kibly/shared-db";
-import { SupabaseStorageClient } from "@kibly/supabase-storage";
-import { logger } from "@kibly/utils";
+} from "@figgy/shared-db";
+import { SupabaseStorageClient } from "@figgy/supabase-storage";
+import { logger } from "@figgy/utils";
 import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
 import { DocumentExtractor } from "../../lib/document-extraction/extractor";
 import { categorizeFileSchema } from "../../schemas/file";
@@ -151,21 +151,24 @@ export const categorizeFile = schemaTask({
 
       // Check if file hash exists and if it's a duplicate
       const deduplicationService = new DeduplicationService(db);
-      
+
       if (file.contentHash) {
         const duplicateCheck = await deduplicationService.checkFileDuplicate(
           file.contentHash,
           file.size,
           file.tenantId,
-          file.id
+          file.id,
         );
 
         if (duplicateCheck.isDuplicate && duplicateCheck.duplicateFileId) {
-          logger.info("File is a duplicate, checking if duplicate was already processed", {
-            fileId,
-            duplicateFileId: duplicateCheck.duplicateFileId,
-            contentHash: file.contentHash
-          });
+          logger.info(
+            "File is a duplicate, checking if duplicate was already processed",
+            {
+              fileId,
+              duplicateFileId: duplicateCheck.duplicateFileId,
+              contentHash: file.contentHash,
+            },
+          );
 
           // Check if the duplicate file has already been processed
           const [duplicateFile] = await db
@@ -179,20 +182,25 @@ export const categorizeFile = schemaTask({
             const [duplicateExtraction] = await db
               .select()
               .from(documentExtractions)
-              .where(eq(documentExtractions.fileId, duplicateCheck.duplicateFileId))
+              .where(
+                eq(documentExtractions.fileId, duplicateCheck.duplicateFileId),
+              )
               .limit(1);
 
             if (duplicateExtraction) {
               logger.info("Copying extraction results from duplicate file", {
                 fileId,
-                duplicateFileId: duplicateCheck.duplicateFileId
+                duplicateFileId: duplicateCheck.duplicateFileId,
               });
 
               // Generate display name from duplicate's extraction
-              const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+              const fileExtension = file.fileName.substring(
+                file.fileName.lastIndexOf("."),
+              );
               const displayName = generateDisplayName({
                 documentType: duplicateExtraction.documentType,
-                extractedFields: duplicateExtraction.extractedFields as any || null,
+                extractedFields:
+                  (duplicateExtraction.extractedFields as any) || null,
                 supplierName: null, // Will be updated when supplier is matched
                 originalFileName: file.fileName,
                 fileExtension,
@@ -204,7 +212,8 @@ export const categorizeFile = schemaTask({
                 .set({
                   processingStatus: "completed",
                   metadata: {
-                    ...(typeof file.metadata === "object" && file.metadata !== null
+                    ...(typeof file.metadata === "object" &&
+                    file.metadata !== null
                       ? file.metadata
                       : {}),
                     categorized: true,
@@ -370,24 +379,29 @@ export const categorizeFile = schemaTask({
       }
 
       // Check for invoice-level duplicates
-      if (["invoice", "receipt", "purchase_order"].includes(extraction.documentType || "")) {
-        const invoiceDuplicateResult = await deduplicationService.checkInvoiceDuplicate(
-          insertedExtraction.id,
-          extraction.fields as any || {},
-          file.tenantId
-        );
+      if (
+        ["invoice", "receipt", "purchase_order"].includes(
+          extraction.documentType || "",
+        )
+      ) {
+        const invoiceDuplicateResult =
+          await deduplicationService.checkInvoiceDuplicate(
+            insertedExtraction.id,
+            (extraction.fields as any) || {},
+            file.tenantId,
+          );
 
         // Update extraction with duplicate status
         await deduplicationService.updateInvoiceDuplicateStatus(
           insertedExtraction.id,
-          invoiceDuplicateResult
+          invoiceDuplicateResult,
         );
 
         logger.info("Invoice duplicate check completed", {
           extractionId: insertedExtraction.id,
           duplicateType: invoiceDuplicateResult.duplicateType,
           duplicateConfidence: invoiceDuplicateResult.duplicateConfidence,
-          isDuplicate: invoiceDuplicateResult.isDuplicate
+          isDuplicate: invoiceDuplicateResult.isDuplicate,
         });
       }
 
@@ -411,13 +425,17 @@ export const categorizeFile = schemaTask({
             userId: undefined, // userId not available in file processing context
           },
           {
-            concurrencyKey: `tenant-${tenantId}`, // Ensure sequential processing per tenant
+            queue: {
+              concurrencyKey: `tenant-${tenantId}`, // Ensure sequential processing per tenant
+            },
           },
         );
       }
 
       // Generate display name based on extracted data
-      const fileExtension = file.fileName.substring(file.fileName.lastIndexOf("."));
+      const fileExtension = file.fileName.substring(
+        file.fileName.lastIndexOf("."),
+      );
       const displayName = generateDisplayName({
         documentType: extraction.documentType,
         extractedFields: extraction.fields || null,

@@ -1,15 +1,15 @@
-# Comprehensive Financial Data Model Analysis: Kibly vs Midday
+# Comprehensive Financial Data Model Analysis: Figgy vs Midday
 
 ## Executive Summary
 
-This document provides a detailed analysis comparing Kibly's current financial data model with Midday's implementation. Midday has achieved recognition for their streamlined transaction and bank feed management system, particularly in the freelancer and small business market. This analysis examines both architectures to identify opportunities for enhancement in Kibly's financial infrastructure.
+This document provides a detailed analysis comparing Figgy's current financial data model with Midday's implementation. Midday has achieved recognition for their streamlined transaction and bank feed management system, particularly in the freelancer and small business market. This analysis examines both architectures to identify opportunities for enhancement in Figgy's financial infrastructure.
 
 ---
 
 ## Table of Contents
 
 1. [Midday Overview](#midday-overview)
-2. [Current Kibly Financial Schema](#current-kibly-financial-schema)
+2. [Current Figgy Financial Schema](#current-figgy-financial-schema)
 3. [Midday Financial Schema](#midday-financial-schema)
 4. [Detailed Comparison Matrix](#detailed-comparison-matrix)
 5. [Architectural Philosophy Differences](#architectural-philosophy-differences)
@@ -41,7 +41,7 @@ This document provides a detailed analysis comparing Kibly's current financial d
 
 ---
 
-## Current Kibly Financial Schema
+## Current Figgy Financial Schema
 
 ### Core Tables Overview
 
@@ -351,22 +351,22 @@ invoices: {
 
 ## Detailed Comparison Matrix
 
-| **Aspect** | **Kibly** | **Midday** | **Analysis** |
+| **Aspect** | **Figgy** | **Midday** | **Analysis** |
 |------------|-----------|------------|--------------|
-| **Data Model Philosophy** | Enterprise accounting focus<br/>Double-entry bookkeeping<br/>Full audit trail | Simplified transaction tracking<br/>Cash-based accounting<br/>User experience first | **Kibly**: More robust for complex accounting<br/>**Midday**: Faster user adoption |
-| **Multi-tenancy** | True multi-tenant with tenant_id<br/>Full data isolation<br/>Horizontal scaling ready | Team-based isolation<br/>Supabase RLS policies<br/>Vertical scaling focused | **Kibly**: Better for SaaS platform<br/>**Midday**: Simpler implementation |
-| **Bank Integration Architecture** | Provider-agnostic sync jobs<br/>Batch processing focus<br/>Manual import support | Real-time provider connections<br/>Live webhook processing<br/>Automated sync preferred | **Midday**: Superior real-time capabilities<br/>**Kibly**: More flexible for edge cases |
-| **Transaction Model** | Complex transaction types<br/>Reconciliation support<br/>Multiple currencies<br/>Provider data preservation | Simple transaction logging<br/>Category-based organization<br/>Attachment system<br/>Assignment workflows | **Kibly**: Better for accounting compliance<br/>**Midday**: Better for daily usage |
-| **Supplier/Customer Management** | Full supplier lifecycle<br/>Payment terms tracking<br/>Sync status management<br/>International support | Customer-focused model<br/>Invoice generation<br/>Project relationships<br/>Contact management | **Kibly**: More comprehensive B2B<br/>**Midday**: Better for freelancers |
-| **Financial Integrity** | Comprehensive referential integrity<br/>Cascading delete policies<br/>Data consistency enforced | Simpler relationships<br/>Team-based data isolation<br/>Supabase constraints | **Kibly**: Better data protection<br/>**Midday**: Easier maintenance |
-| **Reporting Capabilities** | Built for complex reporting<br/>Double-entry ready<br/>Audit trail complete | Transaction-based reports<br/>Category analytics<br/>Real-time dashboards | **Kibly**: Better for compliance<br/>**Midday**: Better for insights |
-| **Development Velocity** | Complex schema changes<br/>Migration heavy<br/>Testing intensive | Rapid iteration<br/>Schema simplicity<br/>Supabase tooling | **Midday**: Faster development cycles<br/>**Kibly**: More stability required |
+| **Data Model Philosophy** | Enterprise accounting focus<br/>Double-entry bookkeeping<br/>Full audit trail | Simplified transaction tracking<br/>Cash-based accounting<br/>User experience first | **Figgy**: More robust for complex accounting<br/>**Midday**: Faster user adoption |
+| **Multi-tenancy** | True multi-tenant with tenant_id<br/>Full data isolation<br/>Horizontal scaling ready | Team-based isolation<br/>Supabase RLS policies<br/>Vertical scaling focused | **Figgy**: Better for SaaS platform<br/>**Midday**: Simpler implementation |
+| **Bank Integration Architecture** | Provider-agnostic sync jobs<br/>Batch processing focus<br/>Manual import support | Real-time provider connections<br/>Live webhook processing<br/>Automated sync preferred | **Midday**: Superior real-time capabilities<br/>**Figgy**: More flexible for edge cases |
+| **Transaction Model** | Complex transaction types<br/>Reconciliation support<br/>Multiple currencies<br/>Provider data preservation | Simple transaction logging<br/>Category-based organization<br/>Attachment system<br/>Assignment workflows | **Figgy**: Better for accounting compliance<br/>**Midday**: Better for daily usage |
+| **Supplier/Customer Management** | Full supplier lifecycle<br/>Payment terms tracking<br/>Sync status management<br/>International support | Customer-focused model<br/>Invoice generation<br/>Project relationships<br/>Contact management | **Figgy**: More comprehensive B2B<br/>**Midday**: Better for freelancers |
+| **Financial Integrity** | Comprehensive referential integrity<br/>Cascading delete policies<br/>Data consistency enforced | Simpler relationships<br/>Team-based data isolation<br/>Supabase constraints | **Figgy**: Better data protection<br/>**Midday**: Easier maintenance |
+| **Reporting Capabilities** | Built for complex reporting<br/>Double-entry ready<br/>Audit trail complete | Transaction-based reports<br/>Category analytics<br/>Real-time dashboards | **Figgy**: Better for compliance<br/>**Midday**: Better for insights |
+| **Development Velocity** | Complex schema changes<br/>Migration heavy<br/>Testing intensive | Rapid iteration<br/>Schema simplicity<br/>Supabase tooling | **Midday**: Faster development cycles<br/>**Figgy**: More stability required |
 
 ---
 
 ## Architectural Philosophy Differences
 
-### Kibly's Approach: Enterprise-First Architecture
+### Figgy's Approach: Enterprise-First Architecture
 
 **Strengths:**
 1. **Accounting Compliance**: Built for proper double-entry bookkeeping
@@ -404,7 +404,7 @@ invoices: {
 
 ### Bank Integration Capabilities
 
-#### Kibly's Current Implementation
+#### Figgy's Current Implementation
 - **Sync Jobs System**: Batch processing with job queues
 - **Provider Abstraction**: Generic integration interface
 - **Manual Import**: Support for CSV/OFX file uploads
@@ -426,7 +426,7 @@ invoices: {
 
 ### Transaction Management
 
-#### Kibly's Approach
+#### Figgy's Approach
 ```sql
 -- Rich transaction model
 transactions (
@@ -463,7 +463,7 @@ transactions: {
 
 ### Supplier/Customer Management
 
-#### Kibly's Supplier Model
+#### Figgy's Supplier Model
 - Comprehensive business information capture
 - International address and tax support
 - Payment terms and credit management
@@ -483,7 +483,7 @@ transactions: {
 
 ## Strengths and Weaknesses
 
-### Kibly Strengths
+### Figgy Strengths
 1. **Enterprise Readiness**: Full accounting compliance and audit trails
 2. **Data Integrity**: Comprehensive referential integrity and constraints
 3. **Scalability**: True multi-tenant architecture for SaaS platforms
@@ -491,7 +491,7 @@ transactions: {
 5. **International Support**: Multi-currency and tax jurisdiction handling
 6. **Reconciliation**: Advanced bank statement matching and discrepancy tracking
 
-### Kibly Weaknesses
+### Figgy Weaknesses
 1. **User Experience**: Complex interface and setup processes
 2. **Real-time Capabilities**: Batch processing limits responsiveness
 3. **Development Velocity**: Complex schema slows feature development
@@ -520,7 +520,7 @@ transactions: {
 ### Immediate Opportunities (0-3 months)
 
 #### 1. Real-time Bank Integration Layer
-**Objective**: Match Midday's real-time capabilities while maintaining Kibly's robustness
+**Objective**: Match Midday's real-time capabilities while maintaining Figgy's robustness
 
 **Implementation:**
 ```sql
@@ -640,9 +640,9 @@ CREATE TABLE transaction_feeds (
 
 Midday has successfully created a compelling financial management platform by prioritizing user experience and real-time capabilities. Their approach demonstrates the power of simplified data models and modern banking integrations for the freelancer/small business market.
 
-Kibly's current architecture provides a more robust foundation for enterprise accounting needs but lacks the modern user experience and real-time features that make Midday attractive. The strategic opportunity lies in combining both approaches:
+Figgy's current architecture provides a more robust foundation for enterprise accounting needs but lacks the modern user experience and real-time features that make Midday attractive. The strategic opportunity lies in combining both approaches:
 
-**Maintain Kibly's enterprise strengths** (double-entry bookkeeping, audit trails, multi-tenancy) while **adopting Midday's modern capabilities** (real-time sync, AI automation, streamlined UX).
+**Maintain Figgy's enterprise strengths** (double-entry bookkeeping, audit trails, multi-tenancy) while **adopting Midday's modern capabilities** (real-time sync, AI automation, streamlined UX).
 
 This hybrid approach would create a differentiated platform that serves both small businesses seeking simplicity and enterprises requiring compliance and scalability.
 
@@ -651,5 +651,5 @@ The recommended implementation roadmap provides a structured path to achieve thi
 ---
 
 *Document prepared: [Current Date]  
-Analysis based on: Midday.ai GitHub repository and Kibly's current codebase  
+Analysis based on: Midday.ai GitHub repository and Figgy's current codebase  
 Next review: Quarterly assessment of implementation progress*

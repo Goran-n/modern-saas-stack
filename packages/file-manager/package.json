@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/file-manager",
+  "name": "@figgy/file-manager",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -17,13 +17,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kibly/supabase-storage": "workspace:*",
-    "@kibly/utils": "workspace:*",
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/config": "workspace:*",
-    "@kibly/deduplication": "workspace:*",
-    "@trigger.dev/sdk": "^3.0.0-beta.63",
-    "@kibly/jobs": "workspace:*"
+    "@figgy/supabase-storage": "workspace:*",
+    "@figgy/utils": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/config": "workspace:*",
+    "@figgy/deduplication": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.17",
+    "@figgy/jobs": "workspace:*"
   },
   "devDependencies": {}
 }

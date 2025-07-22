@@ -1,5 +1,5 @@
-import type { ParsedQuery, QueryContext } from "../types";
 import { getValidationConfig } from "../config/validation-config";
+import type { ParsedQuery, QueryContext } from "../types";
 
 export interface ValidationResult {
   valid: boolean;
@@ -23,7 +23,7 @@ export async function validateParsedQuery(
     // Validate status values
     if (query.entities.status) {
       const invalidStatuses = query.entities.status.filter(
-        s => !config.entities.status.includes(s)
+        (s) => !config.entities.status.includes(s),
       );
       if (invalidStatuses.length > 0) {
         errors.push(`Invalid status values: ${invalidStatuses.join(", ")}`);
@@ -33,7 +33,7 @@ export async function validateParsedQuery(
     // Validate source values
     if (query.entities.source) {
       const invalidSources = query.entities.source.filter(
-        s => !config.entities.source.includes(s)
+        (s) => !config.entities.source.includes(s),
       );
       if (invalidSources.length > 0) {
         errors.push(`Invalid source values: ${invalidSources.join(", ")}`);
@@ -43,7 +43,7 @@ export async function validateParsedQuery(
     // Validate document types
     if (query.entities.documentType) {
       const invalidTypes = query.entities.documentType.filter(
-        t => !config.entities.documentType.includes(t)
+        (t) => !config.entities.documentType.includes(t),
       );
       if (invalidTypes.length > 0) {
         errors.push(`Invalid document types: ${invalidTypes.join(", ")}`);
@@ -54,7 +54,7 @@ export async function validateParsedQuery(
     if (query.entities.dateRange) {
       const start = new Date(query.entities.dateRange.start);
       const end = new Date(query.entities.dateRange.end);
-      
+
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         errors.push("Invalid date range format");
       } else if (start > end) {
@@ -68,7 +68,10 @@ export async function validateParsedQuery(
     // Validate confidence filter
     if (query.entities.confidence) {
       const { min, max } = config.constraints.confidence;
-      if (query.entities.confidence.value < min || query.entities.confidence.value > max) {
+      if (
+        query.entities.confidence.value < min ||
+        query.entities.confidence.value > max
+      ) {
         errors.push(`Confidence value must be between ${min} and ${max}`);
       }
     }
@@ -112,12 +115,14 @@ export async function validateParsedQuery(
     case "list":
     case "search":
       // These intents should have some filters or search terms
-      if (!query.entities.searchTerm && 
-          !query.entities.status && 
-          !query.entities.source &&
-          !query.entities.documentType &&
-          !query.entities.vendor &&
-          !query.entities.dateRange) {
+      if (
+        !query.entities.searchTerm &&
+        !query.entities.status &&
+        !query.entities.source &&
+        !query.entities.documentType &&
+        !query.entities.vendor &&
+        !query.entities.dateRange
+      ) {
         // Allow but set a default limit
         if (!query.entities.limit) {
           query.entities.limit = config.constraints.limit.default;

@@ -1,6 +1,6 @@
 # Supplier Package
 
-Core supplier management system for Kibly. Handles supplier data ingestion from multiple sources with a unified interface.
+Core supplier management system for Figgy. Handles supplier data ingestion from multiple sources with a unified interface.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ Core supplier management system for Kibly. Handles supplier data ingestion from 
 ## Usage
 
 ```typescript
-import { SupplierIngestionService } from '@kibly/supplier';
+import { SupplierIngestionService } from '@figgy/supplier';
 
 // Ingest from any source
 const result = await ingestionService.ingest({

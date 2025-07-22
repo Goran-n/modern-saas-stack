@@ -1,6 +1,10 @@
 import { MATCH_SCORES } from "../constants";
 import type { Identifiers, Supplier } from "../types";
 import { calculateNameMatchScore } from "../utils/fuzzy-match";
+import {
+  extractDomainsFromSupplier,
+  // domainsMatchWithSubdomains, // TODO: Use when supplier domain loading is implemented
+} from "../utils/domain";
 
 export interface MatchResult {
   matched: boolean;
@@ -21,6 +25,8 @@ export interface MatchResult {
         domainScore?: number;
         identifierScore?: number;
         contactScore?: number;
+        bankAccountScore?: number;
+        confidenceMultiplier?: number;
       }
     | undefined;
 }
@@ -37,6 +43,16 @@ export interface SupplierMatchData {
     type: string;
     value: string;
   }>;
+  bankAccounts?: Array<{
+    iban?: string | null | undefined;
+    accountNumber?: string | null | undefined;
+    bankName?: string | null | undefined;
+    accountName?: string | null | undefined;
+    sortCode?: string | null | undefined;
+  }>;
+  confidence?: {
+    [field: string]: number;
+  };
 }
 
 /**
@@ -144,9 +160,28 @@ export class SupplierMatcher {
     details.nameScore = nameScore;
 
     // 4. Domain matching
-    // Note: We don't have existing supplier domains in the current schema
-    // This would need to be added to the supplier model for full functionality
-    // For now, we'll skip domain matching but keep the framework
+    const supplierDomains = extractDomainsFromSupplier({
+      contacts: supplierData.contacts || [],
+    });
+
+    if (supplierDomains.length > 0) {
+      // TODO: Extract domains from existing supplier attributes (email/website contacts)
+      // For now, this is a placeholder - requires loading supplier attributes
+      // const existingDomains = await this.loadSupplierDomains(existing.id);
+      //
+      // for (const newDomain of supplierDomains) {
+      //   for (const existingDomain of existingDomains) {
+      //     if (domainsMatchWithSubdomains(newDomain, existingDomain)) {
+      //       totalScore += MATCH_SCORES.DOMAIN.EXACT_MATCH;
+      //       details.domainScore = MATCH_SCORES.DOMAIN.EXACT_MATCH;
+      //       if (matchType === "none") matchType = "domain";
+      //       break;
+      //     }
+      //   }
+      // }
+    }
+
+    // Set to 0 for now until supplier domain loading is implemented
     details.domainScore = 0;
 
     // 5. Address matching
@@ -163,6 +198,43 @@ export class SupplierMatcher {
       // Placeholder for now
     }
     details.contactScore = contactScore;
+
+    // 7. Bank account matching
+    let bankAccountScore = 0;
+    if (supplierData.bankAccounts && supplierData.bankAccounts.length > 0) {
+      // TODO: Load supplier bank accounts from attributes table and compare
+      // For now, this is a placeholder - requires loading supplier attributes
+      // bankAccountScore = this.matchBankAccounts(supplierData.bankAccounts, existingBankAccounts);
+    }
+    details.bankAccountScore = bankAccountScore;
+    totalScore += bankAccountScore;
+
+    // 8. Apply confidence weighting if available
+    let confidenceMultiplier = 1.0;
+    if (supplierData.confidence) {
+      // Calculate average confidence from available fields
+      const confidenceValues = Object.values(supplierData.confidence).filter(
+        (c) => c > 0,
+      );
+      if (confidenceValues.length > 0) {
+        const avgConfidence =
+          confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length;
+
+        if (avgConfidence >= 80) {
+          confidenceMultiplier = MATCH_SCORES.CONFIDENCE_MULTIPLIERS.HIGH;
+        } else if (avgConfidence >= 60) {
+          confidenceMultiplier = MATCH_SCORES.CONFIDENCE_MULTIPLIERS.MEDIUM;
+        } else if (avgConfidence >= 40) {
+          confidenceMultiplier = MATCH_SCORES.CONFIDENCE_MULTIPLIERS.LOW;
+        } else {
+          confidenceMultiplier = MATCH_SCORES.CONFIDENCE_MULTIPLIERS.VERY_LOW;
+        }
+      }
+    }
+    details.confidenceMultiplier = confidenceMultiplier;
+
+    // Apply confidence multiplier to total score
+    totalScore = Math.round(totalScore * confidenceMultiplier);
 
     // Determine overall match
     const matched = totalScore > 0;
@@ -232,6 +304,18 @@ export class SupplierMatcher {
       }
       if (hasPhone) score += MATCH_SCORES.CONTACTS.PHONE;
       if (hasWebsite) score += MATCH_SCORES.DOMAIN.EXACT_MATCH;
+    }
+
+    // Bank account data
+    if (supplierData.bankAccounts && supplierData.bankAccounts.length > 0) {
+      const bankAccount = supplierData.bankAccounts[0];
+      if (bankAccount?.iban) {
+        score += MATCH_SCORES.BANK_ACCOUNT.IBAN_MATCH;
+      } else if (bankAccount?.accountNumber) {
+        score += MATCH_SCORES.BANK_ACCOUNT.ACCOUNT_NUMBER;
+      } else if (bankAccount?.bankName) {
+        score += MATCH_SCORES.BANK_ACCOUNT.PARTIAL_MATCH;
+      }
     }
 
     return Math.min(score, 100);

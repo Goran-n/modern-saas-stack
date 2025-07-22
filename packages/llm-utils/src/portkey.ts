@@ -1,5 +1,5 @@
-import { getConfig } from "@kibly/config";
-import { createLogger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { createLogger } from "@figgy/utils";
 import { Portkey } from "portkey-ai";
 
 const logger = createLogger("portkey");

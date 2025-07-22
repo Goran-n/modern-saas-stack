@@ -1,5 +1,6 @@
 import {
   and,
+  type CommunicationMessage,
   communicationMessages,
   count,
   desc,
@@ -7,9 +8,8 @@ import {
   gte,
   lt,
   sql,
-  type CommunicationMessage,
-} from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import { getDb } from "../db";
 
 const logger = createLogger("communication-messages");
@@ -53,7 +53,7 @@ export async function getMessages(
       .select({ count: count() })
       .from(communicationMessages)
       .where(and(...filters));
-    
+
     const total = countResult?.count || 0;
 
     // Get messages
@@ -203,4 +203,3 @@ export async function deleteOldMessages(
     throw error;
   }
 }
-

@@ -52,6 +52,50 @@ export function domainsMatch(
 }
 
 /**
+ * Check if domains match including subdomain matching
+ * e.g., invoices.company.com matches company.com
+ */
+export function domainsMatchWithSubdomains(
+  domain1: string | null,
+  domain2: string | null,
+): boolean {
+  if (!domain1 || !domain2) return false;
+
+  const normalized1 = domain1.toLowerCase().replace("www.", "");
+  const normalized2 = domain2.toLowerCase().replace("www.", "");
+
+  // Exact match
+  if (normalized1 === normalized2) return true;
+
+  // Check if one is a subdomain of the other
+  const parts1 = normalized1.split(".");
+  const parts2 = normalized2.split(".");
+
+  // Ensure we have valid domain parts
+  if (parts1.length < 2 || parts2.length < 2) return false;
+
+  // Get the main domain (last two parts for most domains)
+  const mainDomain1 = parts1.slice(-2).join(".");
+  const mainDomain2 = parts2.slice(-2).join(".");
+
+  // Check if main domains match
+  if (mainDomain1 === mainDomain2) return true;
+
+  // Handle special TLDs like .co.uk, .com.au
+  if (parts1.length > 2 && parts2.length > 2) {
+    // Check if one domain ends with the other
+    if (
+      normalized1.endsWith(`.${normalized2}`) ||
+      normalized2.endsWith(`.${normalized1}`)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Extract all domains from supplier data
  */
 export function extractDomainsFromSupplier(data: {

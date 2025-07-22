@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 
 export interface ErrorMetrics {
@@ -144,12 +144,23 @@ class ErrorTracker {
 // Singleton instance
 export const errorTracker = new ErrorTracker();
 
+// Track interval for cleanup
+let cleanupInterval: NodeJS.Timeout | undefined;
+
 // Clean up old errors every hour
 if (typeof setInterval !== "undefined") {
-  setInterval(
+  cleanupInterval = setInterval(
     () => {
       errorTracker.clearOldErrors();
     },
     60 * 60 * 1000,
   );
+}
+
+// Export cleanup function for graceful shutdown
+export function cleanupErrorTracker(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = undefined;
+  }
 }

@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
-import { getConfig } from "@kibly/config";
+import { getConfig } from "@figgy/config";
 import {
   documentExtractions,
+  eq,
   files as filesTable,
   getDatabaseConnection,
-  eq,
-} from "@kibly/shared-db";
-import { SupabaseStorageClient } from "@kibly/supabase-storage";
-import { logger } from "@kibly/utils";
+} from "@figgy/shared-db";
+import { SupabaseStorageClient } from "@figgy/supabase-storage";
+import { logger } from "@figgy/utils";
 import { program } from "commander";
 import { DocumentExtractor } from "./extractor";
 

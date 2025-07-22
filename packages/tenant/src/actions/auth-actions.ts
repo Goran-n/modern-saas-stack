@@ -1,7 +1,6 @@
-import { getConfig } from "@kibly/config";
-import { tenantMembers, users } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils/logger";
-import { eq } from "@kibly/shared-db";
+import { getConfig } from "@figgy/config";
+import { eq, tenantMembers, users } from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils/logger";
 import jwt from "jsonwebtoken";
 import { getDb } from "../db";
 import type { AuthToken, TenantMember, User } from "../types";

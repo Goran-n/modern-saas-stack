@@ -1,6 +1,11 @@
-import { whatsappMappings, whatsappVerifications } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
-import { and, desc, eq } from "@kibly/shared-db";
+import {
+  and,
+  desc,
+  eq,
+  whatsappMappings,
+  whatsappVerifications,
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import { getDb } from "../db";
 import { getTwilioService } from "../services/twilio";
 
@@ -15,7 +20,7 @@ export async function getWhatsAppVerifications(tenantId: string) {
   logger.info("Getting WhatsApp verifications", { tenantId });
 
   const db = getDb();
-  
+
   try {
     const verifications = await db
       .select()
@@ -114,7 +119,11 @@ export async function createWhatsAppVerification(
   verificationId: string;
   message: string;
 }> {
-  logger.info("Creating WhatsApp verification", { phoneNumber, tenantId, userId });
+  logger.info("Creating WhatsApp verification", {
+    phoneNumber,
+    tenantId,
+    userId,
+  });
 
   const db = getDb();
 

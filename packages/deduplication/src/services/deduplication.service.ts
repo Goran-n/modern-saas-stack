@@ -1,9 +1,13 @@
-import { getConfig } from '@kibly/config';
-import { getDatabaseConnection, type DrizzleClient } from '@kibly/shared-db';
-import { logger } from '@kibly/utils';
-import type { FileDeduplicationResult, InvoiceDeduplicationResult, ExtractedFieldsData } from '../types';
-import { FileDeduplicationService } from './file-deduplication.service';
-import { InvoiceDeduplicationService } from './invoice-deduplication.service';
+import { getConfig } from "@figgy/config";
+import { type DrizzleClient, getDatabaseConnection } from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
+import type {
+  ExtractedFieldsData,
+  FileDeduplicationResult,
+  InvoiceDeduplicationResult,
+} from "../types";
+import { FileDeduplicationService } from "./file-deduplication.service";
+import { InvoiceDeduplicationService } from "./invoice-deduplication.service";
 
 export class DeduplicationService {
   private fileService: FileDeduplicationService;
@@ -13,7 +17,7 @@ export class DeduplicationService {
   constructor(db?: DrizzleClient) {
     const config = getConfig().getCore();
     this.db = db || getDatabaseConnection(config.DATABASE_URL);
-    
+
     this.fileService = new FileDeduplicationService(this.db);
     this.invoiceService = new InvoiceDeduplicationService(this.db);
   }
@@ -25,9 +29,14 @@ export class DeduplicationService {
     contentHash: string,
     fileSize: number,
     tenantId: string,
-    excludeFileId?: string
+    excludeFileId?: string,
   ): Promise<FileDeduplicationResult> {
-    return this.fileService.checkFileDuplicate(contentHash, fileSize, tenantId, excludeFileId);
+    return this.fileService.checkFileDuplicate(
+      contentHash,
+      fileSize,
+      tenantId,
+      excludeFileId,
+    );
   }
 
   /**
@@ -36,15 +45,22 @@ export class DeduplicationService {
   async checkInvoiceDuplicate(
     extractionId: string,
     extractedFields: ExtractedFieldsData,
-    tenantId: string
+    tenantId: string,
   ): Promise<InvoiceDeduplicationResult> {
-    return this.invoiceService.checkInvoiceDuplicate(extractionId, extractedFields, tenantId);
+    return this.invoiceService.checkInvoiceDuplicate(
+      extractionId,
+      extractedFields,
+      tenantId,
+    );
   }
 
   /**
    * Calculate and store file hash
    */
-  async calculateAndStoreFileHash(fileId: string, fileContent: Buffer): Promise<string> {
+  async calculateAndStoreFileHash(
+    fileId: string,
+    fileContent: Buffer,
+  ): Promise<string> {
     return this.fileService.calculateAndStoreFileHash(fileId, fileContent);
   }
 
@@ -53,7 +69,7 @@ export class DeduplicationService {
    */
   async updateInvoiceDuplicateStatus(
     extractionId: string,
-    result: InvoiceDeduplicationResult
+    result: InvoiceDeduplicationResult,
   ): Promise<void> {
     return this.invoiceService.updateDuplicateStatus(extractionId, result);
   }
@@ -65,9 +81,18 @@ export class DeduplicationService {
     fileId: string,
     contentHash: string,
     fileSize: number,
-    tenantId: string
-  ): Promise<{ shouldProcess: boolean; reason?: string; duplicateFileId?: string }> {
-    return this.fileService.shouldProcessFile(fileId, contentHash, fileSize, tenantId);
+    tenantId: string,
+  ): Promise<{
+    shouldProcess: boolean;
+    reason?: string;
+    duplicateFileId?: string;
+  }> {
+    return this.fileService.shouldProcessFile(
+      fileId,
+      contentHash,
+      fileSize,
+      tenantId,
+    );
   }
 
   /**
@@ -93,23 +118,26 @@ export class DeduplicationService {
   }> {
     try {
       // Stage 1: File-level deduplication
-      const contentHash = await this.calculateAndStoreFileHash(params.fileId, params.fileContent);
+      const contentHash = await this.calculateAndStoreFileHash(
+        params.fileId,
+        params.fileContent,
+      );
       const fileResult = await this.checkFileDuplicate(
         contentHash,
         params.fileContent.length,
         params.tenantId,
-        params.fileId
+        params.fileId,
       );
 
       // If exact file duplicate, no need to process
       if (fileResult.isDuplicate) {
-        logger.info('File is exact duplicate, skipping processing', {
+        logger.info("File is exact duplicate, skipping processing", {
           fileId: params.fileId,
-          duplicateFileId: fileResult.duplicateFileId
+          duplicateFileId: fileResult.duplicateFileId,
         });
         return {
           fileResult,
-          shouldProcess: false
+          shouldProcess: false,
         };
       }
 
@@ -119,45 +147,52 @@ export class DeduplicationService {
         invoiceResult = await this.checkInvoiceDuplicate(
           params.extractionId,
           params.extractedFields,
-          params.tenantId
+          params.tenantId,
         );
 
         // Update extraction with duplicate status
-        await this.updateInvoiceDuplicateStatus(params.extractionId, invoiceResult);
+        await this.updateInvoiceDuplicateStatus(
+          params.extractionId,
+          invoiceResult,
+        );
 
         // Determine if we should process based on duplicate type
-        const shouldProcess = invoiceResult.duplicateType === 'unique' || 
-                            invoiceResult.duplicateType === 'possible';
+        const shouldProcess =
+          invoiceResult.duplicateType === "unique" ||
+          invoiceResult.duplicateType === "possible";
 
         if (!shouldProcess) {
-          logger.info('Invoice is likely duplicate, may skip processing', {
+          logger.info("Invoice is likely duplicate, may skip processing", {
             extractionId: params.extractionId,
             duplicateType: invoiceResult.duplicateType,
-            duplicateConfidence: invoiceResult.duplicateConfidence
+            duplicateConfidence: invoiceResult.duplicateConfidence,
           });
         }
 
         return {
           fileResult,
           invoiceResult,
-          shouldProcess
+          shouldProcess,
         };
       }
 
       return {
         fileResult,
-        shouldProcess: true
+        shouldProcess: true,
       };
     } catch (error) {
-      logger.error('Error in full deduplication flow', { error, fileId: params.fileId });
+      logger.error("Error in full deduplication flow", {
+        error,
+        fileId: params.fileId,
+      });
       // In case of error, allow processing to continue
       return {
         fileResult: {
           isDuplicate: false,
-          contentHash: '',
-          confidence: 0
+          contentHash: "",
+          confidence: 0,
         },
-        shouldProcess: true
+        shouldProcess: true,
       };
     }
   }

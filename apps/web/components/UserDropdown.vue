@@ -12,7 +12,7 @@
         color="neutral"
         variant="ghost"
         class="w-full justify-start"
-        :class="[slotProps?.open ? 'bg-gray-100 dark:bg-gray-800' : '']"
+        :class="[slotProps?.open ? 'bg-canvas' : '']"
       >
         <UAvatar
           :alt="user?.email || 'User'"
@@ -22,27 +22,27 @@
         </UAvatar>
 
         <div class="flex-1 text-left min-w-0">
-          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <p class="text-sm font-medium truncate">
             {{ userName }}
           </p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+          <p class="text-xs text-muted truncate">
             {{ user?.email || 'Guest' }}
           </p>
         </div>
 
         <UIcon
           name="i-heroicons-chevron-up-down-20-solid"
-          class="w-4 h-4 text-gray-400 flex-shrink-0"
+          class="w-4 h-4 text-muted flex-shrink-0"
         />
       </UButton>
     </template>
 
     <template #account>
       <div class="px-2 py-2">
-        <p class="text-xs font-medium text-gray-900 dark:text-white">
+        <p class="text-xs font-medium">
           {{ user?.email || 'Guest' }}
         </p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+        <p class="text-xs text-muted mt-0.5">
           Free Plan
         </p>
       </div>
@@ -120,7 +120,7 @@ const items = computed(() => [
   [{
     label: colorMode.value === 'dark' ? 'Light mode' : 'Dark mode',
     icon: colorMode.value === 'dark' ? 'i-heroicons-sun' : 'i-heroicons-moon',
-    iconClass: 'text-yellow-500 dark:text-yellow-400',
+    iconClass: 'text-warning',
     shortcuts: ['⌘', 'T'],
     click: () => toggleColorMode()
   }],
@@ -128,21 +128,21 @@ const items = computed(() => [
   [{
     label: 'Documentation',
     icon: 'i-heroicons-book-open',
-    click: () => window.open('https://docs.kibly.com', '_blank')
+    click: () => window.open('https://docs.figgy.com', '_blank')
   }, {
     label: 'Support',
     icon: 'i-heroicons-lifebuoy',
-    click: () => window.open('https://support.kibly.com', '_blank')
+    click: () => window.open('https://support.figgy.com', '_blank')
   }, {
     label: 'Changelog',
     icon: 'i-heroicons-megaphone',
-    click: () => window.open('https://changelog.kibly.com', '_blank')
+    click: () => window.open('https://changelog.figgy.com', '_blank')
   }],
   // Actions section
   [{
     label: 'Sign out',
     icon: 'i-heroicons-arrow-left-on-rectangle',
-    iconClass: 'text-red-500',
+    iconClass: 'text-secondary',
     shortcuts: ['⌘', 'Q'],
     click: async () => await signOut()
   }]

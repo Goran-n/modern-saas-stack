@@ -18,9 +18,9 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@kibly/api/*": ["./apps/api/src/*"],
-      "@kibly/web/*": ["./apps/web/src/*"],
-      "@kibly/shared-utils/*": ["./packages/shared-utils/src/*"]
+      "@figgy/api/*": ["./apps/api/src/*"],
+      "@figgy/web/*": ["./apps/web/src/*"],
+      "@figgy/shared-utils/*": ["./packages/shared-utils/src/*"]
     }
   },
   "references": [

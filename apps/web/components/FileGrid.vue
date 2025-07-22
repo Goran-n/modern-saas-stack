@@ -12,6 +12,19 @@
     >
       <!-- Action Buttons -->
       <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+        <!-- Reprocess Button -->
+        <button
+          v-if="file.processingStatus !== 'processing'"
+          @click.stop="handleReprocessFile(file)"
+          class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500 hover:bg-primary-50 transition-colors"
+          :class="{ 'animate-spin': reprocessingFiles.has(file.id) }"
+          title="Reprocess file"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.65 2.35C12.2 0.9 10.21 0 8 0C3.58 0 0.01 3.58 0.01 8C0.01 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z" fill="currentColor" class="text-primary-500"/>
+          </svg>
+        </button>
+        
         <!-- Copy Button -->
         <button
           @click.stop="handleCopyFile(file)"
@@ -111,6 +124,54 @@
       </div>
     </UCard>
   </div>
+
+  <!-- Reprocess Confirmation Modal -->
+  <UModal v-model:open="showReprocessModal" title="Confirm Reprocess">
+    <template #body>
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          Are you sure you want to reprocess this file?
+        </p>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-400" />
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+              <div class="mt-2 text-sm text-yellow-700">
+                <ul class="list-disc list-inside space-y-1">
+                  <li>All extracted data will be deleted</li>
+                  <li>Supplier links will be removed</li>
+                  <li>The file will be processed from scratch</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #footer="{ close }">
+      <div class="flex justify-end gap-3">
+        <UButton
+          color="neutral"
+          variant="solid"
+          @click="close"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          color="primary"
+          variant="solid"
+          @click="reprocessFile"
+          :loading="isReprocessing"
+        >
+          Reprocess File
+        </UButton>
+      </div>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
@@ -150,8 +211,18 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Composables
+const toast = useToast()
+const trpc = useTrpc()
+
 // Copy handling
 const copiedFileId = ref<string | null>(null)
+
+// Reprocess handling
+const showReprocessModal = ref(false)
+const isReprocessing = ref(false)
+const fileToReprocess = ref<FileItem | null>(null)
+const reprocessingFiles = ref(new Set<string>())
 
 async function handleCopyFile(file: FileItem) {
   try {
@@ -160,7 +231,7 @@ async function handleCopyFile(file: FileItem) {
     
     // Prepare data for clipboard
     const clipboardData = {
-      type: 'kibly-file',
+      type: 'figgy-file',
       fileId: file.id,
       fileName: fileName,
       tenantId: tenantId,
@@ -177,7 +248,7 @@ async function handleCopyFile(file: FileItem) {
     // Notify extension if it's installed
     if (window.postMessage) {
       window.postMessage({
-        type: 'kibly-file-copied',
+        type: 'figgy-file-copied',
         data: clipboardData
       }, '*')
     }
@@ -209,7 +280,7 @@ const handleDragStart = (event: DragEvent, file: FileItem) => {
   
   // Set drag data for the file
   const dragData = {
-    type: 'kibly-file',
+    type: 'figgy-file',
     fileId: file.id,
     fileName: fileName,
     tenantId: tenantId,
@@ -219,7 +290,7 @@ const handleDragStart = (event: DragEvent, file: FileItem) => {
   event.dataTransfer!.effectAllowed = 'copy'
   
   // 1. Custom data for our extension
-  event.dataTransfer!.setData('application/x-kibly-file', JSON.stringify(dragData))
+  event.dataTransfer!.setData('application/x-figgy-file', JSON.stringify(dragData))
   
   // 2. Text/plain fallback
   event.dataTransfer!.setData('text/plain', JSON.stringify(dragData))
@@ -254,6 +325,49 @@ const handleDragStart = (event: DragEvent, file: FileItem) => {
 
 const handleDragEnd = () => {
   isDragging.value = false
+}
+
+// Reprocess handling
+const handleReprocessFile = (file: FileItem) => {
+  fileToReprocess.value = file
+  showReprocessModal.value = true
+}
+
+const reprocessFile = async () => {
+  if (!fileToReprocess.value) return
+  
+  const fileId = fileToReprocess.value.id
+  isReprocessing.value = true
+  reprocessingFiles.value.add(fileId)
+  
+  try {
+    await trpc.files.reprocess.mutate({ fileId })
+    
+    toast.add({
+      title: 'Reprocessing started',
+      description: 'The file will be processed again from scratch',
+      color: 'primary',
+      icon: 'i-heroicons-arrow-path',
+    })
+    
+    // Close modal
+    showReprocessModal.value = false
+    
+    // Emit event to trigger refresh
+    emit('file-selected', null as any)
+  } catch (error) {
+    console.error('Reprocess failed:', error)
+    toast.add({
+      title: 'Reprocess failed',
+      description: error instanceof Error ? error.message : 'Failed to reprocess file',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle',
+    })
+  } finally {
+    isReprocessing.value = false
+    reprocessingFiles.value.delete(fileId)
+    fileToReprocess.value = null
+  }
 }
 
 // Methods

@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/deduplication",
+  "name": "@figgy/deduplication",
   "version": "1.0.0",
   "description": "Anti-duplication system for files and documents",
   "main": "dist/index.js",
@@ -10,10 +10,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kibly/config": "workspace:*",
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/utils": "workspace:*"
+    "@figgy/config": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/utils": "workspace:*"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }

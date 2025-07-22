@@ -1,8 +1,8 @@
-import { getConfig } from "@kibly/config";
-import type { DrizzleClient } from "@kibly/shared-db";
-import { getDatabaseConnection } from "@kibly/shared-db";
-import type { Tenant } from "@kibly/tenant";
-import { logger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import type { DrizzleClient } from "@figgy/shared-db";
+import { getDatabaseConnection } from "@figgy/shared-db";
+import type { Tenant } from "@figgy/tenant";
+import { logger } from "@figgy/utils";
 import type { User } from "@supabase/supabase-js";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";

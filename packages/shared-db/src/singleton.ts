@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schemas";

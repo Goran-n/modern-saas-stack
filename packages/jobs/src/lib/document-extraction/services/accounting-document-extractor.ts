@@ -1,5 +1,5 @@
-import type { ExtractedFields } from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+import type { ExtractedFields } from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
 import { PROCESSING_CONFIG } from "../constants";
 import { accountingDocumentPrompt } from "../prompts";
 

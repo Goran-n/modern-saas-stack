@@ -1,6 +1,13 @@
-import { and, count, eq, sql, type PostgresJsDatabase } from "@kibly/shared-db";
-import { documentExtractions, files } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
+import {
+  and,
+  count,
+  documentExtractions,
+  eq,
+  files,
+  type PostgresJsDatabase,
+  sql,
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import {
   NLQError,
   NLQErrorCodes,
@@ -34,11 +41,12 @@ export class QueryExecutor {
           result = await this.executeCountQuery(query, db, tenantId);
           break;
         case "list":
-        case "search":
+        case "search": {
           const listResult = await this.executeListQuery(query, db, tenantId);
           result = listResult.items;
           totalCount = listResult.total;
           break;
+        }
         case "aggregate":
           result = await this.executeAggregateQuery(query, db, tenantId);
           break;
@@ -65,12 +73,13 @@ export class QueryExecutor {
       };
     } catch (error) {
       logger.error("Query execution failed", error);
-      
+
       const executionTimeMs = Date.now() - startTime;
-      
+
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Query execution failed",
+        error:
+          error instanceof Error ? error.message : "Query execution failed",
         metadata: {
           executionTimeMs,
           confidence: query.confidence,
@@ -118,7 +127,7 @@ export class QueryExecutor {
 
     if (requiresJoin) {
       const docFilters = this.queryBuilder.buildDocumentFilters(query);
-      
+
       // Get total count
       const [countResult] = await db
         .select({ count: count() })
@@ -192,14 +201,17 @@ export class QueryExecutor {
       if (query.aggregation.groupBy) {
         // Group by query
         const groupByField = this.getGroupByField(query.aggregation.groupBy);
-        
+
         const results = await db
           .select({
             group: groupByField,
             value: aggregationSQL,
           })
           .from(files)
-          .leftJoin(documentExtractions, eq(files.id, documentExtractions.fileId))
+          .leftJoin(
+            documentExtractions,
+            eq(files.id, documentExtractions.fileId),
+          )
           .where(and(...filters, ...docFilters))
           .groupBy(groupByField);
 
@@ -209,7 +221,10 @@ export class QueryExecutor {
         const [result] = await db
           .select({ value: aggregationSQL })
           .from(files)
-          .leftJoin(documentExtractions, eq(files.id, documentExtractions.fileId))
+          .leftJoin(
+            documentExtractions,
+            eq(files.id, documentExtractions.fileId),
+          )
           .where(and(...filters, ...docFilters));
 
         return result?.value || 0;
@@ -218,7 +233,7 @@ export class QueryExecutor {
       if (query.aggregation.groupBy) {
         // Group by query without extraction join
         const groupByField = this.getGroupByField(query.aggregation.groupBy);
-        
+
         const results = await db
           .select({
             group: groupByField,

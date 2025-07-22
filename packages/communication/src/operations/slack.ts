@@ -1,6 +1,11 @@
-import { slackUserMappings, slackWorkspaces } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
-import { desc, eq, sql } from "@kibly/shared-db";
+import {
+  desc,
+  eq,
+  slackUserMappings,
+  slackWorkspaces,
+  sql,
+} from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import { getDb } from "../db";
 
 const logger = createLogger("slack-operations");
@@ -76,12 +81,14 @@ export async function getSlackWorkspaces(tenantId: string): Promise<
 export async function getSlackUserMappings(
   workspaceId: string,
   tenantId: string,
-): Promise<Array<{
-  slackUserId: string;
-  workspaceId: string;
-  userId: string;
-  createdAt: Date;
-}>> {
+): Promise<
+  Array<{
+    slackUserId: string;
+    workspaceId: string;
+    userId: string;
+    createdAt: Date;
+  }>
+> {
   logger.info("Getting Slack user mappings", { workspaceId, tenantId });
 
   const db = getDb();
@@ -91,9 +98,7 @@ export async function getSlackUserMappings(
     const workspace = await db
       .select()
       .from(slackWorkspaces)
-      .where(
-        eq(slackWorkspaces.workspaceId, workspaceId),
-      )
+      .where(eq(slackWorkspaces.workspaceId, workspaceId))
       .limit(1);
 
     if (!workspace[0] || workspace[0].tenantId !== tenantId) {

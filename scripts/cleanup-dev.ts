@@ -59,7 +59,7 @@ function findAndKillProcessesByName(patterns: string[]): number {
 }
 
 async function cleanup() {
-  log("\n🧹 Kibly Development Cleanup Script\n", "blue");
+  log("\n🧹 Figgy Development Cleanup Script\n", "blue");
 
   // Check common development ports
   const portsToCheck = [

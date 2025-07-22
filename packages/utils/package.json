@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/utils",
+  "name": "@figgy/utils",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,6 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "pino": "^9.7.0",
-    "pino-pretty": "^13.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

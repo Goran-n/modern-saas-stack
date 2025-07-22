@@ -61,11 +61,14 @@ export const slackUserMappings = pgTable(
     workspaceId: text("workspace_id").notNull(),
     slackUserId: text("slack_user_id").notNull(),
     userId: uuid("user_id").notNull(),
+    tenantId: uuid("tenant_id").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => {
     return {
-      pk: primaryKey({ columns: [table.workspaceId, table.slackUserId] }),
+      pk: primaryKey({
+        columns: [table.workspaceId, table.slackUserId, table.tenantId],
+      }),
     };
   },
 );
@@ -81,14 +84,14 @@ export const communicationMessages = pgTable("communication_messages", {
   content: text("content").notNull(),
   tenantId: uuid("tenant_id").notNull(),
   userId: uuid("user_id"),
-  
+
   // Query processing fields
   isQuery: boolean("is_query").default(false),
   parsedQuery: jsonb("parsed_query"),
   queryConfidence: numeric("query_confidence", { precision: 3, scale: 2 }),
   response: jsonb("response"),
   processingTimeMs: integer("processing_time_ms"),
-  
+
   // Timestamps
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -109,6 +112,18 @@ export const queryAnalytics = pgTable("query_analytics", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Slack linking tokens for manual account connection
+export const slackLinkingTokens = pgTable("slack_linking_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  token: text("token").notNull().unique(),
+  slackUserId: text("slack_user_id").notNull(),
+  workspaceId: text("workspace_id").notNull(),
+  slackEmail: text("slack_email"),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Type exports
 export type WhatsappVerification = typeof whatsappVerifications.$inferSelect;
 export type NewWhatsappVerification = typeof whatsappVerifications.$inferInsert;
@@ -118,6 +133,8 @@ export type SlackWorkspace = typeof slackWorkspaces.$inferSelect;
 export type NewSlackWorkspace = typeof slackWorkspaces.$inferInsert;
 export type SlackUserMapping = typeof slackUserMappings.$inferSelect;
 export type NewSlackUserMapping = typeof slackUserMappings.$inferInsert;
+export type SlackLinkingToken = typeof slackLinkingTokens.$inferSelect;
+export type NewSlackLinkingToken = typeof slackLinkingTokens.$inferInsert;
 export type CommunicationMessage = typeof communicationMessages.$inferSelect;
 export type NewCommunicationMessage = typeof communicationMessages.$inferInsert;
 export type QueryAnalytic = typeof queryAnalytics.$inferSelect;

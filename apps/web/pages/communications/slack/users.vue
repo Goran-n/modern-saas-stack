@@ -333,19 +333,19 @@ const systemUsers = ref([
   { 
     value: 'user-1', 
     label: 'John Doe', 
-    email: 'john@kibly.com',
+    email: 'john@figgy.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John'
   },
   { 
     value: 'user-2', 
     label: 'Jane Smith', 
-    email: 'jane@kibly.com',
+    email: 'jane@figgy.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane'
   },
   { 
     value: 'user-3', 
     label: 'Bob Wilson', 
-    email: 'bob@kibly.com',
+    email: 'bob@figgy.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob'
   }
 ])
@@ -590,7 +590,7 @@ const formatRelativeTime = (timestamp: string) => {
 
 // SEO
 useSeoMeta({
-  title: 'Slack Users | Kibly',
+  title: 'Slack Users | Figgy',
   description: 'Manage Slack user mappings and permissions',
 })
 </script>

@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 
 export interface RetryOptions {
   maxRetries?: number;

@@ -1,7 +1,7 @@
 /**
  * Browser-safe configuration for the extension
  */
-import { env, validateEnv } from '../config/env';
+import { env, validateEnv } from "../config/env";
 
 interface BrowserConfig {
   SUPABASE_URL: string;
@@ -12,11 +12,11 @@ interface BrowserConfig {
 
 class BrowserConfigManager {
   private config: BrowserConfig;
-  
+
   constructor() {
     // Validate environment variables on initialization
     validateEnv();
-    
+
     this.config = {
       SUPABASE_URL: env.SUPABASE_URL,
       SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY,
@@ -24,14 +24,14 @@ class BrowserConfigManager {
       APP_URL: env.APP_URL,
     };
   }
-  
+
   getCore() {
     return {
       SUPABASE_URL: this.config.SUPABASE_URL,
       SUPABASE_ANON_KEY: this.config.SUPABASE_ANON_KEY,
     };
   }
-  
+
   getApiConfig() {
     return {
       API_URL: this.config.API_URL,

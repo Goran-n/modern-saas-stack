@@ -12,10 +12,10 @@
 <script setup lang="ts">
 // Set default meta tags
 useHead({
-  title: 'Kibly',
-  titleTemplate: '%s - Kibly',
+  title: 'Figgy',
+  titleTemplate: '%s - Figgy',
   meta: [
-    { name: 'description', content: 'Kibly - Your financial management platform' },
+    { name: 'description', content: 'Figgy - Your financial management platform' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ],
   link: [

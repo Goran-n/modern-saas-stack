@@ -1,5 +1,5 @@
-import { supplierAttributes, suppliers, and, eq } from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+import { and, eq, supplierAttributes, suppliers } from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
 import { getDb } from "../db";
 import { SupplierError, SupplierErrors } from "../errors";
 import { SupplierStatus } from "../types";

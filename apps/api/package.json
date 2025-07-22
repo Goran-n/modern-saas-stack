@@ -1,23 +1,23 @@
 {
-  "name": "@kibly/api",
+  "name": "@figgy/api",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "doppler run -- bun run --watch src/index.ts",
+    "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@kibly/communication": "workspace:*",
-    "@kibly/config": "workspace:*",
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/supabase-storage": "workspace:*",
-    "@kibly/tenant": "workspace:*",
-    "@kibly/trpc": "workspace:*",
-    "@kibly/utils": "workspace:*"
+    "@figgy/communication": "workspace:*",
+    "@figgy/config": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/supabase-storage": "workspace:*",
+    "@figgy/tenant": "workspace:*",
+    "@figgy/trpc": "workspace:*",
+    "@figgy/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest"

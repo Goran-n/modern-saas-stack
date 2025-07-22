@@ -1,4 +1,4 @@
-import { logger } from "@kibly/utils";
+import { logger } from "@figgy/utils";
 import { z } from "zod";
 import { DOCUMENT_TYPES } from "../constants";
 import { documentClassificationPrompt } from "../prompts";

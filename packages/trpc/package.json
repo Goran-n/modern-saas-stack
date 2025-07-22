@@ -1,5 +1,5 @@
 {
-  "name": "@kibly/trpc",
+  "name": "@figgy/trpc",
   "version": "1.0.0",
   "type": "module",
   "exports": {
@@ -10,15 +10,17 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@kibly/communication": "workspace:*",
-    "@kibly/config": "workspace:*",
-    "@kibly/deduplication": "workspace:*",
-    "@kibly/jobs": "workspace:*",
-    "@kibly/shared-db": "workspace:*",
-    "@kibly/supabase-storage": "workspace:*",
-    "@kibly/tenant": "workspace:*",
-    "@kibly/utils": "workspace:*",
-    "@trigger.dev/sdk": "^3.3.17"
+    "@figgy/communication": "workspace:*",
+    "@figgy/config": "workspace:*",
+    "@figgy/deduplication": "workspace:*",
+    "@figgy/jobs": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/supabase-storage": "workspace:*",
+    "@figgy/tenant": "workspace:*",
+    "@figgy/utils": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.17",
+    "@trpc/server": "^10.45.2",
+    "superjson": "^2.2.2"
   },
   "devDependencies": {
     "@trpc/client": "^10.45.2",

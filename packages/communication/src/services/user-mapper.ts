@@ -1,12 +1,13 @@
 import {
+  and,
   type DrizzleClient,
+  eq,
   getDatabaseConnection,
   slackUserMappings,
   slackWorkspaces,
   whatsappMappings,
-} from "@kibly/shared-db";
-import { and, eq } from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+} from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
 
 export interface UserMappingResult {
   tenantId: string;
@@ -230,4 +231,3 @@ export class UserMapperService {
     return "error" in result;
   }
 }
-

@@ -1,6 +1,5 @@
-import { tenantMembers, tenants } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils/logger";
-import { eq } from "@kibly/shared-db";
+import { eq, tenantMembers, tenants } from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../db";
 import type {

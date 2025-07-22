@@ -1,31 +1,33 @@
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const user = useSupabaseUser();
-  const tenantStore = useTenantStore();
 
-  console.log("Auth plugin loaded, current user:", user.value?.email);
+  // Ensure we're on the client side and DOM is ready
+  nuxtApp.hook("app:mounted", () => {
+    // Get tenant store after app is mounted to ensure all plugins are initialized
+    const tenantStore = useTenantStore();
 
-  // Watch for user changes
-  watch(
-    user,
-    async (newUser) => {
-      console.log("User changed:", newUser?.email);
-      if (newUser) {
-        // User logged in, fetch their tenants
-        try {
-          console.log("Fetching user tenants...");
-          await tenantStore.fetchUserTenants();
-          console.log(
-            "User tenants fetched, selected tenant:",
-            tenantStore.selectedTenantId,
-          );
-        } catch (error) {
-          console.error("Failed to fetch user tenants on login:", error);
+    // Watch for user changes
+    watch(
+      user,
+      async (newUser, oldUser) => {
+        // Only process if there's an actual change
+        if (newUser?.id === oldUser?.id) return;
+
+        if (newUser) {
+          // User logged in, fetch their tenants
+          try {
+            await tenantStore.fetchUserTenants();
+          } catch (error) {
+            // Error is handled inside fetchUserTenants method
+            // which already logs and continues gracefully
+            console.error("Failed to fetch user tenants:", error);
+          }
+        } else {
+          // User logged out, clear tenant selection
+          tenantStore.$reset();
         }
-      } else {
-        // User logged out, clear tenant selection
-        tenantStore.$reset();
-      }
-    },
-    { immediate: true },
-  );
+      },
+      { immediate: true },
+    );
+  });
 });

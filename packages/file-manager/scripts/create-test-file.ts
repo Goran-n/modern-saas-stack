@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 
-import { getConfig } from "@kibly/config";
-import type { CategorizeFilePayload } from "@kibly/jobs/schemas";
+import { getConfig } from "@figgy/config";
+import type { CategorizeFilePayload } from "@figgy/jobs/schemas";
 // Create a test file record directly in the database
-import { files as filesTable, getDatabaseConnection } from "@kibly/shared-db";
-import { createLogger } from "@kibly/utils";
+import { files as filesTable, getDatabaseConnection } from "@figgy/shared-db";
+import { createLogger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
 
 const logger = createLogger("create-test-file");
@@ -33,7 +33,7 @@ async function main() {
         metadata: {
           importedVia: "test-script",
           originalPath:
-            "/Users/goran/Projects/kibly/files/Invoice-124114EE-0006.pdf",
+            "/Users/goran/Projects/figgy/files/Invoice-124114EE-0006.pdf",
         },
       })
       .returning();

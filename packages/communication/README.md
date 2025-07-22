@@ -5,7 +5,7 @@ This package provides business logic for processing messages from WhatsApp (via 
 ## Installation
 
 ```bash
-bun add @kibly/communication
+bun add @figgy/communication
 ```
 
 ## Setup
@@ -28,7 +28,7 @@ In your API server (using Hono), add the webhook endpoint:
 
 ```typescript
 import { Hono } from 'hono';
-import { handleTwilioWhatsAppWebhook, handleWhatsAppVerification } from '@kibly/communication';
+import { handleTwilioWhatsAppWebhook, handleWhatsAppVerification } from '@figgy/communication';
 
 const app = new Hono();
 
@@ -82,7 +82,7 @@ app.get('/webhooks/whatsapp', (c) => {
 For production, add Twilio signature verification middleware:
 
 ```typescript
-import { TwilioService } from '@kibly/communication';
+import { TwilioService } from '@figgy/communication';
 
 // Create middleware for signature verification
 const verifyTwilioSignature = async (c: Context, next: Next) => {

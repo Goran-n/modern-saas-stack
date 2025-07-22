@@ -1,5 +1,5 @@
-import { formatCurrentUser, getUserById, listUsers } from "@kibly/shared-auth";
-import { createLogger } from "@kibly/utils";
+import { formatCurrentUser, getUserById, listUsers } from "@figgy/shared-auth";
+import { createLogger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
@@ -12,21 +12,21 @@ export const usersRouter = createTRPCRouter({
   list: tenantProcedure.query(async ({ ctx }) => {
     const { tenantId, supabase } = ctx;
 
-    logger.info("Listing users for tenant", { 
+    logger.info("Listing users for tenant", {
       tenantId,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
 
     try {
       // TODO: In the future, filter users by tenant membership
       return await listUsers(supabase);
     } catch (error) {
-      logger.error("Failed to list users", { 
-        error, 
+      logger.error("Failed to list users", {
+        error,
         tenantId,
-        requestId: ctx.requestId 
+        requestId: ctx.requestId,
       });
-      
+
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to list users",
@@ -86,12 +86,12 @@ export const usersRouter = createTRPCRouter({
           throw error;
         }
 
-        logger.error("Failed to get user by ID", { 
-          error, 
+        logger.error("Failed to get user by ID", {
+          error,
           userId,
-          requestId: ctx.requestId 
+          requestId: ctx.requestId,
         });
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to get user",

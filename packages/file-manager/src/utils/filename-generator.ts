@@ -1,4 +1,4 @@
-import { type ExtractedFields } from "@kibly/shared-db";
+import type { ExtractedFields } from "@figgy/shared-db";
 import { format } from "date-fns";
 
 interface FileNameOptions {
@@ -13,7 +13,13 @@ interface FileNameOptions {
  * Generate a descriptive filename based on extracted document data
  */
 export function generateDescriptiveFileName(options: FileNameOptions): string {
-  const { documentType, extractedFields, supplierName, originalFileName, fileExtension } = options;
+  const {
+    documentType,
+    extractedFields,
+    supplierName,
+    originalFileName,
+    fileExtension,
+  } = options;
 
   // If no extraction data available, return sanitized original filename
   if (!extractedFields || !documentType) {
@@ -38,7 +44,7 @@ export function generateDescriptiveFileName(options: FileNameOptions): string {
     contract: "Contract",
     statement: "Statement",
   };
-  
+
   if (documentType && docTypeMap[documentType]) {
     parts.push(docTypeMap[documentType]);
   }
@@ -63,10 +69,14 @@ export function generateDescriptiveFileName(options: FileNameOptions): string {
   }
 
   // Add amount for financial documents
-  if (["invoice", "receipt", "purchase_order", "credit_note"].includes(documentType)) {
+  if (
+    ["invoice", "receipt", "purchase_order", "credit_note"].includes(
+      documentType,
+    )
+  ) {
     const amount = extractedFields.totalAmount?.value;
     const currency = extractedFields.currency?.value || "GBP";
-    
+
     if (amount && !isNaN(parseFloat(amount))) {
       const formattedAmount = parseFloat(amount).toFixed(2);
       parts.push(`${currency}${formattedAmount}`);
@@ -98,7 +108,8 @@ function sanitizeForFileName(str: string): string {
  * Generate a display name for the file (used in UI, not actual filename)
  */
 export function generateDisplayName(options: FileNameOptions): string {
-  const { documentType, extractedFields, supplierName, originalFileName } = options;
+  const { documentType, extractedFields, supplierName, originalFileName } =
+    options;
 
   // If no extraction data available, return original filename without extension
   if (!extractedFields || !documentType) {
@@ -123,7 +134,7 @@ export function generateDisplayName(options: FileNameOptions): string {
     contract: "Contract",
     statement: "Statement",
   };
-  
+
   if (documentType && docTypeMap[documentType]) {
     parts.push(docTypeMap[documentType]);
   }

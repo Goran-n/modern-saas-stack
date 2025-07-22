@@ -2,7 +2,7 @@
 # Communication System Natural Language Query Framework
 
 ## Document Information
-- **Product Name**: Kibly Communication NLQ Framework
+- **Product Name**: Figgy Communication NLQ Framework
 - **Version**: 1.0
 - **Date**: January 2025
 - **Author**: Product Team
@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-The Communication System Natural Language Query (NLQ) Framework enables users to interact with the Kibly platform using natural language queries through WhatsApp, Slack, and other communication channels. This framework will transform how users access information about their files, documents, and system data by allowing conversational queries instead of navigating through traditional UI interfaces.
+The Communication System Natural Language Query (NLQ) Framework enables users to interact with the Figgy platform using natural language queries through WhatsApp, Slack, and other communication channels. This framework will transform how users access information about their files, documents, and system data by allowing conversational queries instead of navigating through traditional UI interfaces.
 
 ## Problem Statement
 

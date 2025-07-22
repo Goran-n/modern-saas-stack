@@ -788,7 +788,7 @@ const addManualMapping = async () => {
 
 // SEO
 useSeoMeta({
-  title: 'WhatsApp Verifications | Kibly',
+  title: 'WhatsApp Verifications | Figgy',
   description: 'Manage WhatsApp phone number verifications and user mappings',
 })
 </script>

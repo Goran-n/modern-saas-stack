@@ -8,7 +8,7 @@ export enum QueryIntent {
   AGGREGATE = "aggregate",
   STATUS = "status",
   GREETING = "greeting",
-  CASUAL = "casual", 
+  CASUAL = "casual",
   FINANCIAL = "financial",
   HELP = "help",
   UNKNOWN = "unknown",
@@ -72,17 +72,9 @@ export interface QueryContext {
 // LLM provider interface
 export interface LLMProvider {
   name: string;
-  parseQuery(
-    query: string,
-    context?: QueryContext,
-  ): Promise<ParsedQuery>;
-  generateSummary(
-    data: SummaryRequest,
-  ): Promise<string>;
-  generateFollowUp(
-    query: ParsedQuery,
-    results: any[],
-  ): Promise<string[]>;
+  parseQuery(query: string, context?: QueryContext): Promise<ParsedQuery>;
+  generateSummary(data: SummaryRequest): Promise<string>;
+  generateFollowUp(query: ParsedQuery, results: any[]): Promise<string[]>;
 }
 
 // Summary request for response generation

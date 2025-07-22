@@ -1,18 +1,18 @@
 import {
-  supplierAttributes,
-  supplierDataSources,
-  suppliers,
   and,
   eq,
   sql,
-} from "@kibly/shared-db";
-import { logger } from "@kibly/utils";
+  supplierAttributes,
+  supplierDataSources,
+  suppliers,
+} from "@figgy/shared-db";
+import { logger } from "@figgy/utils";
 import { CONFIDENCE_THRESHOLDS, DEFAULT_CONFIDENCE } from "../constants";
 import { getDb } from "../db";
 import { SupplierError } from "../errors";
 import { AttributeNormalizer } from "../ingestion/normalizer";
 import { IngestionValidator } from "../ingestion/validator";
-import { SupplierMatcher } from "../matching/matcher";
+import { SupplierMatcher, type SupplierMatchData } from "../matching/matcher";
 import {
   AttributeType,
   type SupplierIngestionRequest,
@@ -72,6 +72,7 @@ export class SupplierIngestionService {
 
       const qualityValidation = SupplierValidator.validate(validateData);
 
+      // Only fail on actual errors (not warnings like missing identifiers)
       if (!qualityValidation.isValid) {
         logger.warn("Supplier data quality validation failed", {
           errors: qualityValidation.errors,
@@ -85,11 +86,12 @@ export class SupplierIngestionService {
         };
       }
 
-      // Log warnings but continue
+      // Log warnings but continue - the scoring system will decide if we have enough data
       if (qualityValidation.warnings.length > 0) {
         logger.info("Supplier data quality warnings", {
           warnings: qualityValidation.warnings,
           confidence: qualityValidation.confidence,
+          name: validated.data.name,
         });
       }
 
@@ -124,10 +126,22 @@ export class SupplierIngestionService {
           name: validated.data.name,
           addresses: validated.data.addresses,
           contacts: validated.data.contacts,
+          bankAccounts: validated.data.bankAccounts,
         };
 
         const creationScore =
           SupplierMatcher.calculateCreationScore(supplierMatchData);
+
+        logger.info("Supplier creation score calculated", {
+          name: validated.data.name,
+          score: creationScore,
+          requiredScore: CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER,
+          hasIdentifiers:
+            !!supplierMatchData.identifiers.companyNumber ||
+            !!supplierMatchData.identifiers.vatNumber,
+          hasAddress: supplierMatchData.addresses.length > 0,
+          hasContacts: supplierMatchData.contacts.length > 0,
+        });
 
         if (creationScore >= CONFIDENCE_THRESHOLDS.CREATE_SUPPLIER) {
           return await this.createNewSupplier(validated);
@@ -171,10 +185,16 @@ export class SupplierIngestionService {
         // VAT number constraint removed - multiple trading names can share VAT
       }
 
+      // Ensure we always have a meaningful error message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : error?.toString() || "Unknown error during supplier ingestion";
+
       return {
         success: false,
         action: "skipped",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
       };
     }
   }
@@ -192,11 +212,14 @@ export class SupplierIngestionService {
       .where(eq(suppliers.tenantId, tenantId));
 
     // Use enhanced matching with scoring
-    const supplierMatchData = {
+    const supplierMatchData: SupplierMatchData = {
       identifiers: data.identifiers,
       name: data.name,
       addresses: data.addresses,
       contacts: data.contacts,
+      bankAccounts: data.bankAccounts,
+      // Pass confidence scores if available from extraction
+      confidence: (data as any).confidence,
     };
 
     return SupplierMatcher.matchWithScoring(

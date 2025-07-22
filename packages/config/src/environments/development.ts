@@ -47,6 +47,12 @@ export const developmentConfigSchema = z
     WEB_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     API_URL: z.string().url().default("http://localhost:5001"),
     DEV_MODE: z.coerce.boolean().default(true),
+
+    // Base URL for OAuth callbacks and webhooks
+    BASE_URL: z
+      .string()
+      .url()
+      .min(1, "BASE_URL is required for OAuth and webhooks"),
   })
   .merge(triggerSchema)
   .merge(portkeySchema)

@@ -1,4 +1,4 @@
-import { createLogger } from "@kibly/utils";
+import { createLogger } from "@figgy/utils";
 import { createClient } from "@supabase/supabase-js";
 import jwt from "jsonwebtoken";
 

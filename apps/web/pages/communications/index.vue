@@ -387,7 +387,7 @@ const formatRelativeTime = (timestamp: string) => {
 
 // SEO
 useSeoMeta({
-  title: 'Communications | Kibly',
+  title: 'Communications | Figgy',
   description: 'Monitor WhatsApp and Slack message processing and file handling',
 })
 </script>

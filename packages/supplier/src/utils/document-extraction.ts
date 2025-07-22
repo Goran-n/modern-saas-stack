@@ -1,4 +1,4 @@
-import type { ExtractedFields, ExtractedFieldValue } from "@kibly/shared-db";
+import type { ExtractedFields, ExtractedFieldValue } from "@figgy/shared-db";
 
 /**
  * Simplified vendor data extracted from documents

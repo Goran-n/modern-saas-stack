@@ -19,10 +19,10 @@
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "paths": {
-      "@kibly/tenant": ["./packages/tenant/src"],
-      "@kibly/shared-db": ["./packages/shared-db/src"],
-      "@kibly/shared-auth": ["./packages/shared-auth/src"],
-      "@kibly/utils": ["./packages/utils/src"]
+      "@figgy/tenant": ["./packages/tenant/src"],
+      "@figgy/shared-db": ["./packages/shared-db/src"],
+      "@figgy/shared-auth": ["./packages/shared-auth/src"],
+      "@figgy/utils": ["./packages/utils/src"]
     }
   }
 }

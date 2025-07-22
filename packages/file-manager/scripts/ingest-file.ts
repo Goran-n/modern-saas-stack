@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
-import { getConfig } from "@kibly/config";
-import { uploadFile } from "@kibly/file-manager";
-import { createLogger } from "@kibly/utils";
+import { getConfig } from "@figgy/config";
+import { uploadFile } from "@figgy/file-manager";
+import { createLogger } from "@figgy/utils";
 import { readFile } from "fs/promises";
 import { basename } from "path";
 import { parseArgs } from "util";

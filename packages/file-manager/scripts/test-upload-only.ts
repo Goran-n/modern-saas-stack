@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { getConfig } from "@kibly/config";
+import { getConfig } from "@figgy/config";
 import { createClient } from "@supabase/supabase-js";
 import { readFile } from "fs/promises";
 import { basename } from "path";

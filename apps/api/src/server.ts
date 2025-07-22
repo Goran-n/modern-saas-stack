@@ -1,14 +1,23 @@
 import { trpcServer } from "@hono/trpc-server";
 import {
+  completeSlackOAuth,
+  consumeLinkingToken,
+  createSlackUserTenantMapping,
+  generateSlackOAuthUrl,
+  getSlackInstaller,
+  getUserAvailableTenants,
   handleSlackEventWebhook,
+  handleSlackMultiTenantWebhook,
   handleTwilioWhatsAppWebhook,
   handleWhatsAppVerification,
+  SlackResponseService,
+  verifyLinkingToken,
   WhatsAppResponseService,
-} from "@kibly/communication";
-import { getConfig } from "@kibly/config";
-import { files, getDatabaseConnection, and, eq } from "@kibly/shared-db";
-import { appRouter, createContext } from "@kibly/trpc";
-import { logger, logError } from "@kibly/utils";
+} from "@figgy/communication";
+import { getConfig } from "@figgy/config";
+import { and, eq, files, getDatabaseConnection } from "@figgy/shared-db";
+import { appRouter, createContext } from "@figgy/trpc";
+import { logError, logger } from "@figgy/utils";
 import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -16,7 +25,7 @@ import { logger as honoLogger } from "hono/logger";
 
 export function createHonoApp() {
   const app = new Hono();
-  
+
   // Ensure configuration is validated
   const configManager = getConfig();
   if (!configManager.isValid()) {
@@ -25,7 +34,7 @@ export function createHonoApp() {
   const config = configManager.getCore();
   // Use process.env directly since webConfig is not available in API context
   const productionAppUrl =
-    process.env.PRODUCTION_APP_URL || "https://app.kibly.com";
+    process.env.PRODUCTION_APP_URL || "https://app.figgy.com";
   const additionalOrigins = process.env.ADDITIONAL_CORS_ORIGINS;
 
   // Build CORS origins from config
@@ -204,11 +213,16 @@ export function createHonoApp() {
               );
             }
           } catch (responseError) {
-            logError(logger, "Failed to send WhatsApp response", responseError, {
-              responseTextLength: result.metadata?.responseText?.length,
-              from,
-              hasQuickReplies: !!(result.metadata?.quickReplies?.length),
-            });
+            logError(
+              logger,
+              "Failed to send WhatsApp response",
+              responseError,
+              {
+                responseTextLength: result.metadata?.responseText?.length,
+                from,
+                hasQuickReplies: !!result.metadata?.quickReplies?.length,
+              },
+            );
           }
         }
 
@@ -233,9 +247,8 @@ export function createHonoApp() {
         );
       }
     } catch (error) {
-      // Use pino's built-in error serialization for better error handling
       logger.error({
-        err: error, // This will use pino's error serializer
+        err: error,
         url: c.req.url,
         method: c.req.method,
         contentType: c.req.header("content-type"),
@@ -298,14 +311,111 @@ export function createHonoApp() {
 
   // Slack event webhook endpoint
   app.post("/webhooks/slack", async (c) => {
+    logger.info("Slack webhook endpoint hit", {
+      headers: {
+        "content-type": c.req.header("content-type"),
+        "x-slack-signature": c.req.header("x-slack-signature")
+          ? "present"
+          : "missing",
+        "x-slack-request-timestamp": c.req.header("x-slack-request-timestamp"),
+      },
+    });
+
     try {
-      const body = await c.req.json();
+      // Get raw body for signature verification
+      const rawBody = await c.req.text();
+
+      if (!rawBody) {
+        logger.warn("Empty request body received from Slack");
+        return c.json({ error: "Empty request body" }, 400);
+      }
+
+      let body;
+      try {
+        body = JSON.parse(rawBody);
+      } catch (parseError) {
+        logger.error("Failed to parse Slack webhook body", {
+          error:
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError),
+          bodyLength: rawBody.length,
+          bodyPreview: rawBody.substring(0, 200),
+        });
+        return c.json({ error: "Invalid JSON body" }, 400);
+      }
+
+      // Verify Slack signature
+      const signature = c.req.header("x-slack-signature");
+      const timestamp = c.req.header("x-slack-request-timestamp");
+
+      if (signature && timestamp) {
+        const { getSlackService } = await import("@figgy/communication");
+        const slackService = getSlackService();
+
+        // Check timestamp to prevent replay attacks (must be within 5 minutes)
+        const requestTime = parseInt(timestamp);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (Math.abs(currentTime - requestTime) > 300) {
+          logger.warn("Slack webhook timestamp too old", {
+            timestamp,
+            requestTime,
+            currentTime,
+            difference: Math.abs(currentTime - requestTime),
+            maxAllowed: 300,
+          });
+          return c.json({ error: "Request timestamp invalid" }, 400);
+        }
+
+        // Verify signature
+        const isValid = slackService.verifyRequestSignature(
+          signature,
+          timestamp,
+          rawBody,
+        );
+
+        if (!isValid) {
+          logger.warn("Invalid Slack webhook signature", {
+            hasSignature: !!signature,
+            hasTimestamp: !!timestamp,
+            signatureLength: signature?.length,
+            timestampValue: timestamp,
+          });
+          return c.json({ error: "Invalid signature" }, 401);
+        }
+      }
+
       logger.info("Slack webhook received", {
         type: body.type,
         event: body.event?.type,
       });
 
-      const result = await handleSlackEventWebhook(body);
+      let result;
+      try {
+        result = await handleSlackMultiTenantWebhook(body);
+      } catch (handlerError) {
+        // Log the specific handler error
+        logger.error("Handler threw error", {
+          error:
+            handlerError instanceof Error
+              ? handlerError.message
+              : String(handlerError),
+          stack: handlerError instanceof Error ? handlerError.stack : undefined,
+          errorType: handlerError?.constructor?.name,
+          eventType: body.event?.type,
+          teamId: body.team_id,
+          userId: body.event?.user,
+        });
+        throw handlerError; // Re-throw to be caught by outer catch
+      }
+
+      logger.info("Slack webhook handler result", {
+        success: result.success,
+        hasError: !!result.error,
+        error: result.error,
+        hasMetadata: !!result.metadata,
+        requiresRegistration: result.requiresRegistration,
+      });
 
       // Handle URL verification challenge
       if ("challenge" in result) {
@@ -314,9 +424,74 @@ export function createHonoApp() {
 
       // Return success for normal events
       if (result.success) {
+        // Check if we have a response to send back
+        if (result.metadata?.responseText && body.event) {
+          const workspaceId = body.team_id;
+          const channelId = body.event.channel;
+          const threadTs = body.event.thread_ts || body.event.ts;
+
+          try {
+            const responseService = new SlackResponseService();
+
+            // Format message with tenant context if in DM
+            let message = result.metadata.responseText;
+            if (
+              result.metadata.isDM &&
+              result.metadata.tenantName &&
+              !result.metadata.skipNLQ
+            ) {
+              message = `_[${result.metadata.tenantName}]_ ${message}`;
+            }
+
+            await responseService.sendMessage(workspaceId, channelId, message, {
+              threadTs: threadTs,
+              blocks: result.metadata.blocks,
+              unfurlLinks: false,
+              unfurlMedia: false,
+            });
+          } catch (responseError) {
+            logError(logger, "Failed to send Slack response", responseError, {
+              workspaceId,
+              channelId,
+              responseTextLength: result.metadata?.responseText?.length,
+              hasBlocks: !!result.metadata?.blocks,
+            });
+
+            // If it's a bot token error, we can't send via API
+            // Slack Events API doesn't support synchronous responses
+            // User will need to complete OAuth flow first
+          }
+        }
+
         return c.json({ ok: true });
       } else {
-        logger.warn("Slack webhook processing failed", { error: result.error });
+        logger.warn("Slack webhook processing failed", {
+          error: result.error,
+          requiresRegistration: result.requiresRegistration,
+          metadata: result.metadata,
+          eventType: body.event?.type,
+          teamId: body.team_id,
+          userId: body.event?.user,
+          text: body.event?.text?.substring(0, 100),
+        });
+
+        // If it's a workspace configuration error, provide OAuth URL
+        if (result.error?.includes("Figgy not configured")) {
+          const baseUrl = config.BASE_URL;
+          if (baseUrl) {
+            logger.info("Figgy needs OAuth setup for workspace", {
+              workspaceId: body.team_id,
+              installUrl: `${baseUrl}/oauth/slack/install?tenantId=YOUR_TENANT_ID`,
+              message:
+                "Admin needs to visit the install URL with their tenant ID to complete Figgy installation",
+            });
+          } else {
+            logger.warn(
+              "BASE_URL not configured - cannot provide OAuth install URL",
+            );
+          }
+        }
+
         const statusCode = result.requiresRegistration ? 403 : 400;
         return c.json(
           {
@@ -328,8 +503,368 @@ export function createHonoApp() {
         );
       }
     } catch (error) {
-      logger.error("Slack webhook error", { error });
-      return c.json({ ok: false, error: "Internal server error" }, 500);
+      // Log error with context
+      logError(logger, "Slack webhook error", error, {
+        url: c.req.url,
+        method: c.req.method,
+        headers: {
+          "content-type": c.req.header("content-type"),
+          "x-slack-signature": c.req.header("x-slack-signature")
+            ? "present"
+            : "missing",
+          "x-slack-request-timestamp": c.req.header(
+            "x-slack-request-timestamp",
+          ),
+        },
+        bodyType: body?.type,
+        eventType: body?.event?.type,
+        teamId: body?.team_id,
+        userId: body?.event?.user,
+        messagePreview: body?.event?.text?.substring(0, 100),
+      });
+
+      // Return more specific error messages based on error type
+      let statusCode = 500;
+      let errorMessage = "Internal server error";
+
+      if (error instanceof Error) {
+        if (
+          error.message.includes("duplicate key") ||
+          error.message.includes("unique constraint")
+        ) {
+          // For duplicate messages, return success to prevent Slack retries
+          logger.info(
+            "Returning success for duplicate message to prevent Slack retries",
+          );
+          return c.json({ ok: true });
+        } else if (
+          error.message.includes("authentication") ||
+          error.message.includes("unauthorized")
+        ) {
+          statusCode = 401;
+          errorMessage = "Authentication failed";
+        } else if (error.message.includes("validation")) {
+          statusCode = 400;
+          errorMessage = "Invalid request";
+        }
+      }
+
+      return c.json({ ok: false, error: errorMessage }, statusCode);
+    }
+  });
+
+  // Slack OAuth endpoints
+  app.get("/oauth/slack/install", async (c) => {
+    const tenantId = c.req.header("x-tenant-id") || c.req.query("tenantId");
+
+    if (!tenantId) {
+      return c.json({ error: "Tenant ID required" }, 401);
+    }
+
+    try {
+      const authUrl = await generateSlackOAuthUrl(tenantId);
+      return c.redirect(authUrl);
+    } catch (error) {
+      logger.error("Failed to generate Slack OAuth URL", {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        tenantId,
+      });
+      return c.json(
+        {
+          error: "Failed to initiate OAuth flow",
+          details: error instanceof Error ? error.message : String(error),
+        },
+        500,
+      );
+    }
+  });
+
+  app.get("/oauth/slack/callback", async (c) => {
+    const code = c.req.query("code");
+    const state = c.req.query("state");
+    const error = c.req.query("error");
+
+    if (error) {
+      logger.warn("Slack OAuth cancelled", { error });
+      return c.html(`
+        <html>
+          <body>
+            <h1>Slack Installation Cancelled</h1>
+            <p>${error}</p>
+            <script>window.close();</script>
+          </body>
+        </html>
+      `);
+    }
+
+    if (!code || !state) {
+      return c.json({ error: "Missing code or state" }, 400);
+    }
+
+    try {
+      // Extract tenantId from state - it's encoded in the JWT state by Slack OAuth
+      let tenantId: string | null = null;
+
+      try {
+        // Decode the JWT state to get the metadata
+        const decodedState = JSON.parse(
+          Buffer.from(state.split(".")[1], "base64").toString(),
+        );
+        logger.info("Decoded state", {
+          decodedState: JSON.stringify(decodedState, null, 2),
+          hasInstallOptions: !!decodedState.installOptions,
+          metadata: decodedState.installOptions?.metadata,
+        });
+
+        if (decodedState.installOptions?.metadata) {
+          const metadata = JSON.parse(decodedState.installOptions.metadata);
+          tenantId = metadata.tenantId;
+          logger.info("Extracted tenantId from state", { tenantId });
+        }
+      } catch (stateError) {
+        logger.warn("Failed to extract tenantId from state", {
+          error:
+            stateError instanceof Error
+              ? stateError.message
+              : String(stateError),
+          state: state.substring(0, 100) + "...",
+        });
+      }
+
+      if (!tenantId) {
+        logger.error("No valid tenantId found in OAuth callback");
+        return c.json(
+          { error: "Invalid OAuth state - missing tenant information" },
+          400,
+        );
+      }
+
+      logger.info("Processing Slack OAuth callback", {
+        code: code.substring(0, 10) + "...",
+        tenantId,
+        stateParam: state.substring(0, 50) + "...",
+        tenantIdSource:
+          tenantId === "default-tenant" ? "default" : "extracted from state",
+      });
+
+      const result = await completeSlackOAuth(code, state, tenantId);
+
+      if (result.success) {
+        return c.html(`
+          <html>
+            <body>
+              <h1>Slack Installation Successful!</h1>
+              <p>You can now close this window and return to FIGGY.</p>
+              <script>
+                // Post message to parent window if opened as popup
+                if (window.opener) {
+                  window.opener.postMessage({ 
+                    type: 'slack-oauth-success', 
+                    workspaceId: '${result.workspaceId}' 
+                  }, '*');
+                }
+                setTimeout(() => window.close(), 3000);
+              </script>
+            </body>
+          </html>
+        `);
+      } else {
+        return c.html(`
+          <html>
+            <body>
+              <h1>Slack Installation Failed</h1>
+              <p>${result.error}</p>
+              <script>window.close();</script>
+            </body>
+          </html>
+        `);
+      }
+    } catch (error) {
+      logger.error("Slack OAuth callback error", { error });
+      return c.json({ error: "OAuth callback failed" }, 500);
+    }
+  });
+
+  // Slack account linking endpoint for team members
+  app.get("/slack/link", async (c) => {
+    const token = c.req.query("token");
+
+    if (!token) {
+      return c.html(`
+        <html>
+          <head>
+            <title>Link Slack Account - Figgy</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0;
+                padding: 40px;
+                background-color: #f5f5f5;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+              }
+              .container {
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                max-width: 500px;
+                text-align: center;
+              }
+              h1 {
+                color: #333;
+                margin-bottom: 20px;
+              }
+              p {
+                color: #666;
+                line-height: 1.6;
+              }
+              .error {
+                background-color: #fee;
+                color: #c33;
+                padding: 20px;
+                border-radius: 4px;
+                margin: 20px 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Invalid Link</h1>
+              <div class="error">
+                <p>This link is invalid or has expired.</p>
+              </div>
+              <p>Please return to Slack and request a new link.</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+
+    try {
+      // Verify the linking token
+      const tokenInfo = await verifyLinkingToken(token);
+
+      if (!tokenInfo.valid) {
+        return c.html(`
+          <html>
+            <head>
+              <title>Link Slack Account - Figgy</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  margin: 0;
+                  padding: 40px;
+                  background-color: #f5f5f5;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                }
+                .container {
+                  background: white;
+                  padding: 40px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                  max-width: 500px;
+                  text-align: center;
+                }
+                h1 {
+                  color: #333;
+                  margin-bottom: 20px;
+                }
+                p {
+                  color: #666;
+                  line-height: 1.6;
+                }
+                .error {
+                  background-color: #fee;
+                  color: #c33;
+                  padding: 20px;
+                  border-radius: 4px;
+                  margin: 20px 0;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>Link Expired</h1>
+                <div class="error">
+                  <p>This link has expired or has already been used.</p>
+                </div>
+                <p>Please return to Slack and request a new link.</p>
+              </div>
+            </body>
+          </html>
+        `);
+      }
+
+      // Store token info in session for after authentication
+      // For now, we'll use a simple redirect with token in URL
+      // In production, you'd want to use proper session management
+      const webAppUrl =
+        config.NODE_ENV === "production"
+          ? process.env.PRODUCTION_APP_URL || "https://app.figgy.com"
+          : "http://localhost:3000";
+
+      // Redirect to web app for authentication
+      return c.redirect(`${webAppUrl}/slack-link?token=${token}`);
+    } catch (error) {
+      logger.error("Slack link verification error", { error });
+      return c.html(`
+        <html>
+          <head>
+            <title>Link Slack Account - Figgy</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0;
+                padding: 40px;
+                background-color: #f5f5f5;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+              }
+              .container {
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                max-width: 500px;
+                text-align: center;
+              }
+              h1 {
+                color: #333;
+                margin-bottom: 20px;
+              }
+              p {
+                color: #666;
+                line-height: 1.6;
+              }
+              .error {
+                background-color: #fee;
+                color: #c33;
+                padding: 20px;
+                border-radius: 4px;
+                margin: 20px 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Error</h1>
+              <div class="error">
+                <p>An error occurred while processing your request.</p>
+              </div>
+              <p>Please try again or contact support.</p>
+            </div>
+          </body>
+        </html>
+      `);
     }
   });
 
@@ -358,7 +893,7 @@ export function createHonoApp() {
 
   app.get("/health", async (c) => {
     const { checkDatabaseHealth, getConnectionStats } = await import(
-      "@kibly/shared-db"
+      "@figgy/shared-db"
     );
 
     try {

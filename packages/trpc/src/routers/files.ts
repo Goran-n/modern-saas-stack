@@ -1,17 +1,18 @@
-import { 
-  uploadFileFromBase64,
-  generateSignedUrl,
-  listFiles,
+import {
   deleteFileByUser,
+  generateSignedUrl,
   getFileById,
-  getFileWithExtractions,
-  processBatchFiles,
-  getFilesGroupedByYear,
   getFilesByProcessingStatus,
   getFilesBySupplierAndYear,
+  getFilesGroupedByYear,
+  getFileWithExtractions,
+  listFiles,
+  processBatchFiles,
+  reprocessFile,
   setDb as setFileManagerDb,
-} from "@kibly/file-manager";
-import { logger } from "@kibly/utils";
+  uploadFileFromBase64,
+} from "@figgy/file-manager";
+import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
@@ -127,8 +128,9 @@ export const filesRouter = createTRPCRouter({
 
         return result;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
         if (errorMessage === "File not found") {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -173,7 +175,11 @@ export const filesRouter = createTRPCRouter({
       const { fileId } = input;
 
       try {
-        const success = await deleteFileByUser(fileId, ctx.tenantId, ctx.user.id);
+        const success = await deleteFileByUser(
+          fileId,
+          ctx.tenantId,
+          ctx.user.id,
+        );
 
         if (!success) {
           throw new TRPCError({
@@ -269,8 +275,9 @@ export const filesRouter = createTRPCRouter({
 
         return result;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
         if (errorMessage === "No files found") {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -354,6 +361,59 @@ export const filesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to retrieve files",
+        });
+      }
+    }),
+
+  reprocess: fileManagerProcedure
+    .input(
+      z.object({
+        fileId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { fileId } = input;
+
+      try {
+        const result = await reprocessFile(fileId, ctx.tenantId);
+
+        logger.info("File reprocessing triggered", {
+          fileId,
+          jobHandle: result.jobHandle,
+          tenantId: ctx.tenantId,
+          userId: ctx.user.id,
+          requestId: ctx.requestId,
+        });
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
+        if (errorMessage === "File not found") {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "File not found",
+          });
+        }
+
+        if (errorMessage === "File is already being processed") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "File is already being processed",
+          });
+        }
+
+        logger.error("Failed to reprocess file", {
+          error,
+          fileId,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to reprocess file",
         });
       }
     }),

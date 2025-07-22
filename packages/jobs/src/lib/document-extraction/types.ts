@@ -2,7 +2,7 @@ import type {
   CompanyProfile,
   ExtractedFields,
   ExtractedFieldValue,
-} from "@kibly/shared-db";
+} from "@figgy/shared-db";
 import { z } from "zod";
 import {
   DOCUMENT_TYPES,
@@ -165,4 +165,4 @@ export type {
   ExtractionError,
   FieldAnnotation,
   LineItem,
-} from "@kibly/shared-db";
+} from "@figgy/shared-db";
