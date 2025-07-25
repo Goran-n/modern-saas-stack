@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "doppler run -- npx trigger.dev@latest dev",
-    "deploy": "doppler run -- npx trigger.dev@latest deploy",
-    "deploy:staging": "doppler run -- npx trigger.dev@latest deploy --env staging",
-    "deploy:prod": "doppler run -- npx trigger.dev@latest deploy --env prod",
+    "dev": "doppler run -p figgy-be -c dev -- npx trigger.dev@latest dev",
+    "deploy": "doppler run -p figgy-be -c dev -- npx trigger.dev@latest deploy",
+    "deploy:staging": "doppler run -p figgy-be -c staging -- npx trigger.dev@latest deploy --env staging",
+    "deploy:prod": "doppler run -p figgy-be -c production -- npx trigger.dev@latest deploy --env prod",
     "typecheck": "tsc --noEmit",
     "extract": "bun src/lib/document-extraction/cli.ts"
   },

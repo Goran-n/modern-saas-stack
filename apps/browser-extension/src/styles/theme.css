@@ -1,0 +1,30 @@
+/* Import shared theme from UI package */
+@import "@figgy/ui/theme.css";
+
+/* Browser extension specific theme utilities */
+:root {
+  /* Success colors for drop zones */
+  --drop-zone-success: var(--color-success-500);
+  --drop-zone-success-bg: rgba(122, 201, 67, 0.1); /* success-500 with 10% opacity */
+  
+  /* Primary colors for drag interactions */
+  --drag-active: var(--color-primary-500);
+  
+  /* Overlay colors */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+}
+
+/* Utility classes for browser extension */
+.drop-zone-active {
+  outline: 3px solid var(--drop-zone-success) !important;
+}
+
+.drop-zone-hover {
+  outline: 3px solid var(--drop-zone-success) !important;
+  box-shadow: 0 0 0 4px var(--drop-zone-success-bg) !important;
+  background-color: var(--drop-zone-success-bg) !important;
+}
+
+.drag-active {
+  outline: 2px dashed var(--drag-active) !important;
+}

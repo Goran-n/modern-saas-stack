@@ -1,5 +1,3 @@
-import { logger } from "@figgy/utils";
-
 export class ScoringUtils {
   /**
    * Calculate similarity score for vendor names using fuzzy matching

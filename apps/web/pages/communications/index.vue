@@ -145,13 +145,12 @@
                     {{ activity.description }}
                   </p>
                   <div class="mt-1 flex items-center space-x-3">
-                    <UBadge 
-                      :color="getStatusColor(activity.status)" 
+                    <FigStatusBadge
+                      :status="activity.status"
+                      type="processing"
                       variant="soft"
                       size="xs"
-                    >
-                      {{ activity.status }}
-                    </UBadge>
+                    />
                     <span class="text-xs text-gray-500">
                       {{ formatRelativeTime(activity.timestamp) }}
                     </span>
@@ -240,9 +239,12 @@
                   </UAvatar>
                   <span class="text-sm font-medium">WhatsApp</span>
                 </div>
-                <UBadge color="success" variant="soft" size="xs">
-                  Connected
-                </UBadge>
+                <FigStatusBadge
+                  status="connected"
+                  type="connection"
+                  variant="soft"
+                  size="xs"
+                />
               </div>
 
               <div class="flex items-center justify-between">
@@ -252,13 +254,13 @@
                   </UAvatar>
                   <span class="text-sm font-medium">Slack</span>
                 </div>
-                <UBadge 
-                  :color="workspaceCount > 0 ? 'success' : 'neutral'" 
-                  variant="soft" 
+                <FigBadge
+                  :color="workspaceCount > 0 ? 'success' : 'neutral'"
+                  variant="soft"
                   size="xs"
                 >
                   {{ workspaceCount > 0 ? `${workspaceCount} workspaces` : 'Not configured' }}
-                </UBadge>
+                </FigBadge>
               </div>
             </div>
           </UCard>
@@ -270,6 +272,7 @@
 
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
+import { FigBadge, FigStatusBadge } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()
@@ -360,14 +363,7 @@ const getPlatformIconClass = (platform: string) => {
     : 'bg-purple-100 text-purple-600'
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'success': return 'success'
-    case 'pending': return 'warning'
-    case 'failed': return 'error'
-    default: return 'neutral'
-  }
-}
+// Status color logic is now handled by FigStatusBadge component
 
 const formatRelativeTime = (timestamp: string) => {
   const date = new Date(timestamp)

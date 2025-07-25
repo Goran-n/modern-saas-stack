@@ -128,12 +128,12 @@
           </template>
 
           <template #status-data="{ row }">
-            <UBadge 
-              :color="getStatusBadgeColor(row as any)"
+            <FigStatusBadge 
+              :status="getStatusLabel(row as any)"
+              type="verification"
               variant="soft"
-            >
-              {{ getStatusLabel(row as any) }}
-            </UBadge>
+              size="sm"
+            />
           </template>
 
           <template #expiresAt-data="{ row }">
@@ -314,6 +314,7 @@
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
 import type { WhatsAppVerification } from '~/types/communication'
+import { FigStatusBadge } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()
@@ -373,7 +374,7 @@ const fetchUsers = async () => {
       baseURL: useRuntimeConfig().public.apiUrl,
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId || ''
+        'x-tenant-id': tenantStore.selectedTenantId.value || ''
       }
     })
     
@@ -490,11 +491,11 @@ const breadcrumbs = [
 // Load data
 onMounted(async () => {
   // Wait for tenant to be selected
-  if (!tenantStore.selectedTenantId) {
+  if (!tenantStore.selectedTenantId.value) {
     await tenantStore.fetchUserTenants()
   }
 
-  if (!tenantStore.selectedTenantId) {
+  if (!tenantStore.selectedTenantId.value) {
     console.error('No tenant selected')
     useNotification().error(
       'No tenant selected',
@@ -558,11 +559,7 @@ const clearFilters = () => {
   statusFilter.value = 'all'
 }
 
-const getStatusBadgeColor = (row: WhatsAppVerification) => {
-  if (row.verified) return 'success'
-  if (isExpired(row.expiresAt)) return 'error'
-  return 'warning'
-}
+// Status badge color logic is now handled by FigStatusBadge component
 
 const getStatusLabel = (row: WhatsAppVerification) => {
   if (row.verified) return 'Verified'
@@ -605,7 +602,7 @@ const resendCode = async (verification: WhatsAppVerification) => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId || '',
+        'x-tenant-id': tenantStore.selectedTenantId.value || '',
         'Content-Type': 'application/json'
       },
       body: {
@@ -680,7 +677,7 @@ const submitVerificationCode = async () => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId || '',
+        'x-tenant-id': tenantStore.selectedTenantId.value || '',
         'Content-Type': 'application/json'
       },
       body: {
@@ -750,7 +747,7 @@ const addManualMapping = async () => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId || '',
+        'x-tenant-id': tenantStore.selectedTenantId.value || '',
         'Content-Type': 'application/json'
       },
       body: {

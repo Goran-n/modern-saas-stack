@@ -1,15 +1,15 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <h2 class="text-lg font-medium text-gray-900">Files</h2>
+    <div class="flex items-center justify-between p-4 border-b border-neutral-200 flex-shrink-0">
+      <h2 class="text-lg font-medium text-neutral-900">Files</h2>
     </div>
 
     <!-- Content -->
     <div class="p-4 space-y-4 flex-1 overflow-y-auto">
       <!-- Processing & Failed Files Section -->
       <div class="space-y-2">
-        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+        <h3 class="text-sm font-medium text-neutral-500 uppercase tracking-wide">
           Status
         </h3>
         
@@ -20,21 +20,21 @@
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'processing'
               ? 'bg-primary-50 text-primary-700 border border-primary-200'
-              : 'text-gray-700 hover:bg-gray-50'
+              : 'text-neutral-700 hover:bg-neutral-50'
           ]"
         >
           <div class="flex items-center gap-2">
-            <UIcon name="i-heroicons-clock" class="text-sm" />
+            <FigIcon name="i-heroicons-clock" class="text-sm" />
             <span class="text-sm">Processing</span>
           </div>
-          <UBadge
+          <FigBadge
             v-if="processingFiles.length > 0"
             color="info"
             variant="soft"
             size="xs"
           >
             {{ processingFiles.length }}
-          </UBadge>
+          </FigBadge>
         </button>
 
         <!-- Failed Files -->
@@ -44,36 +44,36 @@
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'failed'
               ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'text-gray-700 hover:bg-gray-50'
+              : 'text-neutral-700 hover:bg-neutral-50'
           ]"
         >
           <div class="flex items-center gap-2">
-            <UIcon name="i-heroicons-exclamation-triangle" class="text-sm" />
+            <FigIcon name="i-heroicons-exclamation-triangle" class="text-sm" />
             <span class="text-sm">Failed</span>
           </div>
-          <UBadge
+          <FigBadge
             v-if="failedFiles.length > 0"
             color="error"
             variant="soft"
             size="xs"
           >
             {{ failedFiles.length }}
-          </UBadge>
+          </FigBadge>
         </button>
       </div>
 
       <!-- Divider -->
-      <div class="border-t border-gray-200"></div>
+      <div class="border-t border-neutral-200"></div>
 
       <!-- Years & Suppliers Section -->
       <div class="space-y-2">
-        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+        <h3 class="text-sm font-medium text-neutral-500 uppercase tracking-wide">
           Browse by Year
         </h3>
 
         <!-- Loading State -->
         <div v-if="loading" class="space-y-2">
-          <USkeleton class="h-8 w-full" v-for="i in 3" :key="i" />
+          <FigSkeleton class="h-8 w-full" v-for="i in 3" :key="i" />
         </div>
 
         <!-- Years Tree -->
@@ -86,25 +86,25 @@
               :class="[
                 selectedYear === year && !selectedSupplier
                   ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  : 'text-neutral-700 hover:bg-neutral-50'
               ]"
             >
               <div class="flex items-center gap-2">
-                <UIcon 
+                <FigIcon 
                   :name="expandedYears.has(year) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'" 
-                  class="text-xs text-gray-400"
+                  class="text-xs text-neutral-400"
                 />
-                <UIcon name="i-heroicons-calendar-days" class="text-sm" />
+                <FigIcon name="i-heroicons-calendar-days" class="text-sm" />
                 <span class="text-sm font-medium">{{ year }}</span>
               </div>
-              <UBadge
+              <FigBadge
                 v-if="getYearFileCount(year) > 0"
                 color="neutral"
                 variant="soft"
                 size="xs"
               >
                 {{ getYearFileCount(year) }}
-              </UBadge>
+              </FigBadge>
             </button>
 
             <!-- Suppliers for Year -->
@@ -120,29 +120,29 @@
                 :class="[
                   selectedYear === year && selectedSupplier === supplier.name
                     ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    : 'text-neutral-600 hover:bg-neutral-50'
                 ]"
               >
                 <div class="flex items-center gap-2">
-                  <UIcon name="i-heroicons-building-office-2" class="text-xs" />
+                  <FigIcon name="i-heroicons-building-office-2" class="text-xs" />
                   <span class="text-sm">{{ supplier.name }}</span>
                 </div>
-                <UBadge
+                <FigBadge
                   v-if="supplier.fileCount > 0"
                   color="neutral"
                   variant="soft"
                   size="xs"
                 >
                   {{ supplier.fileCount }}
-                </UBadge>
+                </FigBadge>
               </button>
             </div>
           </div>
         </div>
 
         <!-- Empty State -->
-        <div v-else class="text-center py-6 text-gray-500">
-          <UIcon name="i-heroicons-folder-open" class="text-2xl mb-2" />
+        <div v-else class="text-center py-6 text-neutral-500">
+          <FigIcon name="i-heroicons-folder-open" class="text-2xl mb-2" />
           <p class="text-sm">No files uploaded yet</p>
         </div>
       </div>
@@ -151,6 +151,8 @@
 </template>
 
 <script setup lang="ts">
+import { FigBadge, FigIcon, FigSkeleton } from '@figgy/ui';
+
 interface Supplier {
   name: string
   fileCount: number

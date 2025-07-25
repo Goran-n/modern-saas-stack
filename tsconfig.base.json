@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
+    "module": "ESNext",
     "lib": ["ES2022", "DOM"],
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -17,8 +17,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "allowJs": true,
     "paths": {
+      "@figgy/types": ["./packages/types/src"],
       "@figgy/tenant": ["./packages/tenant/src"],
       "@figgy/shared-db": ["./packages/shared-db/src"],
       "@figgy/shared-auth": ["./packages/shared-auth/src"],

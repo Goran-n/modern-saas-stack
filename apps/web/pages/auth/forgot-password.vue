@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">
       Forgot your password?
     </h2>
-    <p class="text-gray-600 dark:text-gray-400 mb-8">
+    <p class="text-gray-600 mb-8">
       No worries, we'll send you reset instructions.
     </p>
 

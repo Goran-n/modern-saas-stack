@@ -1,5 +1,5 @@
 <template>
-  <UApp class="min-h-screen bg-canvas">
+  <FigApp class="min-h-screen bg-gray-50">
     <!-- Header -->
     <header class="w-full bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div class="flex justify-between items-center h-16 w-full px-4 sm:px-6 lg:px-8">
@@ -7,9 +7,9 @@
         <div class="flex items-center space-x-8">
           <!-- Logo -->
           <NuxtLink to="/" class="flex items-center space-x-2">
-            <UAvatar size="sm" class="bg-primary">
+            <FigAvatar size="sm" class="bg-primary-500" alt="Kibly logo">
               <span class="text-white font-bold text-lg">K</span>
-            </UAvatar>
+            </FigAvatar>
             <span class="text-xl font-semibold">Figgy</span>
           </NuxtLink>
           
@@ -19,8 +19,8 @@
               v-for="item in navigationItems" 
               :key="item.to"
               :to="item.to"
-              class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-muted hover:text-primary hover:bg-primary-50"
-              active-class="bg-primary-50 text-primary font-semibold"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-primary-600 hover:bg-primary-50"
+              active-class="bg-primary-50 text-primary-600 font-semibold"
             >
               {{ item.label }}
             </NuxtLink>
@@ -32,12 +32,19 @@
           <!-- Mobile menu button -->
           <button
             @click="mobileMenuOpen = !mobileMenuOpen"
-            class="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-canvas focus:outline-none focus:ring-2 focus:ring-primary"
+            class="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <UIcon 
+            <FigIcon 
               :name="mobileMenuOpen ? 'heroicons:x-mark' : 'heroicons:bars-3'" 
-              class="h-6 w-6"
-            />
+              size="lg"
+            >
+              <svg v-if="mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <svg v-else class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </FigIcon>
           </button>
           
           <!-- User Menu -->
@@ -57,8 +64,8 @@
           :key="item.to"
           :to="item.to"
           @click="mobileMenuOpen = false"
-          class="block px-4 py-3 text-base font-medium rounded-lg transition-all duration-200 text-muted hover:text-primary hover:bg-primary-50"
-          active-class="bg-primary-50 text-primary font-semibold"
+          class="block px-4 py-3 text-base font-medium rounded-lg transition-all duration-200 text-gray-600 hover:text-primary-600 hover:bg-primary-50"
+          active-class="bg-primary-50 text-primary-600 font-semibold"
         >
           {{ item.label }}
         </NuxtLink>
@@ -66,13 +73,16 @@
     </div>
 
     <!-- Main Content -->
-    <UMain>
+    <FigMain :padding="false">
       <slot />
-    </UMain>
-  </UApp>
+    </FigMain>
+  </FigApp>
 </template>
 
 <script setup lang="ts">
+import { FigApp, FigMain, FigAvatar, FigIcon } from '@figgy/ui';
+import UserDropdown from '~/components/UserDropdown.vue';
+
 const mobileMenuOpen = ref(false)
 
 const navigationItems = [
@@ -91,6 +101,10 @@ const navigationItems = [
   {
     label: 'Communications',
     to: '/communications'
+  },
+  {
+    label: 'Settings',
+    to: '/settings'
   }
 ]
 

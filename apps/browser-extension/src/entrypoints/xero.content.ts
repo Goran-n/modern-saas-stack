@@ -8,6 +8,7 @@ import {
   type FileDownloadResponsePayload,
   MessageType,
 } from "../types/messages";
+import "../styles/theme.css";
 import { createLogger } from "../utils/logger";
 import { sendToBackground } from "../utils/messaging";
 
@@ -16,17 +17,15 @@ export default defineContentScript({
 
   main() {
     const logger = createLogger("content:xero");
-    logger.info("Xero content script loaded (paste + drag-drop support)");
+    logger.info("Xero content script loaded (drag-drop support)");
 
-    let isProcessingPaste = false;
     let isProcessingDrop = false;
-    let pasteIndicator: HTMLDivElement | null = null;
 
     // Common file processing function
     async function processFile(
       fileData: any,
       fileInput: HTMLInputElement,
-      operation: "paste" | "drop",
+      operation: "drop",
     ) {
       try {
         logger.debug(`Processing file ${operation}`, {
@@ -49,8 +48,7 @@ export default defineContentScript({
             "currentDragData"
           ]);
           
-          tenantId = storage.currentTenantId || 
-            (operation === "paste" ? storage.copiedFileData?.tenantId : storage.currentDragData?.tenantId);
+          tenantId = storage.currentTenantId || storage.currentDragData?.tenantId;
         }
 
         if (!tenantId) {
@@ -108,7 +106,7 @@ export default defineContentScript({
           }
 
           // Flash success
-          fileInput.style.outline = "3px solid #10b981";
+          fileInput.classList.add('drop-zone-active');
           setTimeout(() => {
             fileInput.style.outline = "";
           }, 1000);
@@ -184,9 +182,9 @@ export default defineContentScript({
       const buttons = findUploadButtons();
       buttons.forEach(btn => {
         btn.setAttribute('data-figgy-highlighted', 'true');
-        (btn as HTMLElement).style.outline = '3px solid #10b981';
+        (btn as HTMLElement).classList.add('drop-zone-active');
         (btn as HTMLElement).style.outlineOffset = '2px';
-        (btn as HTMLElement).style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+        (btn as HTMLElement).style.backgroundColor = 'var(--drop-zone-success-bg)';
       });
       
       logger.debug("Highlighted upload buttons", { count: buttons.length });
@@ -311,12 +309,10 @@ export default defineContentScript({
     async function getTenantId(): Promise<string> {
       const storage = await chrome.storage.local.get([
         "currentTenantId",
-        "copiedFileData", 
         "currentDragData"
       ]);
       
       return storage.currentTenantId || 
-        storage.copiedFileData?.tenantId || 
         storage.currentDragData?.tenantId || 
         "";
     }
@@ -456,123 +452,6 @@ export default defineContentScript({
       }
     }
 
-    // Show indicator when clipboard contains Figgy file
-    async function checkClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
-        const data = JSON.parse(text);
-
-        if (data.type === "figgy-file") {
-          showPasteIndicator(data.fileName);
-        }
-      } catch (e) {
-        // Not our data or no clipboard access
-      }
-    }
-
-    function showPasteIndicator(fileName: string) {
-      if (!pasteIndicator) {
-        pasteIndicator = document.createElement("div");
-        pasteIndicator.style.cssText = `
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          background: #3b82f6;
-          color: white;
-          padding: 15px 20px;
-          border-radius: 8px;
-          z-index: 999999;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          font-family: system-ui, -apple-system, sans-serif;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        `;
-        pasteIndicator.innerHTML = `
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M8 3H6C4.89543 3 4 3.89543 4 5V17C4 18.1046 4.89543 19 6 19H14C15.1046 19 16 18.1046 16 17V5C16 3.89543 15.1046 3 14 3H12" stroke="currentColor" stroke-width="2"/>
-            <rect x="7" y="1" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          <div>
-            <div style="font-weight: 600;">Ready to paste: ${fileName}</div>
-            <div style="font-size: 12px; opacity: 0.9;">Press Ctrl+V near a file upload area</div>
-          </div>
-        `;
-        document.body.appendChild(pasteIndicator);
-
-        // Remove after 10 seconds
-        setTimeout(() => {
-          if (pasteIndicator) {
-            pasteIndicator.remove();
-            pasteIndicator = null;
-          }
-        }, 10000);
-      }
-    }
-
-    // Check clipboard on focus
-    window.addEventListener("focus", checkClipboard);
-
-    // Global paste handler
-    document.addEventListener("paste", async (e) => {
-      if (isProcessingPaste) return;
-
-      logger.debug("Paste event detected");
-
-      try {
-        // Get clipboard text
-        const clipboardText =
-          e.clipboardData?.getData("text/plain") ||
-          (await navigator.clipboard.readText());
-
-        // Try to parse as JSON
-        let fileData;
-        try {
-          fileData = JSON.parse(clipboardText);
-        } catch (err) {
-          // Not JSON, ignore
-          return;
-        }
-
-        // Check if it's our file data
-        if (!fileData || fileData.type !== "figgy-file") return;
-
-        logger.info("Figgy file paste detected", {
-          fileId: fileData.fileId,
-          fileName: fileData.fileName,
-        });
-
-        // Prevent default paste
-        e.preventDefault();
-        isProcessingPaste = true;
-
-        // Remove indicator
-        if (pasteIndicator) {
-          pasteIndicator.remove();
-          pasteIndicator = null;
-        }
-
-        // Find file input
-        const fileInput = findFileInput(document.activeElement);
-
-        if (!fileInput) {
-          throw new Error(
-            "No file upload area found for paste operation.\n" +
-            "Please:\n" +
-            "1. Click near or on a file upload button\n" +
-            "2. Or open the file attachments section\n" +
-            "3. Then try pasting again (Ctrl+V)"
-          );
-        }
-
-        await processFile(fileData, fileInput, "paste");
-      } catch (error) {
-        logger.error("Paste failed", { error });
-        alert(error instanceof Error ? error.message : "Failed to paste file");
-      } finally {
-        isProcessingPaste = false;
-      }
-    });
 
     // Drag and drop handlers
     let draggedOver: Element | null = null;
@@ -666,7 +545,7 @@ export default defineContentScript({
         parent.addEventListener("dragover", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          parent.style.outline = "2px dashed #3b82f6";
+          parent.classList.add('drag-active');
         });
 
         parent.addEventListener("dragleave", () => {
@@ -711,9 +590,6 @@ export default defineContentScript({
       subtree: true,
     });
 
-    // Initial clipboard check
-    checkClipboard();
-
-    logger.info("Paste and drag-drop handlers registered");
+    logger.info("Drag-drop handlers registered");
   },
 });

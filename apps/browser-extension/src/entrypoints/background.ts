@@ -12,7 +12,7 @@ import {
 } from "../types/messages";
 import { getConfig } from "../utils/config";
 import { createLogger } from "../utils/logger";
-import { getSession, initializeAuth } from "../utils/supabase";
+import { getSession, initializeAuth, getSupabaseClient } from "../utils/supabase";
 import { createConsole } from "../utils/console";
 
 export default {
@@ -487,7 +487,7 @@ export default {
 
         return createMessage(MessageType.FILE_ERROR, {
           error: error instanceof Error ? error.message : "Failed to download file",
-          operation: "download",
+          operation: "fetch",
         });
       }
     }

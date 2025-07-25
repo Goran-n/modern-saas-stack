@@ -128,13 +128,12 @@
           </template>
 
           <template #status-data="{ row }">
-            <UBadge 
-              :color="(row as any).isActive ? 'success' : 'neutral'" 
+            <FigStatusBadge
+              :status="(row as any).isActive ? 'active' : 'inactive'"
+              type="connection"
               variant="soft"
               size="xs"
-            >
-              {{ (row as any).isActive ? 'Active' : 'Inactive' }}
-            </UBadge>
+            />
           </template>
 
           <template #mapping-data="{ row }">
@@ -253,6 +252,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { FigStatusBadge } from '@figgy/ui'
 
 interface SlackUser {
   id: string

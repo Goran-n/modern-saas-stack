@@ -106,6 +106,11 @@ slack.post("/", async (c) => {
       throw handlerError; // Re-throw to be caught by outer catch
     }
 
+    // Handle URL verification challenge
+    if ("challenge" in result) {
+      return c.json(result);
+    }
+
     logger.info("Slack webhook handler result", {
       success: result.success,
       hasError: !!result.error,
@@ -113,11 +118,6 @@ slack.post("/", async (c) => {
       hasMetadata: !!result.metadata,
       requiresRegistration: result.requiresRegistration,
     });
-
-    // Handle URL verification challenge
-    if ("challenge" in result) {
-      return c.json(result);
-    }
 
     // Return success for normal events
     if (result.success) {
@@ -222,7 +222,7 @@ slack.post("/", async (c) => {
       }
     }
 
-    return c.json({ ok: false, error: errorMessage }, statusCode);
+    return c.json({ ok: false, error: errorMessage }, statusCode as any);
   }
 });
 

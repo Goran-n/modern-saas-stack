@@ -1,8 +1,9 @@
+import tailwindcss from '@tailwindcss/vite';
+
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
 
   modules: [
-    "@nuxt/ui-pro",
     "@nuxt/eslint",
     "@nuxt/fonts",
     "@nuxt/icon",
@@ -51,26 +52,12 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["~/assets/css/main.css"],
+  css: ["~/app.css"],
 
-  ui: {
-    theme: {
-      colors: [
-        "primary",
-        "gray",
-        "green",
-        "red",
-        "midnight",
-        "electric",
-        "prosperity",
-        "alert",
-      ],
-    },
-  },
 
   colorMode: {
     classSuffix: "",
-    preference: "system",
+    preference: "light",
     fallback: "light",
   },
 
@@ -101,9 +88,15 @@ export default defineNuxtConfig({
 
   nitro: {
     devProxy: {
-      "/api": {
-        target: process.env.NUXT_PUBLIC_API_URL || "http://localhost:5000",
+      "/api/**": {
+        target: "http://localhost:5000",
         changeOrigin: true,
+        ws: true,
+      },
+      "/trpc/**": {
+        target: "http://localhost:5000", 
+        changeOrigin: true,
+        ws: true,
       },
     },
   },
@@ -114,7 +107,12 @@ export default defineNuxtConfig({
 
   components: {
     global: true,
-    dirs: ["~/components"],
+    dirs: [
+      "~/components",
+      "~/components/atoms",
+      "~/components/molecules", 
+      "~/components/organisms"
+    ],
   },
 
   fonts: {
@@ -122,6 +120,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    plugins: [tailwindcss()],
     resolve: {
       alias: {
         cookie: "cookie",

@@ -111,7 +111,7 @@ async function handleSignOut() {
 .popup {
   width: 320px;
   background: #fff;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family-sans, system-ui, -apple-system, sans-serif);
 }
 
 header {

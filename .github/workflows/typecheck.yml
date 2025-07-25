@@ -1,0 +1,51 @@
+name: TypeScript Type Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+
+jobs:
+  typecheck:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run TypeScript strict validation
+        run: bun run typecheck:strict
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Run individual package type checks
+        run: |
+          echo "Running type checks for all packages..."
+          bun run typecheck
+
+      - name: Check @figgy/types package
+        run: |
+          cd packages/types
+          bun run typecheck
+
+      - name: Check @figgy/api
+        run: |
+          cd apps/api
+          bunx tsc --noEmit
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Check @figgy/web
+        run: |
+          cd apps/web
+          bunx vue-tsc -b --noEmit

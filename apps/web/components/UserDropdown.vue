@@ -1,174 +1,170 @@
 <template>
-  <UDropdownMenu
-    :items="items"
-    :ui="{ 
-      item: 'data-disabled:cursor-text data-disabled:select-text',
-      content: 'w-64'
-    }"
-    :popper="{ placement: 'right-start' }"
-  >
-    <template #default="slotProps">
-      <UButton
-        color="neutral"
-        variant="ghost"
-        class="w-full justify-start"
-        :class="[slotProps?.open ? 'bg-canvas' : '']"
+  <div ref="dropdownRef" class="relative">
+    <FigButton
+      color="neutral"
+      variant="ghost"
+      class="w-full justify-start"
+      @click="isOpen = !isOpen"
+    >
+      <FigAvatar
+        :alt="user?.email || 'User'"
+        size="xs"
+        class="flex-shrink-0"
       >
-        <UAvatar
-          :alt="user?.email || 'User'"
-          size="xs"
-        >
-          <span class="text-xs font-medium">{{ userInitials }}</span>
-        </UAvatar>
+        <span class="text-xs font-medium">{{ userInitials }}</span>
+      </FigAvatar>
 
-        <div class="flex-1 text-left min-w-0">
-          <p class="text-sm font-medium truncate">
-            {{ userName }}
-          </p>
-          <p class="text-xs text-muted truncate">
+      <div class="flex-1 text-left min-w-0">
+        <p class="text-sm font-medium truncate">
+          {{ userName }}
+        </p>
+        <p class="text-xs text-neutral-500 truncate">
+          {{ user?.email || 'Guest' }}
+        </p>
+      </div>
+
+      <FigIcon
+        name="i-heroicons-chevron-up-down-20-solid"
+        class="w-4 h-4 text-neutral-500 flex-shrink-0"
+      />
+    </FigButton>
+
+    <!-- Dropdown Menu -->
+    <Transition
+      enter-active-class="transition duration-100 ease-out"
+      enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100"
+      leave-active-class="transition duration-75 ease-in"
+      leave-from-class="transform scale-100 opacity-100"
+      leave-to-class="transform scale-95 opacity-0"
+    >
+      <div
+        v-if="isOpen"
+        class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-neutral-200 divide-y divide-neutral-100 z-50"
+      >
+        <!-- Account Section -->
+        <div class="px-3 py-3">
+          <p class="text-sm font-medium text-neutral-900">
             {{ user?.email || 'Guest' }}
+          </p>
+          <p class="text-xs text-neutral-500 mt-1">
+            Free Plan
           </p>
         </div>
 
-        <UIcon
-          name="i-heroicons-chevron-up-down-20-solid"
-          class="w-4 h-4 text-muted flex-shrink-0"
-        />
-      </UButton>
-    </template>
-
-    <template #account>
-      <div class="px-2 py-2">
-        <p class="text-xs font-medium">
-          {{ user?.email || 'Guest' }}
-        </p>
-        <p class="text-xs text-muted mt-0.5">
-          Free Plan
-        </p>
-      </div>
-    </template>
-
-    <template #item="{ item }">
-      <div v-if="'label' in item" class="flex items-center gap-2 w-full">
-        <UIcon
-          v-if="'icon' in item && item.icon"
-          :name="item.icon"
-          class="w-4 h-4 flex-shrink-0"
-          :class="'iconClass' in item ? item.iconClass : ''"
-        />
-
-        <span class="flex-1 truncate">{{ item.label }}</span>
-
-        <span 
-          v-if="'shortcuts' in item && item.shortcuts?.length"
-          class="flex items-center gap-0.5"
-        >
-          <UKbd 
-            v-for="(shortcut, index) in item.shortcuts" 
-            :key="index"
-            size="sm"
+        <!-- Menu Items -->
+        <div class="py-1">
+          <button
+            v-for="item in items"
+            :key="item.label"
+            @click="handleItemClick(item)"
+            class="w-full px-3 py-2 text-left text-sm hover:bg-neutral-50 transition-colors flex items-center gap-2"
+            :class="[
+              item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+              item.iconClass
+            ]"
+            :disabled="item.disabled"
           >
-            {{ shortcut }}
-          </UKbd>
-        </span>
+            <FigIcon
+              v-if="item.icon"
+              :name="item.icon"
+              class="w-4 h-4"
+            />
+            <span class="flex-1">{{ item.label }}</span>
+            <span v-if="item.shortcuts?.length" class="text-xs text-neutral-400">
+              {{ item.shortcuts.join(' ') }}
+            </span>
+          </button>
+        </div>
       </div>
-    </template>
-  </UDropdownMenu>
+    </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
+import { FigButton, FigAvatar, FigIcon } from '@figgy/ui'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
-const authStore = useAuthStore()
-const colorMode = useColorMode()
-const { auth, general } = useNotifications()
+interface MenuItem {
+  label: string
+  icon?: string
+  click?: () => void
+  disabled?: boolean
+  shortcuts?: string[]
+  iconClass?: string
+}
 
-// Use Supabase user composable directly
+const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const router = useRouter()
+
+const isOpen = ref(false)
+const dropdownRef = ref<HTMLElement>()
+
+// Handle click outside - use event handler approach
+const handleClickOutside = (event: MouseEvent) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    isOpen.value = false
+  }
+}
+
+// Setup and cleanup click outside listener
+watch(isOpen, (newValue) => {
+  if (newValue) {
+    document.addEventListener('click', handleClickOutside, true)
+  } else {
+    document.removeEventListener('click', handleClickOutside, true)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside, true)
+})
 
 const userName = computed(() => {
-  const email = user.value?.email || 'Guest'
-  return email.split('@')[0]
+  if (user.value?.user_metadata?.full_name) {
+    return user.value.user_metadata.full_name
+  }
+  return user.value?.email?.split('@')[0] || 'User'
 })
 
 const userInitials = computed(() => {
   const name = userName.value
-  return name.substring(0, 2).toUpperCase()
+  return name
+    .split(' ')
+    .map((part: string) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 })
 
-const items = computed(() => [
-  [{
-    slot: 'account',
-    disabled: true
-  }],
-  // User section
-  [{
-    label: 'View profile',
+const items = computed<MenuItem[]>(() => [
+  {
+    label: 'View account',
     icon: 'i-heroicons-user-circle',
-    click: () => navigateTo('/profile')
-  }, {
-    label: 'Account settings',
+    click: () => console.log('View account'),
+  },
+  {
+    label: 'Settings',
     icon: 'i-heroicons-cog-6-tooth',
-    shortcuts: ['⌘', 'S'],
-    click: () => navigateTo('/settings/account')
-  }, {
-    label: 'Billing',
-    icon: 'i-heroicons-credit-card',
-    click: () => navigateTo('/settings/billing')
-  }],
-  // Theme section
-  [{
-    label: colorMode.value === 'dark' ? 'Light mode' : 'Dark mode',
-    icon: colorMode.value === 'dark' ? 'i-heroicons-sun' : 'i-heroicons-moon',
-    iconClass: 'text-warning',
-    shortcuts: ['⌘', 'T'],
-    click: () => toggleColorMode()
-  }],
-  // Support section
-  [{
-    label: 'Documentation',
-    icon: 'i-heroicons-book-open',
-    click: () => window.open('https://docs.figgy.com', '_blank')
-  }, {
-    label: 'Support',
-    icon: 'i-heroicons-lifebuoy',
-    click: () => window.open('https://support.figgy.com', '_blank')
-  }, {
-    label: 'Changelog',
-    icon: 'i-heroicons-megaphone',
-    click: () => window.open('https://changelog.figgy.com', '_blank')
-  }],
-  // Actions section
-  [{
+    shortcuts: ['⌘', ','],
+    click: () => console.log('Settings'),
+  },
+  {
     label: 'Sign out',
     icon: 'i-heroicons-arrow-left-on-rectangle',
-    iconClass: 'text-secondary',
-    shortcuts: ['⌘', 'Q'],
-    click: async () => await signOut()
-  }]
+    iconClass: 'text-red-500',
+    click: async () => {
+      await supabase.auth.signOut()
+      await router.push('/auth/login')
+    },
+  },
 ])
 
-function toggleColorMode() {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-  
-  general.info(`Switched to ${colorMode.value} mode`, undefined)
-}
-
-async function signOut() {
-  try {
-    await authStore.signOut()
-    await navigateTo('/auth/login')
-    
-    auth.signOutSuccess()
-  } catch (error) {
-    auth.signOutFailed(error instanceof Error ? error.message : undefined)
+const handleItemClick = (item: MenuItem) => {
+  if (item.click && !item.disabled) {
+    item.click()
   }
+  isOpen.value = false
 }
-
-// Keyboard shortcuts
-defineShortcuts({
-  'cmd-s': () => navigateTo('/settings/account'),
-  'cmd-t': () => toggleColorMode(),
-  'cmd-q': async () => await signOut()
-})
 </script>

@@ -1,12 +1,7 @@
 import { trpcServer } from "@hono/trpc-server";
 import {
   completeSlackOAuth,
-  consumeLinkingToken,
-  createSlackUserTenantMapping,
   generateSlackOAuthUrl,
-  getSlackInstaller,
-  getUserAvailableTenants,
-  handleSlackEventWebhook,
   handleSlackMultiTenantWebhook,
   handleTwilioWhatsAppWebhook,
   handleWhatsAppVerification,
@@ -17,6 +12,7 @@ import {
 import { getConfig } from "@figgy/config";
 import { and, eq, files, getDatabaseConnection } from "@figgy/shared-db";
 import { appRouter, createContext } from "@figgy/trpc";
+import type { SlackWebhookBody } from "@figgy/types";
 import { logError, logger } from "@figgy/utils";
 import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
@@ -200,12 +196,12 @@ export function createHonoApp() {
         // Check if we have a response to send back
         if (result.metadata?.responseText) {
           // Extract sender from the webhook payload
-          const from = (body as any).From || (body as any).from;
+          const from = (body as Record<string, unknown>).From || (body as Record<string, unknown>).from;
           try {
             if (from) {
               const responseService = new WhatsAppResponseService();
               await responseService.sendMessage(
-                from,
+                String(from),
                 result.metadata.responseText,
                 {
                   quickReplies: result.metadata.quickReplies,
@@ -321,6 +317,9 @@ export function createHonoApp() {
       },
     });
 
+    // Initialize body variable for error handling context
+    let parsedBody: SlackWebhookBody | undefined;
+    
     try {
       // Get raw body for signature verification
       const rawBody = await c.req.text();
@@ -330,9 +329,8 @@ export function createHonoApp() {
         return c.json({ error: "Empty request body" }, 400);
       }
 
-      let body;
       try {
-        body = JSON.parse(rawBody);
+        parsedBody = JSON.parse(rawBody);
       } catch (parseError) {
         logger.error("Failed to parse Slack webhook body", {
           error:
@@ -344,10 +342,13 @@ export function createHonoApp() {
         });
         return c.json({ error: "Invalid JSON body" }, 400);
       }
+      
+      // Now we can safely use parsedBody as it's defined
+      const body = parsedBody;
 
-      // Verify Slack signature
-      const signature = c.req.header("x-slack-signature");
-      const timestamp = c.req.header("x-slack-request-timestamp");
+    // Verify Slack signature
+    const signature = c.req.header("x-slack-signature");
+    const timestamp = c.req.header("x-slack-request-timestamp");
 
       if (signature && timestamp) {
         const { getSlackService } = await import("@figgy/communication");
@@ -386,13 +387,13 @@ export function createHonoApp() {
       }
 
       logger.info("Slack webhook received", {
-        type: body.type,
-        event: body.event?.type,
+        type: body!.type,
+        event: body!.event?.type,
       });
 
       let result;
       try {
-        result = await handleSlackMultiTenantWebhook(body);
+        result = await handleSlackMultiTenantWebhook(body!);
       } catch (handlerError) {
         // Log the specific handler error
         logger.error("Handler threw error", {
@@ -402,11 +403,16 @@ export function createHonoApp() {
               : String(handlerError),
           stack: handlerError instanceof Error ? handlerError.stack : undefined,
           errorType: handlerError?.constructor?.name,
-          eventType: body.event?.type,
-          teamId: body.team_id,
-          userId: body.event?.user,
+          eventType: body!.event?.type,
+          teamId: body!.team_id,
+          userId: body!.event?.user,
         });
         throw handlerError; // Re-throw to be caught by outer catch
+      }
+
+      // Handle URL verification challenge
+      if ("challenge" in result) {
+        return c.json(result);
       }
 
       logger.info("Slack webhook handler result", {
@@ -417,18 +423,13 @@ export function createHonoApp() {
         requiresRegistration: result.requiresRegistration,
       });
 
-      // Handle URL verification challenge
-      if ("challenge" in result) {
-        return c.json(result);
-      }
-
       // Return success for normal events
       if (result.success) {
         // Check if we have a response to send back
-        if (result.metadata?.responseText && body.event) {
-          const workspaceId = body.team_id;
-          const channelId = body.event.channel;
-          const threadTs = body.event.thread_ts || body.event.ts;
+        if (result.metadata?.responseText && body!.event) {
+          const workspaceId = body!.team_id;
+          const channelId = body!.event.channel;
+          const threadTs = body!.event.thread_ts || body!.event.ts;
 
           try {
             const responseService = new SlackResponseService();
@@ -469,10 +470,10 @@ export function createHonoApp() {
           error: result.error,
           requiresRegistration: result.requiresRegistration,
           metadata: result.metadata,
-          eventType: body.event?.type,
-          teamId: body.team_id,
-          userId: body.event?.user,
-          text: body.event?.text?.substring(0, 100),
+          eventType: body!.event?.type,
+          teamId: body!.team_id,
+          userId: body!.event?.user,
+          text: body!.event?.text?.substring(0, 100),
         });
 
         // If it's a workspace configuration error, provide OAuth URL
@@ -480,7 +481,7 @@ export function createHonoApp() {
           const baseUrl = config.BASE_URL;
           if (baseUrl) {
             logger.info("Figgy needs OAuth setup for workspace", {
-              workspaceId: body.team_id,
+              workspaceId: body!.team_id,
               installUrl: `${baseUrl}/oauth/slack/install?tenantId=YOUR_TENANT_ID`,
               message:
                 "Admin needs to visit the install URL with their tenant ID to complete Figgy installation",
@@ -516,11 +517,11 @@ export function createHonoApp() {
             "x-slack-request-timestamp",
           ),
         },
-        bodyType: body?.type,
-        eventType: body?.event?.type,
-        teamId: body?.team_id,
-        userId: body?.event?.user,
-        messagePreview: body?.event?.text?.substring(0, 100),
+        bodyType: parsedBody?.type,
+        eventType: parsedBody?.event?.type,  
+        teamId: parsedBody?.team_id,
+        userId: parsedBody?.event?.user,
+        messagePreview: parsedBody?.event?.text?.substring(0, 100),
       });
 
       // Return more specific error messages based on error type
@@ -549,7 +550,7 @@ export function createHonoApp() {
         }
       }
 
-      return c.json({ ok: false, error: errorMessage }, statusCode);
+      return c.json({ ok: false, error: errorMessage }, statusCode as 400 | 401 | 500);
     }
   });
 
@@ -608,8 +609,12 @@ export function createHonoApp() {
 
       try {
         // Decode the JWT state to get the metadata
+        const stateParts = state.split(".");
+        if (stateParts.length < 2) {
+          throw new Error("Invalid state format");
+        }
         const decodedState = JSON.parse(
-          Buffer.from(state.split(".")[1], "base64").toString(),
+          Buffer.from(stateParts[1]!, "base64").toString(),
         );
         logger.info("Decoded state", {
           decodedState: JSON.stringify(decodedState, null, 2),

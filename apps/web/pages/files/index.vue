@@ -1,15 +1,28 @@
 <template>
   <div class="h-screen bg-canvas grid grid-cols-[320px_1fr]">
     <!-- Sidebar -->
-    <div class="border-r border-gray-200 bg-white overflow-y-auto">
+    <div class="border-r border-neutral-200 bg-white overflow-y-auto">
       <FileManagerSidebar
-        :file-data="fileData"
+        v-if="fileDataUnwrapped"
+        :file-data="fileDataUnwrapped"
         :processing-files="processingFiles"
         :failed-files="failedFiles"
         :selected-year="selectedYear"
         :selected-supplier="selectedSupplier"
         :selected-status="selectedStatus"
-        :loading="isLoading"
+        :loading="!!isLoading"
+        @year-selected="handleYearSelected"
+        @supplier-selected="handleSupplierSelected"
+        @status-selected="handleStatusSelected"
+      />
+      <FileManagerSidebar
+        v-else
+        :processing-files="processingFiles"
+        :failed-files="failedFiles"
+        :selected-year="selectedYear"
+        :selected-supplier="selectedSupplier"
+        :selected-status="selectedStatus"
+        :loading="!!isLoading"
         @year-selected="handleYearSelected"
         @supplier-selected="handleSupplierSelected"
         @status-selected="handleStatusSelected"
@@ -24,41 +37,57 @@
           <div class="flex items-center justify-between">
             <div>
               <h1 class="text-2xl font-semibold">Files</h1>
-              <UBreadcrumb 
-                :links="breadcrumbLinks" 
-                class="mt-1"
-              />
+              <nav class="mt-1 flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                  <li v-for="(link, index) in breadcrumbLinks" :key="index">
+                    <div class="flex items-center">
+                      <a :href="link.to" class="text-sm font-medium text-neutral-500 hover:text-neutral-700">
+                        {{ link.label }}
+                      </a>
+                      <FigIcon 
+                        v-if="index < breadcrumbLinks.length - 1"
+                        name="i-heroicons-chevron-right" 
+                        class="ml-2 h-4 w-4 text-neutral-400" 
+                      />
+                    </div>
+                  </li>
+                </ol>
+              </nav>
             </div>
               
             <div class="flex items-center gap-3">
               <!-- View Toggle -->
-              <UButtonGroup size="sm" orientation="horizontal">
-                <UButton
-                  :variant="viewMode === 'grid' ? 'solid' : 'ghost'"
+              <div class="flex rounded-md shadow-sm" role="group">
+                <FigButton
+                  :variant="viewMode === 'grid' ? 'solid' : 'outline'"
                   icon="i-heroicons-squares-2x2"
+                  size="sm"
+                  class="rounded-r-none"
                   @click="viewMode = 'grid'"
                 />
-                <UButton
-                  :variant="viewMode === 'list' ? 'solid' : 'ghost'"
+                <FigButton
+                  :variant="viewMode === 'list' ? 'solid' : 'outline'"
                   icon="i-heroicons-list-bullet"
+                  size="sm"
+                  class="rounded-l-none -ml-px"
                   @click="viewMode = 'list'"
                 />
-              </UButtonGroup>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Loading State -->
         <div v-if="isLoading" class="space-y-4">
-          <USkeleton class="h-32 w-full" v-for="i in 6" :key="i" />
+          <FigSkeleton class="h-32 w-full" v-for="i in 6" :key="i" />
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="text-center py-12">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-4xl text-error mb-4" />
-          <h3 class="text-lg font-medium mb-2">Error Loading Files</h3>
-          <p class="text-muted">{{ error.message }}</p>
-        </div>
+        <molecules-file-empty-state
+          v-else-if="error"
+          type="error"
+          :description="error.value?.message || 'There was an error loading your files'"
+        />
 
         <!-- Supplier Folders Display -->
         <div v-else-if="currentSuppliers.length > 0">
@@ -76,12 +105,12 @@
               v-for="supplier in currentSuppliers"
               :key="supplier.id"
               @click="handleSupplierSelected(supplier.name)"
-              class="cursor-pointer hover:shadow-md transition-all duration-200 bg-white rounded-lg border border-gray-200 hover:border-primary-300 p-4"
+              class="cursor-pointer hover:shadow-md transition-all duration-200 bg-white rounded-lg border border-neutral-200 hover:border-primary-300 p-4"
             >
               <div class="aspect-square flex flex-col items-center justify-center">
                 <!-- Folder Icon -->
                 <div class="w-12 h-12 mb-3 flex items-center justify-center">
-                  <UIcon 
+                  <FigIcon 
                     name="i-heroicons-folder" 
                     class="text-3xl text-primary"
                   />
@@ -107,16 +136,13 @@
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="!currentFiles.length" class="text-center py-12">
-          <UIcon name="i-heroicons-folder-open" class="text-4xl text-gray-500 mb-4" />
-          <h3 class="text-lg font-medium mb-2">No Files Found</h3>
-          <p class="text-muted">
-            {{ currentView === 'status' 
-              ? `No ${selectedStatus} files at the moment` 
-              : 'Select a year and supplier to view files' 
-            }}
-          </p>
-        </div>
+        <molecules-file-empty-state
+          v-else-if="!currentFiles.length"
+          type="empty"
+          :description="currentView === 'status' 
+            ? `No ${selectedStatus} files at the moment` 
+            : 'Select a year and supplier to view files'"
+        />
 
         <!-- Files Display -->
         <div v-else>
@@ -130,14 +156,14 @@
           </div>
 
           <!-- File Grid -->
-          <FileGrid 
+          <organisms-file-grid 
             v-if="viewMode === 'grid'"
             :files="currentFiles"
             @file-selected="handleFileSelected"
           />
 
           <!-- File List -->
-          <FileList 
+          <organisms-file-list 
             v-else
             :files="currentFiles"
             @file-selected="handleFileSelected"
@@ -149,7 +175,7 @@
 
   <!-- File Preview Modal (outside grid for proper overlay) -->
   <Teleport to="body">
-    <FilePreview
+    <organisms-file-preview
       v-if="selectedFile"
       :file="selectedFile"
       @close="selectedFile = null"
@@ -159,6 +185,8 @@
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
+import type { File, FileItem, FileDataSerialized } from '@figgy/types';
+import { FigButton, FigIcon, FigSkeleton } from '@figgy/ui';
 
 // Composables
 const api = useApi()
@@ -170,45 +198,81 @@ const selectedSupplier = ref<string | null>(null)
 const selectedStatus = ref<'processing' | 'failed' | null>(null)
 const currentView = ref<'default' | 'supplier' | 'status'>('default')
 const viewMode = ref<'grid' | 'list'>('grid')
-const selectedFile = ref<any>(null)
+const selectedFile = ref<FileItem | null>(null)
 
 // Computed
 const selectedTenantId = computed(() => tenantStore.selectedTenantId)
+const fileDataUnwrapped = computed(() => fileData.value)
 
 // Data fetching
-const { data: fileData, isLoading, error } = useQuery({
+const { data: fileData, isLoading, error } = useQuery<FileDataSerialized>({
   queryKey: ['files-manager', selectedTenantId],
   queryFn: async () => {
     const input = { json: {} }
-    const response = await api.get<any>(`/trpc/files.getGroupedByYear?input=${encodeURIComponent(JSON.stringify(input))}`)
-    return response.result.data.json
+    const response = await api.get<{ result: { data: { json: any } } }>(`/trpc/files.getGroupedByYear?input=${encodeURIComponent(JSON.stringify(input))}`)
+    const data = response.result.data.json
+    
+    // Transform the data to ensure suppliers have names
+    const transformed: FileDataSerialized = {
+      byYear: {},
+      totalFiles: data.totalFiles
+    }
+    
+    for (const [year, yearData] of Object.entries(data.byYear as Record<string, any>)) {
+      transformed.byYear[year] = {
+        year: yearData.year,
+        totalFiles: yearData.totalFiles,
+        suppliers: {}
+      }
+      
+      for (const [supplierName, supplierData] of Object.entries(yearData.suppliers as Record<string, any>)) {
+        transformed.byYear[year].suppliers[supplierName] = {
+          name: supplierName,
+          fileCount: supplierData.fileCount,
+          files: supplierData.files?.map((f: any) => ({
+            ...f,
+            createdAt: typeof f.createdAt === 'string' ? f.createdAt : new Date(f.createdAt).toISOString(),
+            processingStatus: f.status || f.processingStatus
+          })) || []
+        }
+      }
+    }
+    
+    return transformed
   },
-  enabled: computed(() => !!selectedTenantId.value),
+  enabled: () => !!selectedTenantId.value,
 })
 
 const { data: statusFiles } = useQuery({
   queryKey: ['files-status', selectedTenantId],
   queryFn: async () => {
     const input = { json: {} }
-    const response = await api.get<any>(`/trpc/files.getProcessingStatus?input=${encodeURIComponent(JSON.stringify(input))}`)
+    const response = await api.get<{ result: { data: { json: { processing: File[], failed: File[] } } } }>(`/trpc/files.getProcessingStatus?input=${encodeURIComponent(JSON.stringify(input))}`)
     return response.result.data.json
   },
-  enabled: computed(() => !!selectedTenantId.value),
+  enabled: () => !!selectedTenantId.value,
 })
 
+// Helper function to convert File to FileItem
+const fileToFileItem = (file: File): FileItem => ({
+  ...file,
+  createdAt: typeof file.createdAt === 'string' ? file.createdAt : file.createdAt.toISOString(),
+  processingStatus: file.status,
+});
+
 // Computed data
-const processingFiles = computed(() => statusFiles.value?.processing || [])
-const failedFiles = computed(() => statusFiles.value?.failed || [])
+const processingFiles = computed(() => (statusFiles.value?.processing || []).map(fileToFileItem))
+const failedFiles = computed(() => (statusFiles.value?.failed || []).map(fileToFileItem))
 
 const currentSuppliers = computed(() => {
-  if (currentView.value === 'status' || !fileData.value || !selectedYear.value || selectedSupplier.value) return []
+  if (currentView.value === 'status' || !fileDataUnwrapped.value || !selectedYear.value || selectedSupplier.value) return []
 
-  const yearData = fileData.value.byYear[selectedYear.value]
+  const yearData = fileDataUnwrapped.value.byYear[selectedYear.value]
   if (!yearData) return []
 
-  return Object.values(yearData.suppliers).map((supplier: any) => ({
-    id: supplier.name,
-    name: supplier.name,
+  return Object.entries(yearData.suppliers).map(([name, supplier]) => ({
+    id: name,
+    name: name,
     fileCount: supplier.fileCount,
     type: 'supplier'
   }))
@@ -219,13 +283,14 @@ const currentFiles = computed(() => {
     return selectedStatus.value === 'processing' ? processingFiles.value : failedFiles.value
   }
 
-  if (!fileData.value || !selectedYear.value) return []
+  if (!fileDataUnwrapped.value || !selectedYear.value) return []
 
-  const yearData = fileData.value.byYear[selectedYear.value]
+  const yearData = fileDataUnwrapped.value.byYear[selectedYear.value]
   if (!yearData) return []
 
   if (selectedSupplier.value && yearData.suppliers[selectedSupplier.value]) {
-    return yearData.suppliers[selectedSupplier.value].files || []
+    const files = yearData.suppliers[selectedSupplier.value].files || [];
+    return files.map((f: any) => typeof f.createdAt === 'string' ? f : fileToFileItem(f));
   }
 
   // If year is selected but no supplier, return empty (show suppliers instead)
@@ -272,8 +337,10 @@ const handleStatusSelected = (status: 'processing' | 'failed') => {
   currentView.value = 'status'
 }
 
-const handleFileSelected = (file: any) => {
-  selectedFile.value = file
+const handleFileSelected = (file: FileItem | null) => {
+  if (file) {
+    selectedFile.value = file
+  }
 }
 
 // SEO
@@ -282,12 +349,3 @@ useSeoMeta({
   description: 'Manage and view your uploaded files organised by year and supplier',
 })
 </script>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

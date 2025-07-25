@@ -1,18 +1,20 @@
+import type { UserTenant, Tenant } from '@figgy/types';
+
 export const useTenantStore = defineStore("tenant", () => {
   // State
-  const userTenants = ref<any[]>([]);
+  const userTenants = ref<UserTenant[]>([]);
   const selectedTenantId = ref<string | null>(null);
   const isLoading = ref(false);
 
   // Getters
-  const selectedTenant = computed(
+  const selectedTenant = computed<Tenant | undefined>(
     () =>
       userTenants.value.find((ut) => ut.tenant.id === selectedTenantId.value)
         ?.tenant,
   );
 
   // Actions
-  async function fetchUserTenants() {
+  async function fetchUserTenants(): Promise<void> {
     try {
       isLoading.value = true;
       // Get trpc client at runtime to ensure it's available
@@ -35,26 +37,27 @@ export const useTenantStore = defineStore("tenant", () => {
         });
         selectTenant(sortedTenants[0].tenant.id);
       }
-    } catch (error: any) {
+    } catch (error) {
       // Don't throw on error - this allows the app to continue working
       // even if tenant fetching fails temporarily
-      if (error?.data?.code === "UNAUTHORIZED") {
+      const err = error as { data?: { code?: string }; message?: string; stack?: string };
+      if (err?.data?.code === "UNAUTHORIZED") {
         // User is not authenticated, this is expected
         return;
       }
 
       // Log other errors for debugging
       console.error("Failed to fetch tenants:", {
-        error: error?.message || error,
-        code: error?.data?.code,
-        stack: error?.stack,
+        error: err?.message || error,
+        code: err?.data?.code,
+        stack: err?.stack,
       });
     } finally {
       isLoading.value = false;
     }
   }
 
-  function selectTenant(tenantId: string) {
+  function selectTenant(tenantId: string): void {
     selectedTenantId.value = tenantId;
     // Persist to localStorage (client-side only)
     if (process.client && window.localStorage) {
@@ -66,7 +69,7 @@ export const useTenantStore = defineStore("tenant", () => {
     }
   }
 
-  function loadSelectedTenant() {
+  function loadSelectedTenant(): void {
     if (process.client && window.localStorage) {
       try {
         const stored = localStorage.getItem("selectedTenantId");
@@ -79,7 +82,7 @@ export const useTenantStore = defineStore("tenant", () => {
     }
   }
 
-  function $reset() {
+  function $reset(): void {
     userTenants.value = [];
     selectedTenantId.value = null;
     isLoading.value = false;

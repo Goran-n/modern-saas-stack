@@ -56,6 +56,12 @@ export const productionConfigSchema = z
     WEB_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     API_URL: z.string().url(), // Must be provided in production
     DEV_MODE: z.coerce.boolean().default(false),
+
+    // Base URL for OAuth callbacks and webhooks
+    BASE_URL: z
+      .string()
+      .url()
+      .optional(), // Optional in production to allow backwards compatibility
   })
   .merge(triggerSchema)
   .merge(portkeySchema)

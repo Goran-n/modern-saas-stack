@@ -213,3 +213,7 @@ export const rolePermissions: Record<MemberRole, Permission[]> = {
     Permission.SYNC_VIEW,
   ],
 };
+
+// Export company configuration types
+export * from "./types/company-config";
+export * from "./schemas/company-config.schema";

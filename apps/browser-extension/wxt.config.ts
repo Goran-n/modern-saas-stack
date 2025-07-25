@@ -3,9 +3,6 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   srcDir: "src",
   imports: false,
-  dev: {
-    openBrowser: false,
-  },
   manifest: {
     name: "Figgy File Transfer",
     description: "Seamlessly drag files from Figgy to Xero",

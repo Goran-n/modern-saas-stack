@@ -12,7 +12,7 @@
         >
           <span class="text-xs font-medium">{{ userInitials }}</span>
         </UAvatar>
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span class="text-sm font-medium text-gray-700">
           {{ userName }}
         </span>
       </UButton>
@@ -20,10 +20,10 @@
 
     <template #account>
       <div class="px-3 py-2">
-        <p class="text-sm font-medium text-gray-900 dark:text-white">
+        <p class="text-sm font-medium text-gray-900">
           {{ user?.email || 'Guest' }}
         </p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-xs text-gray-500 mt-1">
           Signed in
         </p>
       </div>

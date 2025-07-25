@@ -13,22 +13,22 @@
     </div>
 
     <div v-else-if="fileError" class="text-red-500">
-      Error loading file: {{ fileError.message }}
+      Error loading file: {{ fileError.value?.message }}
     </div>
 
     <div v-else-if="file" class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <UIcon 
-            :name="getFileIcon(file.fileName)" 
+            :name="getFileIcon(file.value?.fileName || '')" 
             class="text-2xl text-gray-500"
           />
           <div>
-            <h1 class="text-2xl font-semibold">{{ file.metadata?.displayName || file.fileName }}</h1>
+            <h1 class="text-2xl font-semibold">{{ file.value?.metadata?.displayName || file.value?.fileName }}</h1>
             <div class="flex items-center gap-2 text-sm text-gray-500">
-              <span v-if="file.metadata?.supplierName">{{ file.metadata.supplierName }} •</span>
-              <span>{{ formatFileSize(file.size || 0) }} •</span>
-              <span>{{ formatDate(file.extraction?.extractedFields?.documentDate?.value || file.createdAt) }}</span>
+              <span v-if="file.value?.metadata?.supplierName">{{ file.value?.metadata.supplierName }} •</span>
+              <span>{{ formatFileSize(file.value?.size || 0) }} •</span>
+              <span>{{ formatDate(file.value?.extraction?.extractedFields?.documentDate?.value || file.value?.createdAt || '') }}</span>
             </div>
           </div>
         </div>
@@ -45,7 +45,7 @@
             Download
           </UButton>
           <UButton
-            v-if="file.processingStatus !== 'processing'"
+            v-if="file.value?.processingStatus !== 'processing'"
             icon="i-heroicons-arrow-path"
             color="primary"
             variant="solid"
@@ -66,7 +66,7 @@
             </template>
             
             <div class="min-h-[800px] flex items-center justify-center bg-gray-50 rounded-lg">
-              <div v-if="isPDF(file.fileName)" class="w-full h-full">
+              <div v-if="isPDF(file.value?.fileName || '')" class="w-full h-full">
                 <div v-if="proxyUrl && !iframeError" class="w-full h-[800px]">
                   <iframe 
                     :src="proxyUrl"
@@ -95,10 +95,10 @@
                 </div>
               </div>
               
-              <div v-else-if="isImage(file.fileName)" class="w-full h-full">
+              <div v-else-if="isImage(file.value?.fileName || '')" class="w-full h-full">
                 <img 
                   :src="proxyUrl || undefined" 
-                  :alt="file.fileName"
+                  :alt="file.value?.fileName || ''"
                   class="max-w-full max-h-[800px] object-contain mx-auto"
                 />
               </div>
@@ -122,43 +122,43 @@
         <!-- File Information & Extractions -->
         <div class="space-y-4">
           <!-- Key Document Information (if extracted) -->
-          <UCard v-if="file.extraction?.extractedFields" class="border-primary-500">
+          <UCard v-if="file.value?.extraction?.extractedFields" class="border-primary-500">
             <template #header>
               <h2 class="text-lg font-medium">Document Summary</h2>
             </template>
             
             <div class="space-y-4">
               <!-- Amount if available -->
-              <div v-if="file.extraction.extractedFields.totalAmount?.value" class="bg-primary-50 rounded-lg p-4 text-center">
+              <div v-if="file.value?.extraction?.extractedFields?.totalAmount?.value" class="bg-primary-50 rounded-lg p-4 text-center">
                 <p class="text-sm text-gray-600 mb-1">Total Amount</p>
                 <p class="text-2xl font-bold text-gray-900">
-                  {{ formatCurrency(file.extraction.extractedFields.totalAmount.value, file.extraction.extractedFields.currency?.value) }}
+                  {{ formatCurrency(file.value?.extraction?.extractedFields?.totalAmount?.value, file.value?.extraction?.extractedFields?.currency?.value) }}
                 </p>
-                <p v-if="file.extraction.extractedFields.totalAmount.confidence" class="text-xs text-gray-500 mt-1">
-                  {{ Math.round(file.extraction.extractedFields.totalAmount.confidence) }}% confidence
+                <p v-if="file.value?.extraction?.extractedFields?.totalAmount?.confidence" class="text-xs text-gray-500 mt-1">
+                  {{ Math.round(file.value?.extraction?.extractedFields?.totalAmount?.confidence || 0) }}% confidence
                 </p>
               </div>
               
               <!-- Key Info Grid -->
               <div class="grid grid-cols-2 gap-4">
-                <div v-if="file.extraction.extractedFields.documentNumber?.value" class="bg-gray-50 rounded-lg p-3">
+                <div v-if="file.value?.extraction?.extractedFields?.documentNumber?.value" class="bg-gray-50 rounded-lg p-3">
                   <p class="text-xs text-gray-500">Document Number</p>
-                  <p class="font-semibold">{{ file.extraction.extractedFields.documentNumber.value }}</p>
+                  <p class="font-semibold">{{ file.value?.extraction?.extractedFields?.documentNumber?.value }}</p>
                 </div>
                 
-                <div v-if="file.extraction.extractedFields.documentDate?.value" class="bg-gray-50 rounded-lg p-3">
+                <div v-if="file.value?.extraction?.extractedFields?.documentDate?.value" class="bg-gray-50 rounded-lg p-3">
                   <p class="text-xs text-gray-500">Document Date</p>
-                  <p class="font-semibold">{{ formatDate(file.extraction.extractedFields.documentDate.value) }}</p>
+                  <p class="font-semibold">{{ formatDate(file.value?.extraction?.extractedFields?.documentDate?.value || '') }}</p>
                 </div>
                 
-                <div v-if="file.extraction.extractedFields.dueDate?.value" class="bg-gray-50 rounded-lg p-3">
+                <div v-if="file.value?.extraction?.extractedFields?.dueDate?.value" class="bg-gray-50 rounded-lg p-3">
                   <p class="text-xs text-gray-500">Due Date</p>
-                  <p class="font-semibold">{{ formatDate(file.extraction.extractedFields.dueDate.value) }}</p>
+                  <p class="font-semibold">{{ formatDate(file.value?.extraction?.extractedFields?.dueDate?.value || '') }}</p>
                 </div>
                 
-                <div v-if="file.extraction.extractedFields.vendorName?.value" class="bg-gray-50 rounded-lg p-3">
+                <div v-if="file.value?.extraction?.extractedFields?.vendorName?.value" class="bg-gray-50 rounded-lg p-3">
                   <p class="text-xs text-gray-500">Vendor</p>
-                  <p class="font-semibold text-sm">{{ file.extraction.extractedFields.vendorName.value }}</p>
+                  <p class="font-semibold text-sm">{{ file.value?.extraction?.extractedFields?.vendorName?.value }}</p>
                 </div>
               </div>
               
@@ -166,19 +166,18 @@
               <div class="flex items-center justify-between pt-2 border-t">
                 <div class="flex items-center gap-2">
                   <span class="text-sm text-gray-500">Document Type:</span>
-                  <UBadge variant="soft" size="sm">
-                    {{ file.extraction.documentType }}
-                  </UBadge>
+                  <FigBadge variant="soft" size="sm" color="primary">
+                    {{ file.value?.extraction?.documentType }}
+                  </FigBadge>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="text-sm text-gray-500">Confidence:</span>
-                  <UBadge 
-                    :color="file.extraction.overallConfidence >= 90 ? 'success' : file.extraction.overallConfidence >= 70 ? 'warning' : 'error'"
+                  <FigStatusBadge
+                    :status="file.value?.extraction?.overallConfidence || 0"
+                    type="confidence"
                     variant="soft"
                     size="sm"
-                  >
-                    {{ Math.round(file.extraction.overallConfidence) }}%
-                  </UBadge>
+                  />
                 </div>
               </div>
             </div>
@@ -192,27 +191,27 @@
             <div class="space-y-3">
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Original Name:</span>
-                <span class="text-sm font-medium">{{ file.fileName }}</span>
+                <span class="text-sm font-medium">{{ file.value?.fileName }}</span>
               </div>
               
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Size:</span>
-                <span class="text-sm font-medium">{{ formatFileSize(file.size || 0) }}</span>
+                <span class="text-sm font-medium">{{ formatFileSize(file.value?.size || 0) }}</span>
               </div>
               
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Type:</span>
-                <span class="text-sm font-medium">{{ file.mimeType || 'Unknown' }}</span>
+                <span class="text-sm font-medium">{{ file.value?.mimeType || 'Unknown' }}</span>
               </div>
               
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Uploaded:</span>
-                <span class="text-sm font-medium">{{ formatDate(file.createdAt) }}</span>
+                <span class="text-sm font-medium">{{ formatDate(file.value?.createdAt || '') }}</span>
               </div>
               
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Status:</span>
-                <span class="text-sm font-medium">{{ file.processingStatus || 'Unknown' }}</span>
+                <span class="text-sm font-medium">{{ file.value?.processingStatus || 'Unknown' }}</span>
               </div>
             </div>
             
@@ -231,14 +230,14 @@
           </UCard>
 
           <!-- Extracted Data -->
-          <UCard v-if="file.extraction">
+          <UCard v-if="file.value?.extraction">
             <template #header>
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-medium">Extracted Data</h2>
                 <div class="flex items-center gap-2">
                   <span class="text-sm text-gray-500">Confidence:</span>
-                  <span class="text-sm font-medium" :class="getConfidenceColor(file.extraction.overallConfidence)">
-                    {{ Math.round(file.extraction.overallConfidence) }}%
+                  <span class="text-sm font-medium" :class="getConfidenceColor(file.value?.extraction?.overallConfidence || 0)">
+                    {{ Math.round(file.value?.extraction?.overallConfidence || 0) }}%
                   </span>
                 </div>
               </div>
@@ -247,31 +246,30 @@
             <div class="space-y-4">
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Document Type:</span>
-                <span class="text-sm font-medium capitalize">{{ file.extraction.documentType }}</span>
+                <span class="text-sm font-medium capitalize">{{ file.value?.extraction?.documentType }}</span>
               </div>
               
               <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Validation Status:</span>
-                <span class="text-sm font-medium capitalize" :class="getValidationColor(file.extraction.validationStatus)">
-                  {{ file.extraction.validationStatus.replace('_', ' ') }}
+                <span class="text-sm font-medium capitalize" :class="getValidationColor(file.value?.extraction?.validationStatus || '')">
+                  {{ file.value?.extraction?.validationStatus?.replace('_', ' ') }}
                 </span>
               </div>
 
               <!-- Key Extracted Fields -->
-              <div v-if="file.extraction.extractedFields" class="space-y-3 pt-3 border-t">
+              <div v-if="file.value?.extraction?.extractedFields" class="space-y-3 pt-3 border-t">
                 <h3 class="text-sm font-medium">Key Fields</h3>
                 
-                <div v-for="(field, key) in getDisplayFields(file.extraction.extractedFields)" :key="key" class="flex justify-between">
+                <div v-for="(field, key) in getDisplayFields(file.value?.extraction?.extractedFields)" :key="key" class="flex justify-between">
                   <span class="text-sm text-gray-500">{{ formatFieldName(String(key)) }}:</span>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-medium">{{ field.value }}</span>
-                    <UBadge
-                      size="xs"
-                      :color="getConfidenceBadgeColor(field.confidence)"
+                    <FigStatusBadge
+                      :status="field.confidence"
+                      type="confidence"
                       variant="soft"
-                    >
-                      {{ Math.round(field.confidence) }}%
-                    </UBadge>
+                      size="xs"
+                    />
                   </div>
                 </div>
               </div>
@@ -346,6 +344,7 @@
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query';
+import { FigBadge, FigStatusBadge } from '@figgy/ui';
 
 const route = useRoute();
 const router = useRouter();
@@ -368,7 +367,7 @@ const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
     const response = await api.get<any>(`/trpc/files.getWithExtractions?input=${encodeURIComponent(JSON.stringify(input))}`);
     return response.result.data.json;
   },
-  enabled: computed(() => !!fileId && !!selectedTenantId.value),
+  enabled: () => !!fileId && !!selectedTenantId.value,
 });
 
 // Get proxy URL for file display (inline viewing)
@@ -387,7 +386,7 @@ const { data: downloadUrlData } = useQuery({
     const response = await api.get<any>(`/trpc/files.getSignedUrl?input=${encodeURIComponent(JSON.stringify(input))}`);
     return response.result.data.json;
   },
-  enabled: computed(() => !!fileId && !!selectedTenantId.value),
+  enabled: () => !!fileId && !!selectedTenantId.value,
 });
 
 const downloadUrl = computed(() => downloadUrlData.value?.url);
@@ -441,11 +440,7 @@ const getConfidenceColor = (confidence: number) => {
   return 'text-red-600 bg-red-100';
 };
 
-const getConfidenceBadgeColor = (confidence: number): 'success' | 'warning' | 'error' => {
-  if (confidence >= 90) return 'success';
-  if (confidence >= 70) return 'warning';
-  return 'error';
-};
+// Confidence badge color logic is now handled by FigStatusBadge component
 
 const getValidationColor = (status: string) => {
   if (status === 'valid') return 'text-green-600';

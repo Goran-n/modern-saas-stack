@@ -1,0 +1,121 @@
+# Figgy UI Component Library - AI Coding Rules
+
+You are an expert in Vue 3, TypeScript, Tailwind CSS v4, and Atomic Design patterns.
+
+## Tech Stack
+- Vue 3 (Composition API with <script setup>)
+- TypeScript (strict mode)
+- Tailwind CSS v4 (custom theme)
+- Reka UI (headless components)
+- Vite (build tool)
+
+## Project Structure
+```
+packages/ui/src/
+├── components/
+│   ├── atoms/      # Basic components (Button, Input, Badge)
+│   ├── molecules/  # Composed components (FormField, Modal)
+│   ├── organisms/  # Complex components (future)
+│   └── templates/  # Layouts (future)
+├── utils/          # Shared utilities
+├── types/          # Shared TypeScript types
+└── theme.css       # Tailwind v4 theme
+```
+
+## Critical Rules
+
+### Component Development
+- ALWAYS use Composition API with <script setup>
+- ALWAYS define props with TypeScript interfaces in types.ts
+- ALWAYS use withDefaults for prop defaults
+- NEVER include form logic (labels/hints/errors) in atoms
+- ALWAYS keep components under 150 lines
+
+### TypeScript
+- Use interfaces over types
+- Always use strict mode
+- Define all prop types in separate types.ts file
+- Use shared types: Size, Color, Variant, ClassProp
+- Add JSDoc comments for all props
+
+### Styling
+- ONLY use theme tokens (primary-500, neutral-200, etc.)
+- NEVER hardcode colors (#5e2b94, rgb values)
+- ALWAYS use cn() utility for class merging
+- Use shared utilities: transitions, focusRing, disabledClasses
+- Follow Tailwind spacing scale (2, 4, 6, 8, not arbitrary values)
+
+### Code Patterns
+
+#### New Atom Template:
+```vue
+<template>
+  <div :class="componentClasses">
+    <slot />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { cn } from '../../../utils/cn'
+import type { ComponentProps } from './types'
+
+const props = withDefaults(defineProps<ComponentProps>(), {
+  size: 'md',
+  variant: 'solid',
+})
+
+const componentClasses = computed(() => cn(
+  'base-classes',
+  variantClasses[props.variant],
+  props.class
+))
+</script>
+```
+
+#### Form Pattern:
+```vue
+<!-- Use FormField for labels/errors -->
+<FigFormField label="Email" :error="error">
+  <FigInput v-model="value" />
+</FigFormField>
+```
+
+### File Naming
+- Components: PascalCase (FigButton)
+- Files: kebab-case (button.vue)
+- Props: camelCase (modelValue)
+- Events: kebab-case with colons (update:modelValue)
+
+### Accessibility
+- Include ARIA attributes
+- Support keyboard navigation
+- Use semantic HTML elements
+- Provide ariaLabel props
+
+### Common Imports
+```typescript
+import { cn } from '../../../utils/cn'
+import { transitions, focusRing, disabledClasses } from '../../../utils/transitions'
+import type { Size, Color, Variant, ClassProp } from '../../../types'
+```
+
+### Anti-patterns to Avoid
+- Form logic in atoms
+- Hardcoded colors or values
+- Inline SVGs (use Icon/Spinner components)
+- Direct DOM manipulation
+- Class-based components
+- Deep nesting or complex atoms
+
+### Quality Checklist
+- [ ] TypeScript interfaces in types.ts
+- [ ] Props have JSDoc comments
+- [ ] Uses theme tokens only
+- [ ] Uses cn() for classes
+- [ ] Includes ARIA attributes
+- [ ] Under 150 lines
+- [ ] Exports from index.ts
+
+## Remember
+Keep atoms simple and dumb. Molecules add logic. The design system handles complexity. Consistency over cleverness.

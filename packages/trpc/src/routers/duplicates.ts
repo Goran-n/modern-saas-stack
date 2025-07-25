@@ -90,7 +90,7 @@ export const duplicatesRouter = createTRPCRouter({
           duplicateCandidateId: extraction.duplicate_candidate_id,
           invoiceFingerprint: extraction.invoice_fingerprint,
         },
-        duplicateChain: duplicateChain.map((doc) => ({
+        duplicateChain: duplicateChain.map((doc: any) => ({
           id: doc.id,
           fileId: doc.fileId,
           documentType: doc.documentType,

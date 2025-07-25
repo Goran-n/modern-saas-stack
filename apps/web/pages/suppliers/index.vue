@@ -1,73 +1,95 @@
 <template>
-  <UContainer class="py-6">
-    <UCard>
-      <template #header>
-        <h1 class="text-2xl font-semibold">Suppliers</h1>
-      </template>
-
-      <div v-if="!selectedTenantId && tenantStore.isLoading" class="text-gray-500 text-center py-8">
-        Loading tenant information...
+  <div class="min-h-screen bg-canvas">
+    <!-- Search Header -->
+    <SearchHeader 
+      v-model:search="searchQuery"
+      :results-count="filteredCount"
+      :total-count="supplierCount"
+      :show-results-count="!!suppliers"
+      :disabled="!!isLoading"
+      class="sticky top-0 z-10"
+    />
+    
+    <!-- Main Content -->
+    <FigContainer max-width="6xl" class="py-8">
+      <!-- Loading State for Tenant -->
+      <div v-if="!selectedTenantId && tenantStore.isLoading" class="text-center py-16">
+        <FigSpinner size="lg" class="mx-auto mb-4" />
+        <p class="text-neutral-600">Loading tenant information...</p>
       </div>
 
-      <div v-else-if="!selectedTenantId" class="text-amber-500 text-center py-8">
-        No tenant selected. Please select a tenant to view suppliers.
+      <!-- No Tenant Selected -->
+      <FigAlert 
+        v-else-if="!selectedTenantId" 
+        variant="subtle" 
+        color="warning"
+        class="max-w-2xl mx-auto"
+      >
+        <template #title>No tenant selected</template>
+        Please select a tenant to view suppliers.
+      </FigAlert>
+
+      <!-- Loading State -->
+      <div v-else-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <FigSkeleton v-for="i in 6" :key="i" class="h-48 rounded-lg" />
       </div>
 
-      <div v-else-if="isLoading" class="space-y-4">
-        <USkeleton class="h-12 w-full" v-for="i in 5" :key="i" />
-      </div>
+      <!-- Error State -->
+      <FigAlert 
+        v-else-if="error" 
+        variant="solid" 
+        color="error"
+        class="max-w-2xl mx-auto"
+      >
+        <template #title>Error loading suppliers</template>
+        {{ (error?.value as any)?.message || 'An error occurred while loading suppliers' }}
+      </FigAlert>
 
-      <div v-else-if="error" class="text-red-500">
-        Error loading suppliers: {{ error.message }}
-      </div>
+      <!-- Results Grid -->
+      <SuppliersGrid 
+        v-else-if="filteredSuppliers.length > 0"
+        :suppliers="filteredSuppliers"
+      />
 
-      <div v-else-if="suppliers?.length === 0" class="text-gray-500 text-center py-8">
-        No suppliers found
-      </div>
-
-      <div v-else class="space-y-2">
-        <NuxtLink
-          v-for="supplier in suppliers"
-          :key="supplier.id"
-          :to="`/suppliers/${supplier.id}`"
-          class="block"
-        >
-          <UCard class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="font-medium">{{ supplier.displayName || supplier.legalName }}</h3>
-                <p class="text-sm text-gray-500">{{ supplier.companyNumber || 'No company number' }}</p>
-              </div>
-              <UBadge :color="supplier.status === 'active' ? 'success' : 'neutral'">
-                {{ supplier.status }}
-              </UBadge>
-            </div>
-          </UCard>
-        </NuxtLink>
-      </div>
-    </UCard>
-  </UContainer>
+      <!-- Empty State -->
+      <FigEmptyState 
+        v-else
+        :type="searchQuery ? 'no-results' : 'empty'"
+        :title="searchQuery ? 'No suppliers found' : 'No suppliers yet'"
+        :description="searchQuery 
+          ? 'Try adjusting your search terms' 
+          : 'Suppliers will appear here once they are added to your account'"
+        class="mt-16"
+      />
+    </FigContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@tanstack/vue-query';
+import { useQuery } from '@tanstack/vue-query'
+import { FigContainer, FigAlert, FigSkeleton, FigSpinner, FigEmptyState } from '@figgy/ui'
+import SearchHeader from '~/components/organisms/SearchHeader.vue'
+import SuppliersGrid from '~/components/organisms/SuppliersGrid.vue'
 
-const api = useApi();
-
-const tenantStore = useTenantStore();
+const api = useApi()
+const tenantStore = useTenantStore()
 
 // Use computed to make it reactive
-const selectedTenantId = computed(() => tenantStore.selectedTenantId);
+const selectedTenantId = computed(() => tenantStore.selectedTenantId)
 
-// Wait for tenant to be selected before fetching suppliers
-const { data: suppliers, isLoading, error } = useQuery({
+// Fetch suppliers
+const { data: suppliersData, isLoading, error } = useQuery({
   queryKey: ['suppliers', selectedTenantId],
   queryFn: async () => {
-    console.log('Fetching suppliers for tenant:', selectedTenantId.value);
-    const response = await api.get<any>('/trpc/suppliers.list');
-    console.log('Suppliers response:', response);
-    return response.result.data.json;
+    const response = await api.get<any>('/trpc/suppliers.list')
+    return response.result.data.json
   },
-  enabled: computed(() => !!selectedTenantId.value), // Only fetch when tenant is selected
-});
+  enabled: () => !!selectedTenantId.value,
+})
+
+// Convert to ref for composable
+const suppliers = computed(() => suppliersData.value || [])
+
+// Search functionality
+const { searchQuery, filteredSuppliers, supplierCount, filteredCount } = useSupplierSearch(suppliers)
 </script>

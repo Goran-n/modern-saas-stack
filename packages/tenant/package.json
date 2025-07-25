@@ -13,14 +13,13 @@
   "dependencies": {
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
-    "@figgy/supplier": "workspace:*",
-    "@figgy/jobs": "workspace:*",
     "nanoid": "^5.1.5",
     "date-fns": "^3.6.0"
   },
   "devDependencies": {},
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./types/*": "./src/types/*.ts"
   }
 }

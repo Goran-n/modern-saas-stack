@@ -113,7 +113,7 @@ export async function uploadFile(
       source: record.source,
     } satisfies CategorizeFilePayload, {
       queue: {
-        concurrencyKey: `tenant-${record.tenantId}`,
+        name: `tenant-${record.tenantId}`,
       },
     });
 
@@ -327,7 +327,7 @@ export async function uploadFileFromBase64(input: {
       source: fileRecord.source,
     } satisfies CategorizeFilePayload, {
       queue: {
-        concurrencyKey: `tenant-${fileRecord.tenantId}`,
+        name: `tenant-${fileRecord.tenantId}`,
       },
     });
 
@@ -970,7 +970,7 @@ export async function reprocessFile(
     source: file.source,
   } satisfies CategorizeFilePayload, {
     queue: {
-      concurrencyKey: `tenant-${file.tenantId}`,
+      name: `tenant-${file.tenantId}`,
     },
   });
 

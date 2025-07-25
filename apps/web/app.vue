@@ -1,15 +1,17 @@
 <template>
-  <UApp>
+  <FigApp>
     <NuxtLoadingIndicator />
     
     <!-- Main app content -->
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-  </UApp>
+  </FigApp>
 </template>
 
 <script setup lang="ts">
+import { FigApp } from '@figgy/ui';
+
 // Set default meta tags
 useHead({
   title: 'Figgy',

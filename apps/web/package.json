@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@figgy/trpc": "workspace:*",
-    "@nuxt/ui-pro": "latest",
-    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@figgy/types": "workspace:*",
+    "@figgy/ui": "workspace:*",
     "@pinia/nuxt": "^0.11.2",
     "@tanstack/vue-query": "^5.83.0",
     "@tanstack/vue-query-devtools": "^5.83.0",
@@ -35,6 +35,7 @@
     "@nuxt/image": "^1.10.0",
     "@nuxtjs/color-mode": "^3.5.2",
     "@nuxtjs/supabase": "^1.5.3",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/sharp": "^0.32.0",
     "eslint": "^9.31.0",
     "jiti": "latest",

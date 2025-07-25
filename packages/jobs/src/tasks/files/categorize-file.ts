@@ -426,7 +426,7 @@ export const categorizeFile = schemaTask({
           },
           {
             queue: {
-              concurrencyKey: `tenant-${tenantId}`, // Ensure sequential processing per tenant
+              name: `tenant-${tenantId}`, // Ensure sequential processing per tenant
             },
           },
         );

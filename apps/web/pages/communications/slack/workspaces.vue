@@ -80,13 +80,12 @@
                   <p class="text-xs text-gray-500">ID: {{ workspace.workspaceId }}</p>
                 </div>
               </div>
-              <UBadge 
-                :color="workspace.botToken ? 'success' : 'error'" 
+              <FigStatusBadge
+                :status="workspace.botToken ? 'active' : 'inactive'"
+                type="connection"
                 variant="soft"
                 size="xs"
-              >
-                {{ workspace.botToken ? 'Active' : 'Inactive' }}
-              </UBadge>
+              />
             </div>
           </template>
 
@@ -246,12 +245,12 @@
               </UFormGroup>
 
               <UFormGroup label="Status">
-                <UBadge 
-                  :color="selectedWorkspace.botToken ? 'success' : 'error'" 
+                <FigStatusBadge
+                  :status="selectedWorkspace.botToken ? 'active' : 'inactive'"
+                  type="connection"
                   variant="soft"
-                >
-                  {{ selectedWorkspace.botToken ? 'Active' : 'Inactive' }}
-                </UBadge>
+                  size="sm"
+                />
               </UFormGroup>
 
               <div class="flex justify-end gap-3 pt-4">
@@ -284,9 +283,9 @@
                   <div class="flex items-center gap-2">
                     <UIcon name="i-heroicons-hashtag" class="text-gray-400" />
                     <span class="font-medium">{{ channel.name }}</span>
-                    <UBadge v-if="channel.isPrivate" size="xs" variant="soft">
+                    <FigBadge v-if="channel.isPrivate" size="xs" variant="soft" color="neutral">
                       Private
-                    </UBadge>
+                    </FigBadge>
                   </div>
                   <UToggle v-model="channel.enabled" />
                 </div>
@@ -337,6 +336,7 @@
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
 import type { SlackWorkspace } from '~/types/communication'
+import { FigBadge, FigStatusBadge } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()

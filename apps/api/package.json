@@ -17,6 +17,7 @@
     "@figgy/supabase-storage": "workspace:*",
     "@figgy/tenant": "workspace:*",
     "@figgy/trpc": "workspace:*",
+    "@figgy/types": "workspace:*",
     "@figgy/utils": "workspace:*"
   },
   "devDependencies": {

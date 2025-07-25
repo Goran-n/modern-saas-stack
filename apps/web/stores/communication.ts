@@ -153,7 +153,7 @@ export const useCommunicationStore = defineStore("communication", {
     addActivity(activity: Omit<RecentActivity, "id" | "timestamp">) {
       this.recentActivity.unshift({
         ...activity,
-        id: crypto.randomUUID(),
+        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: new Date().toISOString(),
       });
 

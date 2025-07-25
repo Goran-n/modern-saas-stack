@@ -17,6 +17,7 @@
     "@figgy/shared-db": "workspace:*",
     "@figgy/supabase-storage": "workspace:*",
     "@figgy/tenant": "workspace:*",
+    "@figgy/types": "workspace:*",
     "@figgy/utils": "workspace:*",
     "@trigger.dev/sdk": "^3.3.17",
     "@trpc/server": "^10.45.2",
