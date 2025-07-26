@@ -11,7 +11,7 @@ export const ApiErrorSchema = z.object({
 export const ApiSuccessSchema = z.object({
   success: z.literal(true),
   data: z.unknown(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const PaginatedResponseSchema = z.object({
@@ -28,7 +28,7 @@ export function createApiResponse<T extends z.ZodType>(dataSchema: T) {
     z.object({
       success: z.literal(true),
       data: dataSchema,
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     }),
     ApiErrorSchema,
   ]);

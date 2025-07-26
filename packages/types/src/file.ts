@@ -12,21 +12,21 @@ export const FileSchema = z.object({
   uploadedBy: z.string().uuid(),
   status: FileStatusSchema,
   error: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 
 export const FileGroupByYearSchema = z.object({
   year: z.string(),
-  suppliers: z.record(z.object({
+  suppliers: z.record(z.string(), z.object({
     fileCount: z.number(),
     files: z.array(FileSchema),
   })),
 });
 
 export const FileDataSchema = z.object({
-  byYear: z.record(FileGroupByYearSchema),
+  byYear: z.record(z.string(), FileGroupByYearSchema),
   totalFiles: z.number(),
 });
 

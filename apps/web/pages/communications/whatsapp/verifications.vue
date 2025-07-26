@@ -374,7 +374,7 @@ const fetchUsers = async () => {
       baseURL: useRuntimeConfig().public.apiUrl,
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId.value || ''
+        'x-tenant-id': tenantStore.selectedTenantId || ''
       }
     })
     
@@ -491,11 +491,11 @@ const breadcrumbs = [
 // Load data
 onMounted(async () => {
   // Wait for tenant to be selected
-  if (!tenantStore.selectedTenantId.value) {
+  if (!tenantStore.selectedTenantId) {
     await tenantStore.fetchUserTenants()
   }
 
-  if (!tenantStore.selectedTenantId.value) {
+  if (!tenantStore.selectedTenantId) {
     console.error('No tenant selected')
     useNotification().error(
       'No tenant selected',
@@ -602,7 +602,7 @@ const resendCode = async (verification: WhatsAppVerification) => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId.value || '',
+        'x-tenant-id': tenantStore.selectedTenantId || '',
         'Content-Type': 'application/json'
       },
       body: {
@@ -677,7 +677,7 @@ const submitVerificationCode = async () => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId.value || '',
+        'x-tenant-id': tenantStore.selectedTenantId || '',
         'Content-Type': 'application/json'
       },
       body: {
@@ -747,7 +747,7 @@ const addManualMapping = async () => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
-        'x-tenant-id': tenantStore.selectedTenantId.value || '',
+        'x-tenant-id': tenantStore.selectedTenantId || '',
         'Content-Type': 'application/json'
       },
       body: {

@@ -35,7 +35,9 @@ export const useTenantStore = defineStore("tenant", () => {
           const dateB = new Date(b.lastAccessAt).getTime();
           return dateB - dateA; // Most recent first
         });
-        selectTenant(sortedTenants[0].tenant.id);
+        if (sortedTenants[0]?.tenant.id) {
+          selectTenant(sortedTenants[0].tenant.id);
+        }
       }
     } catch (error) {
       // Don't throw on error - this allows the app to continue working

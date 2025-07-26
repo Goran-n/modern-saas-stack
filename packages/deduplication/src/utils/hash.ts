@@ -56,7 +56,7 @@ export class HashUtils {
       const date =
         invoiceDate instanceof Date ? invoiceDate : new Date(invoiceDate);
       if (!isNaN(date.getTime())) {
-        normalizedDate = date.toISOString().split("T")[0];
+        normalizedDate = date.toISOString().split("T")[0] || "";
       }
     }
 

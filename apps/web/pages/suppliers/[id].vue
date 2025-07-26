@@ -92,7 +92,7 @@
           color="error"
         >
           <template #title>Error loading files</template>
-          {{ (filesError?.value as any)?.message || 'An error occurred while loading files' }}
+          {{ (filesError as any)?.message || 'An error occurred while loading files' }}
         </FigAlert>
 
         <!-- Files List -->

@@ -89,7 +89,7 @@ export class Config {
         const errorMessage = this.formatValidationErrors(error);
         logger.error("Configuration validation failed", {
           environment: nodeEnv,
-          errors: error.errors,
+          errors: error.issues,
         });
         throw new ConfigValidationError(errorMessage, error);
       }
@@ -153,7 +153,7 @@ export class Config {
    * Format Zod validation errors into a readable message
    */
   private formatValidationErrors(error: z.ZodError): string {
-    const errors = error.errors.map((err) => {
+    const errors = error.issues.map((err: any) => {
       const path = err.path.join(".");
       return `${path}: ${err.message}`;
     });

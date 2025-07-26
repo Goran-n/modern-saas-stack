@@ -19,7 +19,7 @@ export const useFileOperations = () => {
   const downloadFile = async (file: FileItem) => {
     const success = await fileService.downloadFile(file, {
       apiUrl: config.public.apiUrl,
-      tenantId: tenantStore.selectedTenantId.value || undefined
+      tenantId: tenantStore.selectedTenantId || undefined
     })
     
     if (!success) {
@@ -70,7 +70,7 @@ export const useFileOperations = () => {
   const getProxyUrl = (fileId: string): string | null => {
     return fileService.getProxyUrl(fileId, {
       apiUrl: config.public.apiUrl,
-      tenantId: tenantStore.selectedTenantId.value || undefined,
+      tenantId: tenantStore.selectedTenantId || undefined,
       toolbar: false
     })
   }
@@ -81,7 +81,7 @@ export const useFileOperations = () => {
   const getDownloadUrl = (fileId: string): string | null => {
     return fileService.getDownloadUrl(fileId, {
       apiUrl: config.public.apiUrl,
-      tenantId: tenantStore.selectedTenantId.value || undefined
+      tenantId: tenantStore.selectedTenantId || undefined
     })
   }
 
@@ -92,7 +92,7 @@ export const useFileOperations = () => {
     fileService.handleFileDragStart(
       event, 
       file, 
-      tenantStore.selectedTenantId.value || undefined
+      tenantStore.selectedTenantId || undefined
     )
   }
 
@@ -102,7 +102,7 @@ export const useFileOperations = () => {
   const batchDownload = async (files: FileItem[]) => {
     const results = await fileService.batchDownload(files, {
       apiUrl: config.public.apiUrl,
-      tenantId: tenantStore.selectedTenantId.value || undefined
+      tenantId: tenantStore.selectedTenantId || undefined
     })
     
     if (results.failed.length > 0) {

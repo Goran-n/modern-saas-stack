@@ -21,7 +21,7 @@
     "@figgy/utils": "workspace:*",
     "@slack/oauth": "^3.0.3",
     "@slack/web-api": "^7.9.3",
-    "twilio": "^5.7.3"
+    "twilio": "^5.8.0"
   },
   "devDependencies": {
     "@types/bun": "latest"

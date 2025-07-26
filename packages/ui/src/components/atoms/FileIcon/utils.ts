@@ -5,49 +5,22 @@ import type { FileIconConfig } from "./types";
  */
 const getFileExtension = (fileName: string): string => {
   const parts = fileName.split(".");
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+  return parts.length > 1 ? parts[parts.length - 1]!.toLowerCase() : "";
 };
 
 /**
- * Map of file extensions to icon configurations
- * Using Figgy brand colours for consistency
+ * Map of supported file extensions to icon configurations
+ * Only supports images and PDFs as per business requirements
  */
 const fileIconMap: Record<string, FileIconConfig> = {
-  // Documents
+  // PDFs
   pdf: {
     icon: "i-heroicons-document-text",
     colorClass: "text-error-600",
     label: "PDF Document",
   },
-  doc: {
-    icon: "i-heroicons-document",
-    colorClass: "text-blue-600",
-    label: "Word Document",
-  },
-  docx: {
-    icon: "i-heroicons-document",
-    colorClass: "text-blue-600",
-    label: "Word Document",
-  },
 
-  // Spreadsheets
-  xls: {
-    icon: "i-heroicons-table-cells",
-    colorClass: "text-success-600",
-    label: "Excel Spreadsheet",
-  },
-  xlsx: {
-    icon: "i-heroicons-table-cells",
-    colorClass: "text-success-600",
-    label: "Excel Spreadsheet",
-  },
-  csv: {
-    icon: "i-heroicons-table-cells",
-    colorClass: "text-success-500",
-    label: "CSV File",
-  },
-
-  // Images
+  // Images  
   jpg: {
     icon: "i-heroicons-photo",
     colorClass: "text-primary-600",
@@ -78,160 +51,27 @@ const fileIconMap: Record<string, FileIconConfig> = {
     colorClass: "text-primary-600",
     label: "WebP Image",
   },
-
-  // Archives
-  zip: {
-    icon: "i-heroicons-archive-box",
-    colorClass: "text-warning-600",
-    label: "ZIP Archive",
-  },
-  rar: {
-    icon: "i-heroicons-archive-box",
-    colorClass: "text-warning-600",
-    label: "RAR Archive",
-  },
-  "7z": {
-    icon: "i-heroicons-archive-box",
-    colorClass: "text-warning-600",
-    label: "7-Zip Archive",
-  },
-  tar: {
-    icon: "i-heroicons-archive-box",
-    colorClass: "text-warning-700",
-    label: "TAR Archive",
-  },
-  gz: {
-    icon: "i-heroicons-archive-box",
-    colorClass: "text-warning-700",
-    label: "GZ Archive",
-  },
-
-  // Text files
-  txt: {
-    icon: "i-heroicons-document-text",
-    colorClass: "text-neutral-600",
-    label: "Text File",
-  },
-  md: {
-    icon: "i-heroicons-document-text",
-    colorClass: "text-neutral-700",
-    label: "Markdown File",
-  },
-
-  // Code files
-  js: {
-    icon: "i-heroicons-code-bracket",
-    colorClass: "text-warning-500",
-    label: "JavaScript File",
-  },
-  ts: {
-    icon: "i-heroicons-code-bracket",
-    colorClass: "text-blue-600",
-    label: "TypeScript File",
-  },
-  json: {
-    icon: "i-heroicons-code-bracket",
-    colorClass: "text-neutral-600",
-    label: "JSON File",
-  },
-  xml: {
-    icon: "i-heroicons-code-bracket",
-    colorClass: "text-secondary-600",
-    label: "XML File",
-  },
-
-  // Presentations
-  ppt: {
-    icon: "i-heroicons-presentation-chart-bar",
-    colorClass: "text-secondary-600",
-    label: "PowerPoint",
-  },
-  pptx: {
-    icon: "i-heroicons-presentation-chart-bar",
-    colorClass: "text-secondary-600",
-    label: "PowerPoint",
-  },
-
-  // Email
-  eml: {
-    icon: "i-heroicons-envelope",
-    colorClass: "text-blue-600",
-    label: "Email Message",
-  },
-  msg: {
-    icon: "i-heroicons-envelope",
-    colorClass: "text-blue-700",
-    label: "Outlook Message",
-  },
-
-  // Video
-  mp4: {
-    icon: "i-heroicons-video-camera",
-    colorClass: "text-primary-600",
-    label: "MP4 Video",
-  },
-  avi: {
-    icon: "i-heroicons-video-camera",
-    colorClass: "text-primary-600",
-    label: "AVI Video",
-  },
-  mov: {
-    icon: "i-heroicons-video-camera",
-    colorClass: "text-primary-600",
-    label: "QuickTime Video",
-  },
-
-  // Audio
-  mp3: {
-    icon: "i-heroicons-musical-note",
-    colorClass: "text-accent-600",
-    label: "MP3 Audio",
-  },
-  wav: {
-    icon: "i-heroicons-musical-note",
-    colorClass: "text-accent-600",
-    label: "WAV Audio",
-  },
-  flac: {
-    icon: "i-heroicons-musical-note",
-    colorClass: "text-accent-700",
-    label: "FLAC Audio",
-  },
 };
 
 /**
- * MIME type to icon fallbacks
+ * MIME type to icon fallbacks for supported file types
  */
 const mimeTypeMap: Record<string, FileIconConfig> = {
-  "application/pdf": fileIconMap.pdf,
-  "application/msword": fileIconMap.doc,
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-    fileIconMap.docx,
-  "application/vnd.ms-excel": fileIconMap.xls,
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-    fileIconMap.xlsx,
-  "text/csv": fileIconMap.csv,
-  "image/jpeg": fileIconMap.jpg,
-  "image/png": fileIconMap.png,
-  "image/gif": fileIconMap.gif,
-  "image/svg+xml": fileIconMap.svg,
-  "image/webp": fileIconMap.webp,
-  "application/zip": fileIconMap.zip,
-  "application/x-rar-compressed": fileIconMap.rar,
-  "text/plain": fileIconMap.txt,
-  "text/markdown": fileIconMap.md,
-  "application/json": fileIconMap.json,
-  "application/xml": fileIconMap.xml,
-  "text/xml": fileIconMap.xml,
+  "application/pdf": fileIconMap.pdf!,
+  "image/jpeg": fileIconMap.jpg!,
+  "image/png": fileIconMap.png!,
+  "image/gif": fileIconMap.gif!,
+  "image/svg+xml": fileIconMap.svg!,
+  "image/webp": fileIconMap.webp!,
 };
 
 /**
- * Default icon for unknown file types
+ * Default icon for unsupported file types
  */
 const defaultIcon: FileIconConfig = {
   icon: "i-heroicons-document",
-  colorClass: "text-neutral-500",
-  label: "Unknown File",
+  colorClass: "text-neutral-400",
+  label: "Unsupported File",
 };
 
 /**
@@ -252,36 +92,32 @@ export const getFileIconConfig = (
 };
 
 /**
- * Check if file is an image based on extension or MIME type
+ * Check if file is a supported image based on extension or MIME type
  */
 export const isImageFile = (fileName: string, mimeType?: string): boolean => {
-  if (mimeType?.startsWith("image/")) return true;
+  if (mimeType?.startsWith("image/")) {
+    return ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"].includes(mimeType);
+  }
 
   const extension = getFileExtension(fileName);
-  return ["jpg", "jpeg", "png", "gif", "svg", "webp", "bmp", "ico"].includes(
-    extension,
-  );
+  return ["jpg", "jpeg", "png", "gif", "svg", "webp"].includes(extension);
 };
 
 /**
- * Check if file is a document based on extension or MIME type
+ * Check if file is a PDF based on extension or MIME type
  */
-export const isDocumentFile = (
-  fileName: string,
-  mimeType?: string,
-): boolean => {
-  const documentMimeTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/plain",
-    "text/markdown",
-  ];
-
-  if (mimeType && documentMimeTypes.includes(mimeType)) return true;
-
+export const isPDFFile = (fileName: string, mimeType?: string): boolean => {
+  if (mimeType === "application/pdf") return true;
+  
   const extension = getFileExtension(fileName);
-  return ["pdf", "doc", "docx", "txt", "md", "rtf"].includes(extension);
+  return extension === "pdf";
+};
+
+/**
+ * Check if file type is supported (images and PDFs only)
+ */
+export const isSupportedFile = (fileName: string, mimeType?: string): boolean => {
+  return isImageFile(fileName, mimeType) || isPDFFile(fileName, mimeType);
 };
 
 /**

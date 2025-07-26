@@ -86,7 +86,7 @@
         <molecules-file-empty-state
           v-else-if="error"
           type="error"
-          :description="error.value?.message || 'There was an error loading your files'"
+          :description="error?.message || 'There was an error loading your files'"
         />
 
         <!-- Supplier Folders Display -->
@@ -315,8 +315,8 @@ const currentFiles = computed(() => {
   const yearData = fileDataUnwrapped.value.byYear[selectedYear.value]
   if (!yearData) return []
 
-  if (selectedSupplier.value && yearData.suppliers[selectedSupplier.value]) {
-    const files = yearData.suppliers[selectedSupplier.value].files || [];
+  if (selectedSupplier.value && yearData.suppliers?.[selectedSupplier.value]) {
+    const files = yearData.suppliers[selectedSupplier.value]?.files || [];
     return files.map((f: any) => typeof f.createdAt === 'string' ? f : fileToFileItem(f));
   }
 

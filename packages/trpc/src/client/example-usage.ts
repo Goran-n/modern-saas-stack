@@ -5,7 +5,6 @@ import { createLoggingLink } from "./logging-link";
 
 // Example of how to create a TRPC client with logging enabled
 export const trpcClient = createTRPCProxyClient<AppRouter>({
-  transformer: superjson,
   links: [
     // Add logging link first to capture all requests
     createLoggingLink({
@@ -22,6 +21,7 @@ export const trpcClient = createTRPCProxyClient<AppRouter>({
     // Then add your HTTP link
     httpBatchLink({
       url: "http://localhost:4000/trpc",
+      transformer: superjson,
       headers() {
         return {
           authorization: `Bearer ${getAuthToken()}`,

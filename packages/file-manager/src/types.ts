@@ -36,11 +36,11 @@ export const createFileSchema = z.object({
   mimeType: z.string(),
   size: z.number(),
   source: fileSourceSchema,
-  sourceId: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  sourceId: z.string().optional().default(""),
+  metadata: z.record(z.string(), z.unknown()).optional().default({}),
   tenantId: z.string().uuid(),
   uploadedBy: z.string().uuid(),
-  bucket: z.string().optional(),
+  bucket: z.string().optional().default(""),
 });
 
 export type FileSource = z.infer<typeof fileSourceSchema>;

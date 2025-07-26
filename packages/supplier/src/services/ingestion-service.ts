@@ -26,9 +26,9 @@ import { SupplierOperations } from "./supplier-operations";
 export interface IngestionResult {
   success: boolean;
   action: "created" | "updated" | "skipped";
-  supplierId?: string;
-  globalSupplierId?: string;
-  error?: string;
+  supplierId?: string | undefined;
+  globalSupplierId?: string | undefined;
+  error?: string | undefined;
 }
 
 export class SupplierIngestionService {
@@ -309,7 +309,7 @@ export class SupplierIngestionService {
             success: true,
             action: "created" as const,
             supplierId: supplier.id,
-            globalSupplierId: globalSupplierId || undefined,
+            globalSupplierId: globalSupplierId ?? undefined,
           };
         });
 

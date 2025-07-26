@@ -32,6 +32,9 @@ class RateLimiter {
     // Check if we're at the rate limit
     if (this.requestTimes.length >= RATE_LIMIT_CONFIG.maxRequestsPerMinute) {
       const oldestRequest = this.requestTimes[0];
+      if (!oldestRequest) {
+        throw new Error("Unexpected undefined oldest request");
+      }
       const waitTime = Math.max(0, oldestRequest + 60000 - now);
       
       logger.info("Rate limit reached, waiting", {

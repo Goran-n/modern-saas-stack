@@ -95,6 +95,9 @@ export class InvoiceDeduplicationService {
 
       if (exactMatches.length > 0) {
         const match = exactMatches[0];
+        if (!match) {
+          throw new Error("Unexpected null exact match result");
+        }
         logger.info("Exact invoice duplicate found", {
           duplicateExtractionId: match.id,
           invoiceFingerprint,
@@ -118,6 +121,9 @@ export class InvoiceDeduplicationService {
 
       if (similarMatches.length > 0) {
         const bestMatch = similarMatches[0];
+        if (!bestMatch) {
+          throw new Error("Unexpected null similar match result");
+        }
         const matchData = this.extractInvoiceData(
           bestMatch.extractedFields as ExtractedFieldsData,
         );
@@ -156,7 +162,7 @@ export class InvoiceDeduplicationService {
 
         return {
           isDuplicate,
-          duplicateExtractionId: isDuplicate ? bestMatch.id : undefined,
+          duplicateExtractionId: (isDuplicate && bestMatch) ? bestMatch.id : undefined,
           invoiceFingerprint,
           duplicateConfidence: scores.overallScore,
           duplicateType,

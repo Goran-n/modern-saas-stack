@@ -149,10 +149,10 @@ const trapFocus = (e: KeyboardEvent) => {
   
   if (e.shiftKey && document.activeElement === firstElement) {
     e.preventDefault();
-    lastElement.focus();
+    lastElement?.focus();
   } else if (!e.shiftKey && document.activeElement === lastElement) {
     e.preventDefault();
-    firstElement.focus();
+    firstElement?.focus();
   }
 };
 
@@ -171,7 +171,7 @@ watch(() => props.modelValue, async (isOpen) => {
     // Focus the first focusable element in the modal
     const elements = getFocusableElements();
     if (elements.length > 0) {
-      elements[0].focus();
+      elements[0]?.focus();
     }
     
     // Add focus trap listener

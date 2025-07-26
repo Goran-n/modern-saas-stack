@@ -1,13 +1,13 @@
 export interface FileDeduplicationResult {
   isDuplicate: boolean;
-  duplicateFileId?: string;
+  duplicateFileId?: string | undefined;
   contentHash: string;
   confidence: number;
 }
 
 export interface InvoiceDeduplicationResult {
   isDuplicate: boolean;
-  duplicateExtractionId?: string;
+  duplicateExtractionId?: string | undefined;
   invoiceFingerprint: string;
   duplicateConfidence: number;
   duplicateType: "exact" | "likely" | "possible" | "unique";

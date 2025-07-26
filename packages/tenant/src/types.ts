@@ -56,20 +56,20 @@ export const createTenantSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
   email: z.string().email("Invalid email address"),
   ownerId: z.string().uuid("Invalid owner ID"),
-  settings: z.record(z.unknown()).optional(),
-  subscription: z.record(z.unknown()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional().default({}),
+  subscription: z.record(z.string(), z.unknown()).optional().default({}),
+  metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 
 export const updateTenantSchema = z.object({
   tenantId: z.string().uuid("Invalid tenant ID"),
-  name: z.string().min(1, "Name is required").optional(),
-  status: tenantStatusSchema.optional(),
-  settings: z.record(z.unknown()).optional(),
-  subscription: z.record(z.unknown()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  name: z.string().min(1, "Name is required").optional().default(""),
+  status: tenantStatusSchema.optional().default("active"),
+  settings: z.record(z.string(), z.unknown()).optional().default({}),
+  subscription: z.record(z.string(), z.unknown()).optional().default({}),
+  metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;
@@ -107,7 +107,7 @@ export const createUserSchema = z.object({
   id: z.string().uuid("Invalid user ID"),
   email: z.string().email("Invalid email address"),
   name: z.string().min(1, "Name is required"),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -119,9 +119,9 @@ export const tenantSchema = z.object({
   slug: z.string(),
   email: z.string().email(),
   status: tenantStatusSchema,
-  settings: z.record(z.unknown()),
-  subscription: z.record(z.unknown()),
-  metadata: z.record(z.unknown()),
+  settings: z.record(z.string(), z.unknown()),
+  subscription: z.record(z.string(), z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable().optional(),
@@ -136,7 +136,7 @@ export const userSchema = z.object({
   emailVerified: z.boolean(),
   phoneVerified: z.boolean(),
   phone: z.string().nullable().optional(),
-  preferences: z.record(z.unknown()),
+  preferences: z.record(z.string(), z.unknown()),
   lastLoginAt: z.date().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),

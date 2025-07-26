@@ -12,16 +12,10 @@ export function useFileIcons() {
   const getFileIconConfig = (fileName: string): FileIconConfig => {
     const ext = getFileExtension(fileName)
     
+    // Only support images and PDFs
     const iconMap: Record<string, FileIconConfig> = {
-      // Documents
+      // PDFs
       pdf: { icon: 'i-heroicons-document-text', color: 'text-red-500' },
-      doc: { icon: 'i-heroicons-document', color: 'text-blue-500' },
-      docx: { icon: 'i-heroicons-document', color: 'text-blue-500' },
-      
-      // Spreadsheets
-      xls: { icon: 'i-heroicons-table-cells', color: 'text-emerald-500' },
-      xlsx: { icon: 'i-heroicons-table-cells', color: 'text-emerald-500' },
-      csv: { icon: 'i-heroicons-table-cells', color: 'text-emerald-500' },
       
       // Images
       jpg: { icon: 'i-heroicons-photo', color: 'text-green-500' },
@@ -31,17 +25,11 @@ export function useFileIcons() {
       webp: { icon: 'i-heroicons-photo', color: 'text-green-500' },
       svg: { icon: 'i-heroicons-photo', color: 'text-green-500' },
       
-      // Archives
-      zip: { icon: 'i-heroicons-archive-box', color: 'text-purple-500' },
-      rar: { icon: 'i-heroicons-archive-box', color: 'text-purple-500' },
-      '7z': { icon: 'i-heroicons-archive-box', color: 'text-purple-500' },
-      tar: { icon: 'i-heroicons-archive-box', color: 'text-purple-500' },
-      
-      // Default
-      default: { icon: 'i-heroicons-document', color: 'text-gray-500' }
+      // Default (unsupported file type)
+      default: { icon: 'i-heroicons-document', color: 'text-gray-400' }
     }
     
-    return iconMap[ext] || iconMap.default
+    return iconMap[ext] || iconMap.default!
   }
 
   const getFileIcon = (fileName: string): string => {
@@ -61,19 +49,8 @@ export function useFileIcons() {
     return getFileExtension(fileName) === 'pdf'
   }
 
-  const isDocument = (fileName: string): boolean => {
-    const ext = getFileExtension(fileName)
-    return ['doc', 'docx', 'pdf', 'txt', 'rtf'].includes(ext)
-  }
-
-  const isSpreadsheet = (fileName: string): boolean => {
-    const ext = getFileExtension(fileName)
-    return ['xls', 'xlsx', 'csv'].includes(ext)
-  }
-
-  const isArchive = (fileName: string): boolean => {
-    const ext = getFileExtension(fileName)
-    return ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)
+  const isSupportedFileType = (fileName: string): boolean => {
+    return isImage(fileName) || isPDF(fileName)
   }
 
   return {
@@ -83,8 +60,6 @@ export function useFileIcons() {
     getFileIconColor,
     isImage,
     isPDF,
-    isDocument,
-    isSpreadsheet,
-    isArchive
+    isSupportedFileType
   }
 }

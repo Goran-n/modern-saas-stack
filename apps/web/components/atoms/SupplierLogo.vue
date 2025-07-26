@@ -36,9 +36,9 @@ const imageError = ref(false)
 const initials = computed(() => {
   const words = props.name.trim().split(/\s+/)
   if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase()
+    return words[0]?.substring(0, 2).toUpperCase() || ''
   }
-  return words.slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  return words.slice(0, 2).map(w => w?.[0] || '').join('').toUpperCase()
 })
 
 const logoClasses = computed(() => {

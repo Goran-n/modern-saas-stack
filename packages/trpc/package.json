@@ -20,11 +20,11 @@
     "@figgy/types": "workspace:*",
     "@figgy/utils": "workspace:*",
     "@trigger.dev/sdk": "^3.3.17",
-    "@trpc/server": "^10.45.2",
+    "@trpc/server": "^11.4.3",
     "superjson": "^2.2.2"
   },
   "devDependencies": {
-    "@trpc/client": "^10.45.2",
+    "@trpc/client": "^11.4.3",
     "@types/bun": "latest"
   }
 }

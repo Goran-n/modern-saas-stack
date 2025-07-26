@@ -13,7 +13,7 @@
     </div>
 
     <div v-else-if="fileError" class="text-red-500">
-      Error loading file: {{ fileError.value?.message }}
+      Error loading file: {{ fileError?.message }}
     </div>
 
     <div v-else-if="file" class="space-y-6">
@@ -394,9 +394,7 @@ const downloadUrl = computed(() => downloadUrlData.value?.url);
 const getFileIcon = (filename: string) => {
   const ext = filename.split('.').pop()?.toLowerCase();
   if (['pdf'].includes(ext || '')) return 'i-heroicons-document-text';
-  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'i-heroicons-photo';
-  if (['xls', 'xlsx'].includes(ext || '')) return 'i-heroicons-table-cells';
-  if (['doc', 'docx'].includes(ext || '')) return 'i-heroicons-document';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')) return 'i-heroicons-photo';
   return 'i-heroicons-document';
 };
 

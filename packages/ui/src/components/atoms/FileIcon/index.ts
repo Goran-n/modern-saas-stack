@@ -3,6 +3,7 @@ export type { FileIconConfig, FileIconProps } from "./types";
 export {
   getFileIconConfig,
   getFileTypeLabel,
-  isDocumentFile,
   isImageFile,
+  isPDFFile,
+  isSupportedFile,
 } from "./utils";

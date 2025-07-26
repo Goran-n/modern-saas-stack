@@ -84,8 +84,8 @@ export class DeduplicationService {
     tenantId: string,
   ): Promise<{
     shouldProcess: boolean;
-    reason?: string;
-    duplicateFileId?: string;
+    reason?: string | undefined;
+    duplicateFileId?: string | undefined;
   }> {
     return this.fileService.shouldProcessFile(
       fileId,

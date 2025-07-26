@@ -42,7 +42,7 @@
         class="max-w-2xl mx-auto"
       >
         <template #title>Error loading suppliers</template>
-        {{ (error?.value as any)?.message || 'An error occurred while loading suppliers' }}
+        {{ (error as any)?.message || 'An error occurred while loading suppliers' }}
       </FigAlert>
 
       <!-- Results Grid -->

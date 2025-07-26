@@ -148,10 +148,14 @@ export const tenantRouter = createTRPCRouter({
         // Update tenant settings
         const updateData: UpdateTenantInput = {
           tenantId,
+          name: "",
+          status: "active",
           settings: {
             ...existingSettings,
             companyConfig: updatedConfig,
           },
+          subscription: {},
+          metadata: {},
         };
 
         await updateTenant(updateData);
@@ -184,7 +188,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         section: z.enum(["names", "identifiers", "addresses", "matching", "business", "vat"]),
-        data: z.record(z.unknown()),
+        data: z.record(z.string(), z.unknown()),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -236,10 +240,14 @@ export const tenantRouter = createTRPCRouter({
         // Update tenant settings
         const updateData: UpdateTenantInput = {
           tenantId,
+          name: "",
+          status: "active",
           settings: {
             ...existingSettings,
             companyConfig: updatedConfig,
           },
+          subscription: {},
+          metadata: {},
         };
 
         await updateTenant(updateData);

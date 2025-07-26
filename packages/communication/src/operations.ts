@@ -163,8 +163,11 @@ async function _createFileAndTriggerJob(
       mimeType: file.type,
       size: file.size,
       source: source as FileSource,
+      sourceId: "",
+      metadata: {},
       tenantId,
       uploadedBy: userId,
+      bucket: "",
     });
 
     return {

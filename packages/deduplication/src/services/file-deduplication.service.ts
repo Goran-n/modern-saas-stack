@@ -50,6 +50,9 @@ export class FileDeduplicationService {
 
       if (duplicates.length > 0) {
         const duplicate = duplicates[0];
+        if (!duplicate) {
+          throw new Error("Unexpected null duplicate result");
+        }
         logger.info("File duplicate found", {
           duplicateFileId: duplicate.id,
           fileName: duplicate.fileName,
@@ -143,8 +146,8 @@ export class FileDeduplicationService {
     tenantId: string,
   ): Promise<{
     shouldProcess: boolean;
-    reason?: string;
-    duplicateFileId?: string;
+    reason?: string | undefined;
+    duplicateFileId?: string | undefined;
   }> {
     try {
       // Check for duplicates
@@ -159,7 +162,7 @@ export class FileDeduplicationService {
         return {
           shouldProcess: false,
           reason: "Duplicate file already processed",
-          duplicateFileId: duplicationResult.duplicateFileId,
+          duplicateFileId: duplicationResult.duplicateFileId || undefined,
         };
       }
 

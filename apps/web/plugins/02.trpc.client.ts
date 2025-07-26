@@ -17,11 +17,11 @@ export default defineNuxtPlugin(() => {
 
   // Create the tRPC client with batch link
   const trpc = createTRPCProxyClient<AppRouter>({
-    transformer: superjson,
     links: [
       // HTTP batch link
       httpBatchLink({
         url: trpcUrl,
+        transformer: superjson,
         async headers() {
           // Get the current session token
           const {

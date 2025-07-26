@@ -58,11 +58,11 @@ export function bootstrap(
     if (error instanceof ConfigValidationError) {
       logger.error("❌ Configuration bootstrap failed", {
         error: error.message,
-        validationErrors: error.errors.errors.length,
+        validationErrors: error.errors.issues.length,
       });
 
       // Log each validation error for better debugging
-      error.errors.errors.forEach((err, index) => {
+      error.errors.issues.forEach((err: any, index: number) => {
         logger.error(`  ${index + 1}. ${err.path.join(".")}: ${err.message}`);
       });
 
