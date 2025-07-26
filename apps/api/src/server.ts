@@ -46,6 +46,8 @@ export function createHonoApp() {
       "http://localhost:3000",
       "http://localhost:4000",
       "http://localhost:4001",
+      "http://localhost:8010",
+      "http://localhost:8011",
     );
   }
 
@@ -181,6 +183,44 @@ export function createHonoApp() {
     } catch (error) {
       logger.error("File proxy error", { error, fileId, tenantId });
       return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  // Test endpoint for Trigger.dev
+  app.get("/test/trigger", async (c) => {
+    try {
+      const { tasks } = await import("@trigger.dev/sdk/v3");
+      
+      logger.info("Testing Trigger.dev", {
+        tasksAvailable: typeof tasks !== 'undefined',
+        triggerMethodExists: typeof tasks?.trigger === 'function',
+      });
+      
+      // Try to trigger a test job
+      const testIds = ["test-global-supplier-1", "test-global-supplier-2"];
+      const result = await tasks.trigger("fetch-logo", {
+        globalSupplierIds: testIds,
+      });
+      
+      return c.json({
+        success: true,
+        jobId: result.id,
+        testIds,
+        message: "Logo fetch job triggered successfully",
+      });
+    } catch (error) {
+      logger.error("Test trigger failed", {
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        } : error,
+      });
+      
+      return c.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }, 500);
     }
   });
 

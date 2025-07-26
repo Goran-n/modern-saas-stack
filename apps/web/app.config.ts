@@ -96,9 +96,9 @@ export default defineAppConfig({
     name: "Figgy",
     description: "Financial management, reimagined",
     logo: {
-      light: "/logo-light.svg",
-      dark: "/logo-dark.svg",
-      alt: "Figgy",
+      light: "/logo.png",
+      dark: "/logo.png",
+      alt: "Kibly",
     },
   },
 });

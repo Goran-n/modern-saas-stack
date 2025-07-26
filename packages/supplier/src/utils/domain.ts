@@ -2,6 +2,7 @@
  * Domain extraction and normalisation utilities
  */
 
+
 /**
  * Extract domain from email address
  */
@@ -110,7 +111,9 @@ export function extractDomainsFromSupplier(data: {
     for (const contact of data.contacts) {
       if (contact.type === "email") {
         const domain = extractDomain(contact.value);
-        if (domain) domains.push(domain);
+        if (domain) {
+          domains.push(domain);
+        }
       }
       if (contact.type === "website") {
         const domain = extractDomainFromUrl(contact.value);
@@ -122,7 +125,9 @@ export function extractDomainsFromSupplier(data: {
   // From direct email field
   if (data.email) {
     const domain = extractDomain(data.email);
-    if (domain) domains.push(domain);
+    if (domain) {
+      domains.push(domain);
+    }
   }
 
   // From website field
@@ -131,6 +136,16 @@ export function extractDomainsFromSupplier(data: {
     if (domain) domains.push(domain);
   }
 
-  // Remove duplicates
-  return [...new Set(domains)];
+  // Remove duplicates and sort by reliability (websites first, then email domains)
+  const uniqueDomains = [...new Set(domains)];
+  
+  // Sort to prioritize website domains over email domains
+  return uniqueDomains.sort((a, b) => {
+    const aFromWebsite = data.website && extractDomainFromUrl(data.website) === a;
+    const bFromWebsite = data.website && extractDomainFromUrl(data.website) === b;
+    
+    if (aFromWebsite && !bFromWebsite) return -1;
+    if (!aFromWebsite && bFromWebsite) return 1;
+    return 0;
+  });
 }

@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { bootstrap } from "@figgy/config";
 import { checkDatabaseHealth, getDatabaseConnection } from "@figgy/shared-db";
 import { logError, logger } from "@figgy/utils";
+import { configure } from "@trigger.dev/sdk/v3";
 import { createHonoApp } from "./server";
 
 async function waitForDatabase(
@@ -61,6 +62,15 @@ async function main() {
     );
   }
 
+  // Configure Trigger.dev
+  logger.info("Configuring Trigger.dev...");
+  configure({
+    projectId: config.TRIGGER_PROJECT_ID!,
+    apiKey: config.TRIGGER_API_KEY!,
+    apiUrl: config.TRIGGER_API_URL || "https://api.trigger.dev",
+  });
+  logger.info("Trigger.dev configured successfully");
+
   // Initialize database connection with pool
   logger.info("Initializing database connection pool...");
   try {
@@ -93,7 +103,7 @@ async function main() {
   const app = createHonoApp();
 
   // Start server
-  const port = config.PORT || 5000;
+  const port = config.PORT || 8011;
   const hostname = config.HOST || "0.0.0.0";
 
   serve({

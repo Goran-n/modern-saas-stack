@@ -6,11 +6,13 @@
         <!-- Logo and Navigation -->
         <div class="flex items-center space-x-8">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center space-x-2">
-            <FigAvatar size="sm" class="bg-primary-500" alt="Kibly logo">
-              <span class="text-white font-bold text-lg">K</span>
-            </FigAvatar>
-            <span class="text-xl font-semibold">Figgy</span>
+          <NuxtLink to="/" class="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="Kibly logo" 
+              class="h-8 w-auto"
+              @error="handleLogoError"
+            />
           </NuxtLink>
           
           <!-- Main Navigation -->
@@ -80,10 +82,19 @@
 </template>
 
 <script setup lang="ts">
-import { FigApp, FigMain, FigAvatar, FigIcon } from '@figgy/ui';
+import { FigApp, FigMain, FigIcon } from '@figgy/ui';
 import UserDropdown from '~/components/UserDropdown.vue';
 
 const mobileMenuOpen = ref(false)
+
+// Handle logo loading error
+const handleLogoError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  // Try dark logo as fallback
+  if (img.src.includes('/logo.png')) {
+    img.src = '/logo-dark.svg';
+  }
+}
 
 const navigationItems = [
   {

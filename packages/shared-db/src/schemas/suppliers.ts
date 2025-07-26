@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { globalSuppliers } from "./global-suppliers";
 import { tenants } from "./tenants";
 
 // Enums
@@ -53,6 +54,11 @@ export const suppliers = pgTable(
       .notNull()
       .references(() => tenants.id),
 
+    // Global supplier relationship
+    globalSupplierId: uuid("global_supplier_id").references(
+      () => globalSuppliers.id,
+    ),
+
     // Timestamps
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -70,6 +76,9 @@ export const suppliers = pgTable(
       table.companyNumber,
     ),
     vatNumberIdx: index("idx_suppliers_vat_number").on(table.vatNumber),
+    globalSupplierIdx: index("idx_suppliers_global_supplier_id").on(
+      table.globalSupplierId,
+    ),
 
     // Unique constraints
     uniqueCompanyNumberPerTenant: uniqueIndex(
@@ -193,6 +202,10 @@ export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [suppliers.tenantId],
     references: [tenants.id],
+  }),
+  globalSupplier: one(globalSuppliers, {
+    fields: [suppliers.globalSupplierId],
+    references: [globalSuppliers.id],
   }),
   dataSources: many(supplierDataSources),
   attributes: many(supplierAttributes),

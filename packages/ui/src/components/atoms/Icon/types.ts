@@ -3,6 +3,11 @@ import type { Size } from "../../../types";
 
 export interface IconProps {
   /**
+   * The icon name (e.g., 'i-heroicons-arrow-path', 'heroicons:arrow-path')
+   */
+  name?: string;
+
+  /**
    * The size of the icon
    * @default 'md'
    */

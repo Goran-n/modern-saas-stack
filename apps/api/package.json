@@ -18,7 +18,8 @@
     "@figgy/tenant": "workspace:*",
     "@figgy/trpc": "workspace:*",
     "@figgy/types": "workspace:*",
-    "@figgy/utils": "workspace:*"
+    "@figgy/utils": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.7"
   },
   "devDependencies": {
     "@types/bun": "latest"

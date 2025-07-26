@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   devServer: {
-    port: process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 4000,
+    port: process.env.WEB_PORT ? parseInt(process.env.WEB_PORT) : 8010,
   },
 
   typescript: {
@@ -28,11 +28,11 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://localhost:5000",
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || "http://localhost:8011",
       oauthApiUrl:
         process.env.NUXT_PUBLIC_OAUTH_API_URL ||
         process.env.NUXT_PUBLIC_API_URL ||
-        "http://localhost:5000",
+        "http://localhost:8011",
     },
   },
 
@@ -89,12 +89,12 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       "/api/**": {
-        target: "http://localhost:5000",
+        target: "http://localhost:8011",
         changeOrigin: true,
         ws: true,
       },
       "/trpc/**": {
-        target: "http://localhost:5000", 
+        target: "http://localhost:8011", 
         changeOrigin: true,
         ws: true,
       },

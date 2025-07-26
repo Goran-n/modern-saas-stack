@@ -40,6 +40,7 @@
         "@figgy/trpc": "workspace:*",
         "@figgy/types": "workspace:*",
         "@figgy/utils": "workspace:*",
+        "@trigger.dev/sdk": "^3.3.7",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -81,6 +82,7 @@
         "@figgy/trpc": "workspace:*",
         "@figgy/types": "workspace:*",
         "@figgy/ui": "workspace:*",
+        "@iconify/json": "^2.2.363",
         "@pinia/nuxt": "^0.11.2",
         "@tanstack/vue-query": "^5.83.0",
         "@tanstack/vue-query-devtools": "^5.83.0",
@@ -225,6 +227,7 @@
       "dependencies": {
         "@figgy/shared-db": "workspace:*",
         "@figgy/utils": "workspace:*",
+        "@trigger.dev/sdk": "^3.3.7",
       },
     },
     "packages/tenant": {
@@ -277,6 +280,7 @@
       "name": "@figgy/ui",
       "version": "0.1.0",
       "dependencies": {
+        "@iconify/vue": "^5.0.0",
         "@vueuse/core": "^11.3.0",
         "clsx": "^2.1.1",
         "reka-ui": "^2.4.0",
@@ -621,6 +625,8 @@
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
 
     "@iconify/collections": ["@iconify/collections@1.0.570", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-4KJOpoeShq/c7ZoY3fTBfamu6G5hpPMHH8Qf1OSArb3IY/cUy3iVxtLy1uhlpuvAguHxGNycbQwoSreHryIBGA=="],
+
+    "@iconify/json": ["@iconify/json@2.2.363", "", { "dependencies": { "@iconify/types": "*", "pathe": "^1.1.2" } }, "sha512-iSNBti18BhOizJSZCQr/1Mqp9kyqncQfSUElkScsQ0KyLNU2XUNuQ93JAMYtqJbtqtdjjWKidCJu9yfksIQmxA=="],
 
     "@iconify/types": ["@iconify/types@2.0.0", "", {}, "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="],
 

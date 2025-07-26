@@ -5,6 +5,7 @@ export * from "./auth";
 export * from "./base";
 export * from "./communication";
 export * from "./database";
+export * from "./external-services";
 export * from "./portkey";
 export * from "./redis";
 export * from "./slack";

@@ -7,12 +7,20 @@
     :aria-hidden="!props.ariaLabel ? 'true' : undefined"
     v-bind="$attrs"
   >
-    <slot />
+    <!-- Render icon if name is provided -->
+    <Icon 
+      v-if="props.name" 
+      :icon="props.name" 
+      :class="iconSizeClasses"
+    />
+    <!-- Fallback to slot content -->
+    <slot v-else />
   </Component>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Icon } from '@iconify/vue';
 import { cn } from '../../../utils/cn';
 import type { IconProps } from './types';
 
@@ -21,7 +29,7 @@ const props = withDefaults(defineProps<IconProps>(), {
   as: 'span'
 });
 
-// Size mapping
+// Size mapping for container
 const sizeMap = {
   xs: 'h-3 w-3',
   sm: 'h-4 w-4',
@@ -30,11 +38,24 @@ const sizeMap = {
   xl: 'h-8 w-8'
 };
 
+// Size mapping for the actual icon
+const iconSizeMap = {
+  xs: 'w-3 h-3',
+  sm: 'w-4 h-4',
+  md: 'w-5 h-5',
+  lg: 'w-6 h-6',
+  xl: 'w-8 h-8'
+};
+
 const iconClasses = computed(() => {
   return cn(
     'inline-flex shrink-0 items-center justify-center',
     sizeMap[props.size],
     props.class
   );
+});
+
+const iconSizeClasses = computed(() => {
+  return iconSizeMap[props.size];
 });
 </script>

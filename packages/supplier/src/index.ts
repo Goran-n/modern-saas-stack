@@ -16,10 +16,13 @@ export { type MatchResult, SupplierMatcher } from "./matching/matcher";
 // Query exports
 export { SupplierQueries } from "./queries/supplier-queries";
 // Service exports
+export { GlobalSupplierService } from "./services/global-supplier-service";
 export {
   type IngestionResult,
   SupplierIngestionService,
 } from "./services/ingestion-service";
+export { LogoService } from "./services/logo-service";
+export { SupplierOperations } from "./services/supplier-operations";
 export {
   type CreateSupplierInput,
   SupplierService,

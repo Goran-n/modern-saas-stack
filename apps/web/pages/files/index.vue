@@ -108,11 +108,13 @@
               class="cursor-pointer hover:shadow-md transition-all duration-200 bg-white rounded-lg border border-neutral-200 hover:border-primary-300 p-4"
             >
               <div class="aspect-square flex flex-col items-center justify-center">
-                <!-- Folder Icon -->
+                <!-- Supplier Logo -->
                 <div class="w-12 h-12 mb-3 flex items-center justify-center">
-                  <FigIcon 
-                    name="i-heroicons-folder" 
-                    class="text-3xl text-primary"
+                  <SupplierLogo
+                    :name="supplier.name"
+                    :logo-url="supplier.logoUrl"
+                    size="lg"
+                    class="w-12 h-12"
                   />
                 </div>
 
@@ -185,8 +187,27 @@
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import type { File, FileItem, FileDataSerialized } from '@figgy/types';
+import type { File, FileItem } from '@figgy/types';
 import { FigButton, FigIcon, FigSkeleton } from '@figgy/ui';
+import SupplierLogo from '~/components/atoms/SupplierLogo.vue';
+
+// Local interfaces
+interface SupplierWithLogo {
+  name: string;
+  supplierId: string | null;
+  logoUrl: string | null;
+  fileCount: number;
+  files?: any[];
+}
+
+interface FileDataSerializedWithLogo {
+  byYear: Record<string, {
+    year: string;
+    totalFiles: number;
+    suppliers: Record<string, SupplierWithLogo>;
+  }>;
+  totalFiles: number;
+}
 
 // Composables
 const api = useApi()
@@ -205,7 +226,7 @@ const selectedTenantId = computed(() => tenantStore.selectedTenantId)
 const fileDataUnwrapped = computed(() => fileData.value)
 
 // Data fetching
-const { data: fileData, isLoading, error } = useQuery<FileDataSerialized>({
+const { data: fileData, isLoading, error } = useQuery<FileDataSerializedWithLogo>({
   queryKey: ['files-manager', selectedTenantId],
   queryFn: async () => {
     const input = { json: {} }
@@ -213,7 +234,7 @@ const { data: fileData, isLoading, error } = useQuery<FileDataSerialized>({
     const data = response.result.data.json
     
     // Transform the data to ensure suppliers have names
-    const transformed: FileDataSerialized = {
+    const transformed: FileDataSerializedWithLogo = {
       byYear: {},
       totalFiles: data.totalFiles
     }
@@ -228,6 +249,8 @@ const { data: fileData, isLoading, error } = useQuery<FileDataSerialized>({
       for (const [supplierName, supplierData] of Object.entries(yearData.suppliers as Record<string, any>)) {
         transformed.byYear[year].suppliers[supplierName] = {
           name: supplierName,
+          supplierId: supplierData.supplierId,
+          logoUrl: supplierData.logoUrl,
           fileCount: supplierData.fileCount,
           files: supplierData.files?.map((f: any) => ({
             ...f,
@@ -271,12 +294,16 @@ const currentSuppliers = computed(() => {
   if (!yearData) return []
 
   return Object.entries(yearData.suppliers).map(([name, supplier]) => ({
-    id: name,
+    id: supplier.supplierId || name,
     name: name,
+    supplierId: supplier.supplierId,
+    logoUrl: supplier.logoUrl,
     fileCount: supplier.fileCount,
     type: 'supplier'
   }))
 })
+
+// No need to fetch suppliers separately - logo data comes from file manager
 
 const currentFiles = computed(() => {
   if (currentView.value === 'status') {

@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@figgy/shared-db": "workspace:*",
-    "@figgy/utils": "workspace:*"
+    "@figgy/utils": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.7"
   },
   "devDependencies": {},
   "exports": {

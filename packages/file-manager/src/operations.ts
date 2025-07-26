@@ -7,6 +7,7 @@ import {
   documentExtractions,
   eq,
   files,
+  globalSuppliers,
   gte,
   inArray,
   sql,
@@ -1001,6 +1002,7 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
         {
           name: string;
           supplierId: string | null;
+          logoUrl: string | null;
           files: any[];
           fileCount: number;
         }
@@ -1033,6 +1035,10 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
         id: suppliers.id,
         displayName: suppliers.displayName,
         legalName: suppliers.legalName,
+        globalSupplierId: suppliers.globalSupplierId,
+      },
+      globalSupplier: {
+        logoUrl: globalSuppliers.logoUrl,
       },
     })
     .from(files)
@@ -1040,6 +1046,10 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
     .leftJoin(
       suppliers,
       eq(suppliers.id, documentExtractions.matchedSupplierId),
+    )
+    .leftJoin(
+      globalSuppliers,
+      eq(globalSuppliers.id, suppliers.globalSupplierId),
     )
     .where(eq(files.tenantId, tenantId))
     .orderBy(desc(files.createdAt));
@@ -1066,6 +1076,7 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       groupedData[year].suppliers[supplierName] = {
         name: supplierName,
         supplierId: file.supplier?.id || null,
+        logoUrl: file.globalSupplier?.logoUrl || null,
         files: [],
         fileCount: 0,
       };

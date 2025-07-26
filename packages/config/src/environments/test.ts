@@ -49,6 +49,9 @@ export const testConfigSchema = z
 
     // Base URL for OAuth callbacks and webhooks
     BASE_URL: z.string().url().optional(),
+
+    // Logo service
+    LOGO_DEV_TOKEN: z.string().optional(),
   })
   .merge(triggerSchema.partial()) // Optional for tests
   .merge(portkeySchema.partial()) // Optional for tests

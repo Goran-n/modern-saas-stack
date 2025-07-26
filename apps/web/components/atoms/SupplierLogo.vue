@@ -52,7 +52,7 @@ const logoClasses = computed(() => {
   const baseClasses = [
     'rounded-lg',
     'flex items-center justify-center',
-    'bg-primary-100 text-primary-700',
+    props.logoUrl && !imageError.value ? '' : 'bg-primary-100 text-primary-700',
     'overflow-hidden',
     'bg-cover bg-center bg-no-repeat'
   ]

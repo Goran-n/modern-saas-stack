@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { externalServicesSchema } from "../schemas/external-services";
 import { portkeySchema } from "../schemas/portkey";
 import { slackSchema } from "../schemas/slack";
 import { triggerSchema } from "../schemas/trigger";
@@ -15,7 +16,7 @@ export const developmentConfigSchema = z
     LOG_LEVEL: z
       .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
       .default("debug"),
-    PORT: z.coerce.number().int().min(1).max(65535).default(5000),
+    PORT: z.coerce.number().int().min(1).max(65535).default(8011),
     HOST: z.string().default("localhost"),
 
     // Database - required even in development
@@ -44,8 +45,8 @@ export const developmentConfigSchema = z
     REDIS_TIMEOUT: z.coerce.number().int().min(1000).default(5000),
 
     // Web application
-    WEB_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-    API_URL: z.string().url().default("http://localhost:5001"),
+    WEB_PORT: z.coerce.number().int().min(1).max(65535).default(8010),
+    API_URL: z.string().url().default("http://localhost:8011"),
     DEV_MODE: z.coerce.boolean().default(true),
 
     // Base URL for OAuth callbacks and webhooks
@@ -56,6 +57,7 @@ export const developmentConfigSchema = z
   })
   .merge(triggerSchema)
   .merge(portkeySchema)
+  .merge(externalServicesSchema)
   .merge(twilioSchema.partial()) // Twilio is optional in development
   .merge(slackSchema.partial()); // Slack is optional in development
 

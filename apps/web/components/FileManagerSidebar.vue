@@ -1,26 +1,33 @@
 <template>
-  <div class="h-full flex flex-col">
+  <div 
+    class="h-full flex flex-col"
+    @keydown="handleKeydown"
+    tabindex="0"
+  >
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-neutral-200 flex-shrink-0">
-      <h2 class="text-lg font-medium text-neutral-900">Files</h2>
+      <h2 class="text-base font-semibold text-neutral-900">Files</h2>
     </div>
 
     <!-- Content -->
     <div class="p-4 space-y-4 flex-1 overflow-y-auto">
       <!-- Processing & Failed Files Section -->
       <div class="space-y-2">
-        <h3 class="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+        <h3 class="text-xs font-medium text-neutral-500 uppercase tracking-wide">
           Status
         </h3>
         
         <!-- Processing Files -->
         <button
+          ref="processingButton"
           @click="$emit('status-selected', 'processing')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-colors"
+          @keydown.enter.prevent="$emit('status-selected', 'processing')"
+          @keydown.space.prevent="$emit('status-selected', 'processing')"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'processing'
-              ? 'bg-primary-50 text-primary-700 border border-primary-200'
-              : 'text-neutral-700 hover:bg-neutral-50'
+              ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'
+              : 'text-neutral-700 hover:bg-neutral-100 border border-transparent'
           ]"
         >
           <div class="flex items-center gap-2">
@@ -39,12 +46,15 @@
 
         <!-- Failed Files -->
         <button
+          ref="failedButton"
           @click="$emit('status-selected', 'failed')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-colors"
+          @keydown.enter.prevent="$emit('status-selected', 'failed')"
+          @keydown.space.prevent="$emit('status-selected', 'failed')"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'failed'
-              ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'text-neutral-700 hover:bg-neutral-50'
+              ? 'bg-error-100 text-error-800 border border-error-300 shadow-sm'
+              : 'text-neutral-700 hover:bg-neutral-100 border border-transparent'
           ]"
         >
           <div class="flex items-center gap-2">
@@ -67,83 +77,50 @@
 
       <!-- Years & Suppliers Section -->
       <div class="space-y-2">
-        <h3 class="text-sm font-medium text-neutral-500 uppercase tracking-wide">
+        <h3 class="text-xs font-medium text-neutral-500 uppercase tracking-wide">
           Browse by Year
         </h3>
 
         <!-- Loading State -->
         <div v-if="loading" class="space-y-2">
-          <FigSkeleton class="h-8 w-full" v-for="i in 3" :key="i" />
+          <FigSkeleton class="h-8 w-full rounded-md" v-for="i in 3" :key="i" />
         </div>
 
-        <!-- Years Tree -->
+        <!-- Years List -->
         <div v-else-if="years.length > 0" class="space-y-1">
-          <div v-for="year in years" :key="year" class="space-y-1">
-            <!-- Year Item -->
-            <button
-              @click="toggleYear(year)"
-              class="w-full flex items-center justify-between p-2 text-left rounded-md transition-colors"
-              :class="[
-                selectedYear === year && !selectedSupplier
-                  ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                  : 'text-neutral-700 hover:bg-neutral-50'
-              ]"
-            >
-              <div class="flex items-center gap-2">
-                <FigIcon 
-                  :name="expandedYears.has(year) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'" 
-                  class="text-xs text-neutral-400"
-                />
-                <FigIcon name="i-heroicons-calendar-days" class="text-sm" />
-                <span class="text-sm font-medium">{{ year }}</span>
-              </div>
-              <FigBadge
-                v-if="getYearFileCount(year) > 0"
-                color="neutral"
-                variant="soft"
-                size="xs"
-              >
-                {{ getYearFileCount(year) }}
-              </FigBadge>
-            </button>
-
-            <!-- Suppliers for Year -->
-            <div 
-              v-if="expandedYears.has(year)" 
-              class="ml-6 space-y-1 transition-all duration-200"
-            >
-              <button
-                v-for="supplier in getYearSuppliers(year)"
-                :key="`${year}-${supplier.name}`"
-                @click="selectSupplier(year, supplier.name)"
-                class="w-full flex items-center justify-between p-2 text-left rounded-md transition-colors"
-                :class="[
-                  selectedYear === year && selectedSupplier === supplier.name
-                    ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                    : 'text-neutral-600 hover:bg-neutral-50'
-                ]"
-              >
-                <div class="flex items-center gap-2">
-                  <FigIcon name="i-heroicons-building-office-2" class="text-xs" />
-                  <span class="text-sm">{{ supplier.name }}</span>
-                </div>
-                <FigBadge
-                  v-if="supplier.fileCount > 0"
-                  color="neutral"
-                  variant="soft"
-                  size="xs"
-                >
-                  {{ supplier.fileCount }}
-                </FigBadge>
-              </button>
+          <button
+            v-for="year in years"
+            :key="year"
+            :data-year="year"
+            @click="selectYear(year)"
+            @keydown.enter.prevent="selectYear(year)"
+            @keydown.space.prevent="selectYear(year)"
+            class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            :class="[
+              selectedYear === year
+                ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'
+                : 'text-neutral-700 hover:bg-neutral-100 border border-transparent'
+            ]"
+          >
+            <div class="flex items-center gap-2">
+              <FigIcon name="i-heroicons-calendar-days" class="text-sm text-neutral-600" />
+              <span class="text-sm font-medium">{{ year }}</span>
             </div>
-          </div>
+            <FigBadge
+              v-if="getYearFileCount(year) > 0"
+              color="neutral"
+              variant="soft"
+              size="xs"
+            >
+              {{ getYearFileCount(year) }}
+            </FigBadge>
+          </button>
         </div>
 
         <!-- Empty State -->
         <div v-else class="text-center py-6 text-neutral-500">
-          <FigIcon name="i-heroicons-folder-open" class="text-2xl mb-2" />
-          <p class="text-sm">No files uploaded yet</p>
+          <FigIcon name="i-heroicons-folder-open" class="text-2xl mb-2 text-neutral-400" />
+          <p class="text-xs font-medium">No files uploaded yet</p>
         </div>
       </div>
     </div>
@@ -152,16 +129,11 @@
 
 <script setup lang="ts">
 import { FigBadge, FigIcon, FigSkeleton } from '@figgy/ui';
-
-interface Supplier {
-  name: string
-  fileCount: number
-  supplierId?: string | null
-}
+import { nextTick, onMounted } from 'vue';
 
 interface YearData {
   year: string
-  suppliers: Record<string, Supplier>
+  suppliers: Record<string, any>
   totalFiles: number
 }
 
@@ -197,7 +169,12 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // Component state
-const expandedYears = ref(new Set<string>())
+const currentFocusIndex = ref(0)
+const focusableElements = ref<HTMLElement[]>([])
+
+// Template refs
+const processingButton = ref<HTMLElement>()
+const failedButton = ref<HTMLElement>()
 
 // Computed
 const years = computed(() => {
@@ -206,22 +183,8 @@ const years = computed(() => {
 })
 
 // Methods
-const toggleYear = (year: string) => {
-  if (expandedYears.value.has(year)) {
-    expandedYears.value.delete(year)
-    // If this year was selected and we're collapsing it, emit year selection to show all files for that year
-    if (props.selectedYear === year) {
-      emit('year-selected', year)
-    }
-  } else {
-    expandedYears.value.add(year)
-    emit('year-selected', year)
-  }
-}
-
-const selectSupplier = (year: string, supplier: string) => {
+const selectYear = (year: string) => {
   emit('year-selected', year)
-  emit('supplier-selected', supplier)
 }
 
 const getYearFileCount = (year: string): number => {
@@ -229,15 +192,55 @@ const getYearFileCount = (year: string): number => {
   return props.fileData.byYear[year].totalFiles
 }
 
-const getYearSuppliers = (year: string): Supplier[] => {
-  if (!props.fileData?.byYear[year]) return []
-  return Object.values(props.fileData.byYear[year].suppliers)
+
+// Keyboard navigation
+const updateFocusableElements = () => {
+  const elements: HTMLElement[] = []
+  
+  // Add status buttons
+  if (processingButton.value) elements.push(processingButton.value)
+  if (failedButton.value) elements.push(failedButton.value)
+  
+  // Add year buttons
+  years.value.forEach(year => {
+    const yearBtn = document.querySelector(`[data-year="${year}"]`) as HTMLElement
+    if (yearBtn) elements.push(yearBtn)
+  })
+  
+  focusableElements.value = elements
 }
 
-// Auto-expand selected year
-watch(() => props.selectedYear, (newYear) => {
-  if (newYear && !expandedYears.value.has(newYear)) {
-    expandedYears.value.add(newYear)
+const handleKeydown = (event: KeyboardEvent) => {
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+  
+  event.preventDefault()
+  updateFocusableElements()
+  
+  switch (event.key) {
+    case 'ArrowDown':
+      currentFocusIndex.value = Math.min(currentFocusIndex.value + 1, focusableElements.value.length - 1)
+      break
+    case 'ArrowUp':
+      currentFocusIndex.value = Math.max(currentFocusIndex.value - 1, 0)
+      break
+    case 'Home':
+      currentFocusIndex.value = 0
+      break
+    case 'End':
+      currentFocusIndex.value = focusableElements.value.length - 1
+      break
   }
+  
+  focusableElements.value[currentFocusIndex.value]?.focus()
+}
+
+// Update focusable elements when years change
+watch(() => props.selectedYear, () => {
+  nextTick(updateFocusableElements)
 }, { immediate: true })
+
+// Update focusable elements on mount
+onMounted(() => {
+  nextTick(updateFocusableElements)
+})
 </script>

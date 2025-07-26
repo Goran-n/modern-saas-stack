@@ -34,6 +34,11 @@ export {
 } from "./document-extractions";
 export * from "./files";
 export {
+  globalSuppliers,
+  globalSuppliersRelations,
+  logoFetchStatusEnum,
+} from "./global-suppliers";
+export {
   attributeTypeEnum,
   dataSourceEnum,
   supplierAttributes,

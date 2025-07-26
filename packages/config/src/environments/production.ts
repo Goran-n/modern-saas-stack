@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { externalServicesSchema } from "../schemas/external-services";
 import { portkeySchema } from "../schemas/portkey";
 import { triggerSchema } from "../schemas/trigger";
 import { twilioSchema } from "../schemas/twilio";
@@ -62,9 +63,11 @@ export const productionConfigSchema = z
       .string()
       .url()
       .optional(), // Optional in production to allow backwards compatibility
+
   })
   .merge(triggerSchema)
   .merge(portkeySchema)
+  .merge(externalServicesSchema)
   .merge(twilioSchema.partial()); // Twilio is optional but recommended in production
 
 export type ProductionConfig = z.infer<typeof productionConfigSchema>;

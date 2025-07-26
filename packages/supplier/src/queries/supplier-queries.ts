@@ -1,4 +1,11 @@
-import { and, eq, sql, supplierAttributes, suppliers } from "@figgy/shared-db";
+import {
+  and,
+  eq,
+  globalSuppliers,
+  sql,
+  supplierAttributes,
+  suppliers,
+} from "@figgy/shared-db";
 import { getDb } from "../db";
 import { SupplierErrors } from "../errors";
 
@@ -11,25 +18,45 @@ export class SupplierQueries {
    * Get supplier by ID with tenant validation
    */
   async getById(supplierId: string, tenantId: string) {
-    const [supplier] = await this.db
-      .select()
+    const [result] = await this.db
+      .select({
+        // Supplier fields
+        id: suppliers.id,
+        companyNumber: suppliers.companyNumber,
+        vatNumber: suppliers.vatNumber,
+        legalName: suppliers.legalName,
+        displayName: suppliers.displayName,
+        slug: suppliers.slug,
+        status: suppliers.status,
+        tenantId: suppliers.tenantId,
+        globalSupplierId: suppliers.globalSupplierId,
+        createdAt: suppliers.createdAt,
+        updatedAt: suppliers.updatedAt,
+        deletedAt: suppliers.deletedAt,
+        // Global supplier logo
+        logoUrl: globalSuppliers.logoUrl,
+      })
       .from(suppliers)
+      .leftJoin(
+        globalSuppliers,
+        eq(suppliers.globalSupplierId, globalSuppliers.id),
+      )
       .where(
         and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId)),
       );
 
-    if (!supplier) {
+    if (!result) {
       throw SupplierErrors.SUPPLIER_NOT_FOUND;
     }
 
-    return supplier;
+    return result;
   }
 
   /**
    * Get supplier with all attributes
    */
   async getWithAttributes(supplierId: string, tenantId: string) {
-    // First verify supplier exists and belongs to tenant
+    // First verify supplier exists and belongs to tenant (includes logo)
     const supplier = await this.getById(supplierId, tenantId);
 
     // Get all active attributes
@@ -79,14 +106,49 @@ export class SupplierQueries {
       whereConditions.push(eq(suppliers.status, "active"));
     }
 
-    const results = await this.db
-      .select()
-      .from(suppliers)
-      .where(and(...whereConditions))
-      .limit(limit)
-      .offset(offset);
+    try {
+      const results = await this.db
+        .select({
+          // Supplier fields
+          id: suppliers.id,
+          companyNumber: suppliers.companyNumber,
+          vatNumber: suppliers.vatNumber,
+          legalName: suppliers.legalName,
+          displayName: suppliers.displayName,
+          slug: suppliers.slug,
+          status: suppliers.status,
+          tenantId: suppliers.tenantId,
+          globalSupplierId: suppliers.globalSupplierId,
+          createdAt: suppliers.createdAt,
+          updatedAt: suppliers.updatedAt,
+          deletedAt: suppliers.deletedAt,
+          // Global supplier fields
+          logoUrl: globalSuppliers.logoUrl,
+          globalSupplierLogoFetchStatus: globalSuppliers.logoFetchStatus,
+          globalSupplierPrimaryDomain: globalSuppliers.primaryDomain,
+        })
+        .from(suppliers)
+        .leftJoin(
+          globalSuppliers,
+          eq(suppliers.globalSupplierId, globalSuppliers.id),
+        )
+        .where(and(...whereConditions))
+        .limit(limit)
+        .offset(offset);
 
-    return results;
+      return results;
+    } catch (error: any) {
+      // Log the actual PostgreSQL error
+      console.error("Database error in suppliers.list:", {
+        message: error.message,
+        cause: error.cause,
+        code: error.cause?.code,
+        detail: error.cause?.detail,
+        hint: error.cause?.hint,
+        routine: error.cause?.routine,
+      });
+      throw error;
+    }
   }
 
   /**
@@ -94,8 +156,28 @@ export class SupplierQueries {
    */
   async searchByName(tenantId: string, searchTerm: string) {
     const results = await this.db
-      .select()
+      .select({
+        // Supplier fields
+        id: suppliers.id,
+        companyNumber: suppliers.companyNumber,
+        vatNumber: suppliers.vatNumber,
+        legalName: suppliers.legalName,
+        displayName: suppliers.displayName,
+        slug: suppliers.slug,
+        status: suppliers.status,
+        tenantId: suppliers.tenantId,
+        globalSupplierId: suppliers.globalSupplierId,
+        createdAt: suppliers.createdAt,
+        updatedAt: suppliers.updatedAt,
+        deletedAt: suppliers.deletedAt,
+        // Global supplier logo
+        logoUrl: globalSuppliers.logoUrl,
+      })
       .from(suppliers)
+      .leftJoin(
+        globalSuppliers,
+        eq(suppliers.globalSupplierId, globalSuppliers.id),
+      )
       .where(
         and(
           eq(suppliers.tenantId, tenantId),

@@ -20,11 +20,14 @@ import {
 } from "../types";
 import { generateSlug } from "../utils/slug";
 import { SupplierValidator } from "../validation/supplier-validator";
+import { GlobalSupplierService } from "./global-supplier-service";
+import { SupplierOperations } from "./supplier-operations";
 
 export interface IngestionResult {
   success: boolean;
   action: "created" | "updated" | "skipped";
   supplierId?: string;
+  globalSupplierId?: string;
   error?: string;
 }
 
@@ -254,7 +257,7 @@ export class SupplierIngestionService {
 
     while (retries > 0) {
       try {
-        return await this.db.transaction(async (tx) => {
+        const result = await this.db.transaction(async (tx) => {
           // Create supplier
           const [supplier] = await tx
             .insert(suppliers)
@@ -283,18 +286,40 @@ export class SupplierIngestionService {
           // Add attributes
           await this.addAttributes(tx, supplier.id, request);
 
+          // Link to global supplier
+          const globalSupplierService = new GlobalSupplierService();
+          const globalSupplierId =
+            await globalSupplierService.findOrCreateGlobalSupplier(supplier);
+          
+          if (globalSupplierId) {
+            await globalSupplierService.linkToGlobalSupplier(
+              supplier.id,
+              globalSupplierId,
+            );
+          }
+
           logger.info("Created new supplier", {
             supplierId: supplier.id,
             name: supplier.displayName,
             source,
+            globalSupplierId,
           });
 
           return {
             success: true,
-            action: "created",
+            action: "created" as const,
             supplierId: supplier.id,
+            globalSupplierId: globalSupplierId || undefined,
           };
         });
+
+        // Trigger logo fetch for newly created global supplier
+        if (result.globalSupplierId) {
+          const operations = new SupplierOperations();
+          await operations.triggerLogoFetchForGlobalSupplier(result.globalSupplierId);
+        }
+
+        return result;
       } catch (error: any) {
         lastError = error;
 
