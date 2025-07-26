@@ -12,7 +12,7 @@
       </div>
       <div v-else-if="proxyUrl && iframeError" class="flex items-center justify-center flex-1">
         <div class="text-center text-neutral-500 p-8">
-          <FigIcon name="i-heroicons-document-text" class="text-6xl mb-4" />
+          <Icon name="heroicons:document-text" class="h-16 w-16 mb-4" />
           <p class="mb-4">Your browser doesn't support PDFs or the file couldn't be loaded.</p>
           <FigButton 
             @click="$emit('download')" 
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigButton, FigSkeleton, FigIcon, isImageFile } from '@figgy/ui'
+import { FigButton, FigSkeleton, isImageFile } from '@figgy/ui'
 import FileIcon from '../atoms/FileIcon.vue'
 import { isPDF } from '~/utils/fileUtils'
 

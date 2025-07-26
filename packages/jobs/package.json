@@ -19,6 +19,7 @@
     "@ai-sdk/anthropic": "^1.2.12",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",
+    "@figgy/search": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/supplier": "workspace:*",
     "@figgy/supabase-storage": "workspace:*",

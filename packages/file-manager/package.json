@@ -22,6 +22,7 @@
     "@figgy/shared-db": "workspace:*",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",
+    "@figgy/search": "workspace:*",
     "@trigger.dev/sdk": "^3.3.17",
     "@figgy/jobs": "workspace:*"
   },

@@ -1,6 +1,7 @@
 import { getConfig } from "@figgy/config";
 import { DeduplicationService, HashUtils } from "@figgy/deduplication";
 import type { CategorizeFilePayload } from "@figgy/jobs";
+import * as searchOps from "@figgy/search";
 import {
   and,
   desc,
@@ -10,6 +11,7 @@ import {
   globalSuppliers,
   gte,
   inArray,
+  ne,
   sql,
   suppliers,
 } from "@figgy/shared-db";
@@ -102,6 +104,37 @@ export async function uploadFile(
     publicUrl,
     tenantId: input.tenantId,
   });
+
+  // Index file in search
+  try {
+    const indexData: Parameters<typeof searchOps.indexFile>[0] = {
+      id: record.id,
+      tenantId: record.tenantId,
+      fileName: record.fileName,
+      mimeType: record.mimeType,
+      createdAt: record.createdAt,
+    };
+    
+    if (input.metadata?.supplierName) {
+      indexData.supplierName = input.metadata.supplierName as string;
+    }
+    
+    if (input.metadata?.category) {
+      indexData.category = input.metadata.category as string;
+    }
+    
+    if (record.fileSize) {
+      indexData.size = record.fileSize;
+    }
+    
+    await searchOps.indexFile(indexData);
+  } catch (error) {
+    logger.error("Failed to index file in search", {
+      fileId: record.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Don't throw - file is already uploaded successfully
+  }
 
   // Trigger categorization job with tenant-based concurrency control
   try {
@@ -930,7 +963,31 @@ export async function reprocessFile(
 
   // Clean up existing data and reset status in a transaction
   await db.transaction(async (tx) => {
-    // Delete existing document extractions
+    // First, clear any references to extractions that will be deleted
+    await tx
+      .update(documentExtractions)
+      .set({ duplicateCandidateId: null })
+      .where(
+        and(
+          eq(documentExtractions.fileId, fileId),
+          ne(documentExtractions.duplicateCandidateId, sql`NULL`)
+        )
+      );
+    
+    // Also clear references FROM other extractions TO this file's extractions
+    const fileExtractions = await tx
+      .select({ id: documentExtractions.id })
+      .from(documentExtractions)
+      .where(eq(documentExtractions.fileId, fileId));
+    
+    for (const extraction of fileExtractions) {
+      await tx
+        .update(documentExtractions)
+        .set({ duplicateCandidateId: null })
+        .where(eq(documentExtractions.duplicateCandidateId, extraction.id));
+    }
+    
+    // Now safe to delete existing document extractions
     await tx
       .delete(documentExtractions)
       .where(eq(documentExtractions.fileId, fileId));

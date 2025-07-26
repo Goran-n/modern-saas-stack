@@ -1,6 +1,7 @@
 import { getConfig } from "@figgy/config";
 import { DeduplicationService } from "@figgy/deduplication";
 import { generateDisplayName } from "@figgy/file-manager";
+import * as searchOps from "@figgy/search";
 import {
   documentExtractions,
   eq,
@@ -226,6 +227,19 @@ export const categorizeFile = schemaTask({
                   updatedAt: new Date(),
                 })
                 .where(eq(filesTable.id, fileId));
+
+              // Update search index for duplicate
+              try {
+                await searchOps.updateFile(fileId, tenantId, {
+                  category: duplicateExtraction.documentType,
+                  documentType: duplicateExtraction.documentType,
+                });
+              } catch (error) {
+                logger.error("Failed to update search index for duplicate", {
+                  fileId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
 
               return {
                 fileId,
@@ -464,6 +478,31 @@ export const categorizeFile = schemaTask({
           updatedAt: new Date(),
         })
         .where(eq(filesTable.id, fileId));
+
+      // Update search index with extraction results
+      try {
+        const updateData: Parameters<typeof searchOps.updateFile>[2] = {
+          category: extraction.documentType,
+          extractedText: extraction.fields?.description ? String(extraction.fields.description) : "",
+          documentType: extraction.documentType,
+        };
+        
+        if (extraction.fields?.invoiceNumber) {
+          updateData.invoiceNumber = String(extraction.fields.invoiceNumber);
+        }
+        
+        if (extraction.fields?.amount) {
+          updateData.amount = Number(extraction.fields.amount);
+        }
+        
+        await searchOps.updateFile(fileId, tenantId, updateData);
+      } catch (error) {
+        logger.error("Failed to update search index", {
+          fileId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Don't throw - search update failure shouldn't fail the categorization
+      }
 
       logger.info("File categorization and extraction completed", {
         fileId,

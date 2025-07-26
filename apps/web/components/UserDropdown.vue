@@ -1,33 +1,18 @@
 <template>
   <div ref="dropdownRef" class="relative">
-    <FigButton
-      color="neutral"
-      variant="ghost"
-      class="w-full justify-start"
+    <button
+      class="relative p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
       @click="isOpen = !isOpen"
+      :aria-label="`User menu for ${userName}`"
     >
       <FigAvatar
         :alt="user?.email || 'User'"
-        size="xs"
-        class="flex-shrink-0"
+        size="sm"
+        class="w-8 h-8"
       >
         <span class="text-xs font-medium">{{ userInitials }}</span>
       </FigAvatar>
-
-      <div class="flex-1 text-left min-w-0">
-        <p class="text-sm font-medium truncate">
-          {{ userName }}
-        </p>
-        <p class="text-xs text-neutral-500 truncate">
-          {{ user?.email || 'Guest' }}
-        </p>
-      </div>
-
-      <FigIcon
-        name="i-heroicons-chevron-up-down-20-solid"
-        class="w-4 h-4 text-neutral-500 flex-shrink-0"
-      />
-    </FigButton>
+    </button>
 
     <!-- Dropdown Menu -->
     <Transition
@@ -40,14 +25,14 @@
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-neutral-200 divide-y divide-neutral-100 z-50"
+        class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 divide-y divide-gray-100 z-50"
       >
         <!-- Account Section -->
         <div class="px-3 py-3">
-          <p class="text-sm font-medium text-neutral-900">
+          <p class="text-sm font-medium text-gray-900">
             {{ user?.email || 'Guest' }}
           </p>
-          <p class="text-xs text-neutral-500 mt-1">
+          <p class="text-xs text-gray-500 mt-1">
             Free Plan
           </p>
         </div>
@@ -58,20 +43,20 @@
             v-for="item in items"
             :key="item.label"
             @click="handleItemClick(item)"
-            class="w-full px-3 py-2 text-left text-sm hover:bg-neutral-50 transition-colors flex items-center gap-2"
+            class="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
             :class="[
               item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
               item.iconClass
             ]"
             :disabled="item.disabled"
           >
-            <FigIcon
+            <Icon
               v-if="item.icon"
               :name="item.icon"
               class="w-4 h-4"
             />
             <span class="flex-1">{{ item.label }}</span>
-            <span v-if="item.shortcuts?.length" class="text-xs text-neutral-400">
+            <span v-if="item.shortcuts?.length" class="text-xs text-gray-400">
               {{ item.shortcuts.join(' ') }}
             </span>
           </button>
@@ -82,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigButton, FigAvatar, FigIcon } from '@figgy/ui'
+import { FigAvatar } from '@figgy/ui'
 import { ref, computed, watch, onUnmounted } from 'vue'
 
 interface MenuItem {
@@ -141,18 +126,18 @@ const userInitials = computed(() => {
 const items = computed<MenuItem[]>(() => [
   {
     label: 'View account',
-    icon: 'i-heroicons-user-circle',
-    click: () => console.log('View account'),
+    icon: 'heroicons:user-circle',
+    click: () => router.push('/settings/account'),
   },
   {
     label: 'Settings',
-    icon: 'i-heroicons-cog-6-tooth',
+    icon: 'heroicons:cog-6-tooth',
     shortcuts: ['⌘', ','],
-    click: () => console.log('Settings'),
+    click: () => router.push('/settings'),
   },
   {
     label: 'Sign out',
-    icon: 'i-heroicons-arrow-left-on-rectangle',
+    icon: 'heroicons:arrow-left-on-rectangle',
     iconClass: 'text-red-500',
     click: async () => {
       await supabase.auth.signOut()

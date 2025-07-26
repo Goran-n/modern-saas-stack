@@ -29,28 +29,27 @@
           </nav>
         </div>
 
-        <!-- Right side: User Menu and Mobile Menu -->
-        <div class="flex items-center space-x-4">
+        <!-- Right side: Search, User Menu and Mobile Menu -->
+        <div class="flex items-center space-x-3">
+          <!-- Global Search -->
+          <div class="hidden md:block">
+            <GlobalSearch />
+          </div>
+          
+          
+          <!-- User Menu -->
+          <UserDropdown />
+          
           <!-- Mobile menu button -->
           <button
             @click="mobileMenuOpen = !mobileMenuOpen"
             class="md:hidden inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <FigIcon 
+            <Icon 
               :name="mobileMenuOpen ? 'heroicons:x-mark' : 'heroicons:bars-3'" 
-              size="lg"
-            >
-              <svg v-if="mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <svg v-else class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </FigIcon>
+              class="w-6 h-6"
+            />
           </button>
-          
-          <!-- User Menu -->
-          <UserDropdown />
         </div>
       </div>
     </header>
@@ -60,6 +59,7 @@
       v-if="mobileMenuOpen"
       class="md:hidden fixed inset-0 top-16 z-40 bg-white border-t border-gray-200"
     >
+      
       <nav class="px-4 py-6 space-y-1">
         <NuxtLink 
           v-for="item in navigationItems" 
@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigApp, FigMain, FigIcon } from '@figgy/ui';
+import { FigApp, FigMain } from '@figgy/ui';
 import UserDropdown from '~/components/UserDropdown.vue';
 
 const mobileMenuOpen = ref(false)

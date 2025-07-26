@@ -26,7 +26,7 @@
         :aria-label="`Reprocess ${displayNameFinal}`"
         :disabled="isReprocessing"
       >
-        <FigIcon name="i-heroicons-arrow-path" class="text-primary-500" />
+        <Icon name="heroicons:arrow-path" class="text-primary-500" />
       </button>
       
       <!-- Drag Indicator -->
@@ -107,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigCard, FigIcon } from '@figgy/ui'
+import { FigCard } from '@figgy/ui'
 import { computed } from 'vue'
 import type { FileItem } from '@figgy/types'
 import { getFileDisplayName } from '~/utils/fileUtils'

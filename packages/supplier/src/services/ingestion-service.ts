@@ -1,3 +1,4 @@
+import * as searchOps from "@figgy/search";
 import {
   and,
   eq,
@@ -304,6 +305,33 @@ export class SupplierIngestionService {
             source,
             globalSupplierId,
           });
+
+          // Index supplier in search
+          try {
+            const indexData: Parameters<typeof searchOps.indexSupplier>[0] = {
+              id: supplier.id,
+              tenantId: supplier.tenantId,
+              displayName: supplier.displayName,
+              legalName: supplier.legalName,
+              createdAt: supplier.createdAt,
+            };
+            
+            if (supplier.companyNumber) {
+              indexData.companyNumber = supplier.companyNumber;
+            }
+            
+            if (supplier.vatNumber) {
+              indexData.vatNumber = supplier.vatNumber;
+            }
+            
+            await searchOps.indexSupplier(indexData);
+          } catch (error) {
+            logger.error("Failed to index supplier in search", {
+              supplierId: supplier.id,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            // Don't throw - search indexing failure shouldn't fail supplier creation
+          }
 
           return {
             success: true,

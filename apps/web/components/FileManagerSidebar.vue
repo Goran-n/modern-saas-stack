@@ -31,7 +31,7 @@
           ]"
         >
           <div class="flex items-center gap-2">
-            <FigIcon name="i-heroicons-clock" class="text-sm" />
+            <Icon name="heroicons:clock" class="w-4 h-4" />
             <span class="text-sm">Processing</span>
           </div>
           <FigBadge
@@ -58,7 +58,7 @@
           ]"
         >
           <div class="flex items-center gap-2">
-            <FigIcon name="i-heroicons-exclamation-triangle" class="text-sm" />
+            <Icon name="heroicons:exclamation-triangle" class="w-4 h-4" />
             <span class="text-sm">Failed</span>
           </div>
           <FigBadge
@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigBadge, FigIcon, FigSkeleton } from '@figgy/ui';
+import { FigBadge, FigSkeleton } from '@figgy/ui';
 import { nextTick, onMounted } from 'vue';
 
 interface YearData {

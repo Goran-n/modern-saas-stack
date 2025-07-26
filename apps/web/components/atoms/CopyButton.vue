@@ -5,14 +5,14 @@
     @click="handleCopy"
   >
     <Transition mode="out-in" name="fade">
-      <FigIcon 
+      <Icon 
         v-if="!copied" 
-        name="i-heroicons-clipboard-document" 
+        name="heroicons:clipboard-document" 
         class="h-4 w-4"
       />
-      <FigIcon 
+      <Icon 
         v-else 
-        name="i-heroicons-check" 
+        name="heroicons:check" 
         class="h-4 w-4 text-success-600"
       />
     </Transition>
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FigIcon, cn } from '@figgy/ui'
+import { cn } from '@figgy/ui'
 
 interface Props {
   text: string

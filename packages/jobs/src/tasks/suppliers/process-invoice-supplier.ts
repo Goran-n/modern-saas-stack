@@ -1,5 +1,6 @@
 import { getConfig } from "@figgy/config";
 import { generateDisplayName } from "@figgy/file-manager";
+import * as searchOps from "@figgy/search";
 import {
   type CompanyProfile,
   documentExtractions,
@@ -186,6 +187,20 @@ export const processInvoiceSupplier = task({
                   updatedAt: new Date(),
                 })
                 .where(eq(filesTable.id, extraction.fileId));
+
+              // Update search index with supplier information
+              try {
+                await searchOps.updateFile(extraction.fileId, tenantId, {
+                  supplierName: supplier.displayName,
+                  supplierId: result.supplierId,
+                });
+              } catch (error) {
+                logger.error("Failed to update search index with supplier", {
+                  fileId: extraction.fileId,
+                  supplierId: result.supplierId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
             }
           }
 

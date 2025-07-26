@@ -12,7 +12,7 @@
         
         <FigAlert variant="subtle">
           <template #icon>
-            <FigIcon name="i-heroicons-exclamation-triangle" />
+            <Icon name="heroicons:exclamation-triangle" />
           </template>
           <template #title>Warning</template>
           <template #default>
@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigModal, FigButton, FigAlert, FigIcon } from '@figgy/ui'
+import { FigModal, FigButton, FigAlert } from '@figgy/ui'
 import { computed, watch } from 'vue'
 
 interface Props {

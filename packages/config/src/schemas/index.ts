@@ -18,6 +18,7 @@ import { authSchema } from "./auth";
 import { baseSchema } from "./base";
 import { communicationServiceSchema } from "./communication";
 import { databaseSchema } from "./database";
+import { externalServicesSchema } from "./external-services";
 import { portkeySchema } from "./portkey";
 import { redisSchema } from "./redis";
 import { slackSchema } from "./slack";
@@ -38,7 +39,8 @@ export const fullConfigSchema = baseSchema
   .merge(webSchema)
   .merge(triggerSchema)
   .merge(portkeySchema)
-  .merge(twilioSchema);
+  .merge(twilioSchema)
+  .merge(externalServicesSchema);
 
 /**
  * Core required configuration schema
@@ -49,7 +51,8 @@ export const coreConfigSchema = baseSchema
   .merge(supabaseSchema)
   .merge(authSchema)
   .merge(triggerSchema)
-  .merge(portkeySchema);
+  .merge(portkeySchema)
+  .merge(externalServicesSchema.partial()); // External services are optional
 
 /**
  * File manager specific configuration schema

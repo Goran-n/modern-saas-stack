@@ -1,7 +1,7 @@
 <template>
   <FigAlert v-if="errorMessage" variant="solid" color="error" class="mb-4">
     <template #icon>
-      <FigIcon name="i-heroicons-exclamation-circle" />
+      <Icon name="heroicons:exclamation-circle" />
     </template>
     <template #title>Processing Failed</template>
     <template #default>
@@ -22,7 +22,7 @@
         size="xs"
         variant="outline"
         color="error"
-        icon="i-heroicons-arrow-path"
+        icon="heroicons:arrow-path"
         @click="$emit('retry')"
       >
         Retry Processing
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigAlert, FigIcon, FigButton } from '@figgy/ui'
+import { FigAlert, FigButton } from '@figgy/ui'
 
 interface Props {
   errorMessage?: string | null

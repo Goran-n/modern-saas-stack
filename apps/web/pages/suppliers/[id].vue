@@ -6,7 +6,7 @@
         to="/suppliers" 
         class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-6 transition-colors"
       >
-        <FigIcon name="i-heroicons-arrow-left" class="h-5 w-5" />
+        <Icon name="heroicons:arrow-left" class="h-5 w-5" />
         Back to suppliers
       </RouterLink>
 
@@ -41,7 +41,7 @@
             <!-- Contact Information -->
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div v-if="supplier.email" class="flex items-center gap-2 text-sm text-neutral-600">
-                <FigIcon name="i-heroicons-envelope" class="h-4 w-4" />
+                <Icon name="heroicons:envelope" class="h-4 w-4" />
                 <a 
                   :href="`mailto:${supplier.email}`" 
                   class="hover:text-primary-600 transition-colors"
@@ -50,7 +50,7 @@
                 </a>
               </div>
               <div v-if="supplier.phone" class="flex items-center gap-2 text-sm text-neutral-600">
-                <FigIcon name="i-heroicons-phone" class="h-4 w-4" />
+                <Icon name="heroicons:phone" class="h-4 w-4" />
                 <a 
                   :href="`tel:${supplier.phone}`" 
                   class="hover:text-primary-600 transition-colors"
@@ -122,8 +122,8 @@
                 size="sm" 
                 class="text-neutral-500"
               />
-              <FigIcon 
-                name="i-heroicons-chevron-right" 
+              <Icon 
+                name="heroicons:chevron-right" 
                 class="h-5 w-5 text-neutral-400 group-hover:text-primary-600 transition-colors" 
               />
             </div>
@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import { FigContainer, FigCard, FigAlert, FigSkeleton, FigIcon, FigStatusBadge, FigEmptyState } from '@figgy/ui'
+import { FigContainer, FigCard, FigAlert, FigSkeleton, FigStatusBadge, FigEmptyState } from '@figgy/ui'
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue'
 import FileIcon from '~/components/atoms/FileIcon.vue'
 import FileSize from '~/components/atoms/FileSize.vue'

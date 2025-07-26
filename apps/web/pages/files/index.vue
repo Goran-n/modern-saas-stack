@@ -44,9 +44,9 @@
                       <a :href="link.to" class="text-sm font-medium text-neutral-500 hover:text-neutral-700">
                         {{ link.label }}
                       </a>
-                      <FigIcon 
+                      <Icon 
                         v-if="index < breadcrumbLinks.length - 1"
-                        name="i-heroicons-chevron-right" 
+                        name="heroicons:chevron-right" 
                         class="ml-2 h-4 w-4 text-neutral-400" 
                       />
                     </div>
@@ -60,18 +60,20 @@
               <div class="flex rounded-md shadow-sm" role="group">
                 <FigButton
                   :variant="viewMode === 'grid' ? 'solid' : 'outline'"
-                  icon="i-heroicons-squares-2x2"
                   size="sm"
                   class="rounded-r-none"
                   @click="viewMode = 'grid'"
-                />
+                >
+                  <Icon name="heroicons:squares-2x2" class="h-4 w-4" />
+                </FigButton>
                 <FigButton
                   :variant="viewMode === 'list' ? 'solid' : 'outline'"
-                  icon="i-heroicons-list-bullet"
                   size="sm"
                   class="rounded-l-none -ml-px"
                   @click="viewMode = 'list'"
-                />
+                >
+                  <Icon name="heroicons:list-bullet" class="h-4 w-4" />
+                </FigButton>
               </div>
             </div>
           </div>
@@ -188,7 +190,7 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import type { File, FileItem } from '@figgy/types';
-import { FigButton, FigIcon, FigSkeleton } from '@figgy/ui';
+import { FigButton, FigSkeleton } from '@figgy/ui';
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue';
 
 // Local interfaces
