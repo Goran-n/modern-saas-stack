@@ -1,7 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <FigContainer class="py-6">
-      <div class="max-w-4xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
         <!-- Page Header -->
         <div class="mb-8">
           <FigButton 
@@ -397,7 +396,6 @@
             </div>
           </FigCard>
         </form>
-      </div>
     </FigContainer>
   </div>
 

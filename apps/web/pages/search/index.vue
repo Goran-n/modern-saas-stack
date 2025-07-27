@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Search Results</h1>
@@ -136,13 +136,13 @@
         </section>
       </div>
       </div>
-    </div>
+    </FigContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { FigInput, FigSelect, FigCard } from '@figgy/ui'
+import { FigContainer, FigInput, FigSelect, FigCard } from '@figgy/ui'
 import { useSearch } from '~/composables/useSearch'
 import { formatDate } from '~/utils/date'
 

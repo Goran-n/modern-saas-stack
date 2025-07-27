@@ -2,7 +2,12 @@ export interface ModalProps {
   /**
    * Whether the modal is open (v-model)
    */
-  modelValue: boolean;
+  modelValue?: boolean;
+  
+  /**
+   * Whether the modal is open (alternative to modelValue)
+   */
+  open?: boolean;
 
   /**
    * Modal size
@@ -26,6 +31,11 @@ export interface ModalProps {
    * Modal title
    */
   title?: string;
+  
+  /**
+   * Modal description (displayed below title)
+   */
+  description?: string;
 
   /**
    * Whether to show close button

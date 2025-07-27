@@ -132,7 +132,7 @@
   --slate-ink: var(--color-gray-700);
   
   /* Font */
-  --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-sans: 'Gilroy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* Overlay */
   --overlay-bg: rgba(0, 0, 0, 0.5);

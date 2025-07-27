@@ -2,6 +2,9 @@ import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { createLogger } from "@figgy/utils";
+
+const logger = createLogger("generate-favicon");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,7 +50,16 @@ async function generateFavicon() {
     );
   }
 
-  console.log("Favicon generated successfully!");
+  logger.info("Favicon generated successfully!", {
+    mainSize: size,
+    additionalSizes: sizes
+  });
 }
 
-generateFavicon().catch(console.error);
+generateFavicon().catch((error) => {
+  logger.error("Failed to generate favicon", {
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
+  process.exit(1);
+});

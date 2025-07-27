@@ -4,8 +4,6 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
 
   modules: [
-    "@nuxt/eslint",
-    "@nuxt/fonts",
     "@nuxt/icon",
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
@@ -72,7 +70,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Figgy",
+      title: "Kibly",
       link: [
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {
@@ -120,9 +118,6 @@ export default defineNuxtConfig({
     ],
   },
 
-  fonts: {
-    families: [{ name: "Inter", provider: "google" }],
-  },
 
   vite: {
     plugins: [tailwindcss()],

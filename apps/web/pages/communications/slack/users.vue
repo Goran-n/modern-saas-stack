@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="p-4 md:p-6 max-w-7xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Header -->
       <div class="mb-6">
         <UBreadcrumb :links="breadcrumbs" class="mb-4" />
@@ -197,10 +197,9 @@
           />
         </div>
       </UCard>
-    </div>
 
     <!-- Map User Modal -->
-    <UModal v-model="showMapModal">
+    <FigModal v-model="showMapModal">
       <UCard v-if="selectedUser">
         <template #header>
           <h3 class="text-lg font-semibold">Map Slack User</h3>
@@ -246,13 +245,14 @@
           </div>
         </div>
       </UCard>
-    </UModal>
+    </FigModal>
+    </FigContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { FigStatusBadge } from '@figgy/ui'
+import { FigContainer, FigStatusBadge, FigModal } from '@figgy/ui'
 
 interface SlackUser {
   id: string

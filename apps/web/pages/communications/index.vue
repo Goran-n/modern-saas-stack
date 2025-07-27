@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="p-4 md:p-6 max-w-7xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-900">Communications</h1>
@@ -266,13 +266,13 @@
           </UCard>
         </div>
       </div>
-    </div>
+    </FigContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
-import { FigBadge, FigStatusBadge } from '@figgy/ui'
+import { FigContainer, FigBadge, FigStatusBadge } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()

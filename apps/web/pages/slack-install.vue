@@ -1,6 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-12">
+      <div class="mx-auto w-full max-w-md">
       <div class="flex justify-center">
         <h2 class="text-3xl font-bold text-gray-900">Install Figgy for Slack</h2>
       </div>
@@ -79,11 +80,14 @@
           <li>3. Start asking financial questions right away!</li>
         </ol>
       </div>
-    </div>
+      </div>
+    </FigContainer>
   </div>
 </template>
 
 <script setup>
+import { FigContainer } from '@figgy/ui'
+
 const { $trpc } = useNuxtApp()
 const config = useRuntimeConfig()
 const user = useSupabaseUser()

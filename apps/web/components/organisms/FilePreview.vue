@@ -42,7 +42,7 @@
 
     <!-- Reprocess Confirmation Modal -->
     <ReprocessModal
-      v-model="fileState.reprocessModal.value.isOpen"
+      v-model="reprocessModalOpen"
       :loading="fileState.reprocessModal.value.isProcessing"
       @confirm="handleReprocess"
     />
@@ -75,6 +75,16 @@ const fileState = useFileState()
 
 // State
 const isOpen = ref(true)
+
+// Computed property for modal state
+const reprocessModalOpen = computed({
+  get: () => fileState.reprocessModal.value.isOpen,
+  set: (value) => {
+    if (!value) {
+      fileState.closeReprocessModal()
+    }
+  }
+})
 
 // Ensure body doesn't scroll when modal is open
 onMounted(() => {

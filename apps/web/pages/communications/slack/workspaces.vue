@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="p-4 md:p-6 max-w-7xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Header -->
       <div class="mb-6">
         <UBreadcrumb :links="breadcrumbs" class="mb-4" />
@@ -156,10 +156,9 @@
           </UButton>
         </div>
       </UCard>
-    </div>
 
     <!-- Connect Workspace Modal -->
-    <UModal v-model="showAddModal">
+    <FigModal v-model="showAddModal">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Connect Slack Workspace</h3>
@@ -217,10 +216,10 @@
           </div>
         </UForm>
       </UCard>
-    </UModal>
+    </FigModal>
 
     <!-- Configure Workspace Modal -->
-    <UModal v-model="showConfigModal">
+    <FigModal v-model="showConfigModal">
       <UCard v-if="selectedWorkspace">
         <template #header>
           <h3 class="text-lg font-semibold">Configure {{ selectedWorkspace.workspaceName || 'Workspace' }}</h3>
@@ -329,14 +328,15 @@
           </template>
         </UTabs>
       </UCard>
-    </UModal>
+    </FigModal>
+    </FigContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
 import type { SlackWorkspace } from '~/types/communication'
-import { FigBadge, FigStatusBadge } from '@figgy/ui'
+import { FigContainer, FigBadge, FigStatusBadge, FigModal } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()

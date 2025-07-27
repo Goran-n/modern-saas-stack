@@ -8,10 +8,10 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="modelValue" class="fixed inset-0 z-50 overflow-y-auto">
+      <div v-if="isOpen" class="fixed inset-0 z-50 overflow-y-auto">
         <!-- Backdrop -->
         <div 
-          class="fixed inset-0 bg-primary-900 bg-opacity-75 transition-opacity duration-150 ease-out"
+          class="fixed inset-0 bg-neutral-900/20 backdrop-blur-sm transition-opacity duration-150 ease-out"
           @click="handleBackdropClick"
         />
         
@@ -26,7 +26,7 @@
             leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <div
-              v-if="modelValue"
+              v-if="isOpen"
               ref="modalRef"
               :class="modalClasses"
               role="dialog"
@@ -36,11 +36,16 @@
               @click.stop
             >
               <!-- Header -->
-              <div v-if="slots?.header || title" :class="headerClasses">
+              <div v-if="slots?.header || title || description" :class="headerClasses">
                 <slot name="header">
-                  <h3 :id="titleId" class="text-lg font-semibold leading-6 text-primary-900">
-                    {{ title }}
-                  </h3>
+                  <div class="flex-1">
+                    <h3 v-if="title" :id="titleId" class="text-lg font-semibold leading-6 text-primary-900">
+                      {{ title }}
+                    </h3>
+                    <p v-if="description" class="mt-1 text-sm text-primary-600">
+                      {{ description }}
+                    </p>
+                  </div>
                 </slot>
                 
                 <FigButton
@@ -60,12 +65,14 @@
               
               <!-- Body -->
               <div :id="bodyId" :class="bodyClasses">
-                <slot />
+                <slot name="body">
+                  <slot />
+                </slot>
               </div>
               
               <!-- Footer -->
               <div v-if="slots?.footer" :class="footerClasses">
-                <slot name="footer" />
+                <slot name="footer" :close="close" />
               </div>
             </div>
           </Transition>
@@ -76,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted, useSlots, ref, nextTick, useId, toRef } from 'vue';
+import { computed, watch, onMounted, onUnmounted, useSlots, ref, nextTick, useId } from 'vue';
 import { cn } from '../../../utils/cn';
 // Removed unused import
 import { useBodyScrollLock } from '../../../composables';
@@ -93,6 +100,7 @@ const props = withDefaults(defineProps<ModalProps>(), {
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
+  'update:open': [value: boolean];
   'close': [];
 }>();
 
@@ -103,6 +111,7 @@ const bodyId = useId();
 
 const close = () => {
   emit('update:modelValue', false);
+  emit('update:open', false);
   emit('close');
 };
 
@@ -112,8 +121,10 @@ const handleBackdropClick = () => {
   }
 };
 
+const isOpen = computed(() => props.modelValue ?? props.open ?? false);
+
 const handleEscape = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && props.closeOnEscape && props.modelValue) {
+  if (e.key === 'Escape' && props.closeOnEscape && isOpen.value) {
     close();
   }
 };
@@ -139,7 +150,7 @@ const getFocusableElements = () => {
 };
 
 const trapFocus = (e: KeyboardEvent) => {
-  if (e.key !== 'Tab' || !props.modelValue) return;
+  if (e.key !== 'Tab' || !isOpen.value) return;
   
   const elements = getFocusableElements();
   if (elements.length === 0) return;
@@ -157,11 +168,11 @@ const trapFocus = (e: KeyboardEvent) => {
 };
 
 // Use body scroll lock composable
-useBodyScrollLock(toRef(props, 'modelValue'));
+useBodyScrollLock(isOpen);
 
 // Manage focus when modal is open
-watch(() => props.modelValue, async (isOpen) => {
-  if (isOpen) {
+watch(isOpen, async (open) => {
+  if (open) {
     // Store the currently focused element
     lastFocusedElement.value = document.activeElement as HTMLElement;
     

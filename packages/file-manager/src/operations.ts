@@ -194,7 +194,7 @@ export async function uploadFileFromBase64(input: {
   mimeType: string;
   createdAt: Date;
 }> {
-  const sanitisedFileName = input.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const sanitisedFileName = stripSpecialCharacters(input.fileName);
   const timestamp = Date.now();
   const fileName = `${timestamp}_${sanitisedFileName}`;
   const pathTokens = [input.tenantId, input.uploadedBy, fileName];

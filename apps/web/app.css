@@ -1,4 +1,7 @@
 /* Import Figgy UI styles - includes Tailwind CSS, theme, and base styles */
 @import "@figgy/ui/styles";
 
+/* Import custom fonts */
+@import "./assets/fonts.css";
+
 /* App-specific overrides can go here if needed */

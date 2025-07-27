@@ -27,7 +27,7 @@ program
   .action(async (fileId: string, options) => {
     try {
       // Log environment variables for debugging
-      console.log("Raw env vars:", {
+      logger.debug("Raw env vars:", {
         TRIGGER_PROJECT_ID: process.env.TRIGGER_PROJECT_ID,
         TRIGGER_API_KEY: `${process.env.TRIGGER_API_KEY?.substring(0, 10)}...`,
         PORTKEY_API_KEY: `${process.env.PORTKEY_API_KEY?.substring(0, 10)}...`,
@@ -86,7 +86,7 @@ program
       );
 
       if (options.verbose) {
-        console.log(JSON.stringify(result, null, 2));
+        logger.info("Extraction result (verbose):", result);
       } else {
         logger.info("Extraction completed", {
           documentType: result.documentType,
@@ -136,7 +136,11 @@ program
         stack: error instanceof Error ? error.stack : undefined,
       });
       if (options.verbose && error instanceof Error) {
-        console.error("Full error:", error);
+        logger.error("Full error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
       }
       process.exit(1);
     }
@@ -159,7 +163,7 @@ program
       const result = await extractor.extractDocument(url, options.mimeType);
 
       if (options.verbose) {
-        console.log(JSON.stringify(result, null, 2));
+        logger.info("Extraction result (verbose):", result);
       } else {
         logger.info("Extraction completed", {
           documentType: result.documentType,
@@ -177,7 +181,11 @@ program
         stack: error instanceof Error ? error.stack : undefined,
       });
       if (options.verbose && error instanceof Error) {
-        console.error("Full error:", error);
+        logger.error("Full error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
       }
       process.exit(1);
     }

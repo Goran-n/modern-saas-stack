@@ -20,23 +20,30 @@ export const useSupplierSearch = (suppliers: Ref<Supplier[] | undefined>) => {
 
     const query = searchQuery.value.toLowerCase().trim();
 
-    if (!query) {
-      return suppliers.value;
+    let result = suppliers.value;
+
+    if (query) {
+      result = result.filter((supplier) => {
+        // Search in multiple fields
+        const searchableFields = [
+          supplier.legalName,
+          supplier.displayName,
+          supplier.companyNumber,
+          supplier.email,
+          supplier.id,
+        ].filter(Boolean);
+
+        return searchableFields.some((field) =>
+          field!.toLowerCase().includes(query),
+        );
+      });
     }
 
-    return suppliers.value.filter((supplier) => {
-      // Search in multiple fields
-      const searchableFields = [
-        supplier.legalName,
-        supplier.displayName,
-        supplier.companyNumber,
-        supplier.email,
-        supplier.id,
-      ].filter(Boolean);
-
-      return searchableFields.some((field) =>
-        field!.toLowerCase().includes(query),
-      );
+    // Sort alphabetically by displayName (or legalName if displayName is not available)
+    return result.sort((a, b) => {
+      const nameA = (a.displayName || a.legalName).toLowerCase();
+      const nameB = (b.displayName || b.legalName).toLowerCase();
+      return nameA.localeCompare(nameB);
     });
   });
 

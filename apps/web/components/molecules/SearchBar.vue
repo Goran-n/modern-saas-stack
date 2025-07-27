@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full max-w-2xl">
+  <div class="relative w-full max-w-xl">
     <FigInput
       v-model="internalValue"
       :size="size"

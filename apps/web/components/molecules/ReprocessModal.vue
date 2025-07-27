@@ -1,5 +1,5 @@
 <template>
-  <FigModal :modelValue="isOpen" @update:modelValue="(val) => isOpen = val">
+  <FigModal v-model="isOpen">
     <template #header>
       <h3 class="text-lg font-semibold">Confirm Reprocess</h3>
     </template>

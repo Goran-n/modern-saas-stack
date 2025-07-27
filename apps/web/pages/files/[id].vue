@@ -293,7 +293,7 @@
     </div>
 
     <!-- Reprocess Confirmation Modal -->
-    <UModal v-model:open="showReprocessModal" title="Confirm Reprocess">
+    <FigModal v-model:open="showReprocessModal" title="Confirm Reprocess">
       <template #body>
         <div class="space-y-4">
           <p class="text-sm text-gray-600">
@@ -338,13 +338,13 @@
           </UButton>
         </div>
       </template>
-    </UModal>
+    </FigModal>
   </UContainer>
 </template>
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query';
-import { FigBadge, FigStatusBadge } from '@figgy/ui';
+import { FigBadge, FigStatusBadge, FigModal } from '@figgy/ui';
 
 const route = useRoute();
 const router = useRouter();

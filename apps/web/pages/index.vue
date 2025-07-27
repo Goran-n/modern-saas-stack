@@ -1,14 +1,15 @@
 <template>
-  <UContainer class="py-12">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold mb-4">
-        Welcome to Figgy
-      </h1>
-      <p class="text-xl text-muted mb-8">
-        Hello, {{ userName }}! You've successfully signed in.
-      </p>
-      
-      <UCard class="max-w-md mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-12">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold mb-4">
+          Welcome to Figgy
+        </h1>
+        <p class="text-xl text-muted mb-8">
+          Hello, {{ userName }}! You've successfully signed in.
+        </p>
+        
+        <UCard class="max-w-md mx-auto">
         <template #header>
           <div class="text-center">
             <UAvatar size="xl" class="mx-auto mb-4 bg-success-100">
@@ -35,10 +36,13 @@
         </div>
       </UCard>
     </div>
-  </UContainer>
+    </FigContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { FigContainer } from '@figgy/ui'
+
 definePageMeta({
   middleware: ['auth']
 })

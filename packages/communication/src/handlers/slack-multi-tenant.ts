@@ -102,6 +102,11 @@ export async function handleSlackMultiTenantWebhook(
       workspaceId,
     );
 
+    // Declare authentication variables at outer scope
+    let authenticated: boolean;
+    let tenantId: string | undefined;
+    let userId: string | undefined;
+
     // If no tenants, try auto-linking by email first
     if (availableTenants.length === 0) {
       logger.info(
@@ -161,9 +166,9 @@ export async function handleSlackMultiTenantWebhook(
         }
 
         // Set authenticated and tenantId for the rest of the flow
-        var _authenticated = authResult.authenticated;
-        var _tenantId = authResult.tenantId;
-        var _userId = authResult.userId;
+        authenticated = authResult.authenticated;
+        tenantId = authResult.tenantId;
+        userId = authResult.userId;
       } else {
         // Auto-linking failed, return setup message
         return setupResult;
@@ -195,9 +200,9 @@ export async function handleSlackMultiTenantWebhook(
         };
       }
 
-      var authenticated = authResult.authenticated;
-      var tenantId = authResult.tenantId;
-      var userId = authResult.userId;
+      authenticated = authResult.authenticated;
+      tenantId = authResult.tenantId;
+      userId = authResult.userId;
     }
 
     // Variables should be defined from either branch above

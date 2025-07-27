@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-canvas grid grid-cols-[320px_1fr]">
+  <div class="h-screen bg-neutral-50 grid grid-cols-[320px_1fr]">
     <!-- Sidebar -->
     <div class="border-r border-neutral-200 bg-white overflow-y-auto">
       <FileManagerSidebar

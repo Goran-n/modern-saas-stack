@@ -96,7 +96,7 @@
         </FigAlert>
 
         <!-- Files List -->
-        <div v-else-if="files?.value && files.value.length > 0" class="space-y-2">
+        <div v-else-if="files && files.length > 0" class="space-y-2">
           <div 
             v-for="file in files" 
             :key="file.id"

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="p-4 md:p-6 max-w-7xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Header -->
       <div class="mb-6">
         <UBreadcrumb :links="breadcrumbs" class="mb-4" />
@@ -210,10 +210,9 @@
           </div>
         </div>
       </UCard>
-    </div>
 
     <!-- Add Manual Mapping Modal -->
-    <UModal 
+    <FigModal 
       v-model:open="showAddModal" 
       title="Add Manual Mapping"
       description="Map a phone number to a user in your system"
@@ -249,10 +248,10 @@
           <UButton label="Add Mapping" color="primary" :loading="isSubmitting" @click="addManualMapping" />
         </div>
       </template>
-    </UModal>
+    </FigModal>
 
     <!-- Verification Code Entry Modal -->
-    <UModal 
+    <FigModal 
       v-model:open="showCodeModal" 
       title="Enter Verification Code"
       description="Enter the 6-digit code sent to your WhatsApp"
@@ -307,14 +306,15 @@
           </div>
         </div>
       </template>
-    </UModal>
+    </FigModal>
+    </FigContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCommunicationStore } from '~/stores/communication'
 import type { WhatsAppVerification } from '~/types/communication'
-import { FigStatusBadge } from '@figgy/ui'
+import { FigContainer, FigStatusBadge, FigModal } from '@figgy/ui'
 
 // Store
 const communicationStore = useCommunicationStore()
