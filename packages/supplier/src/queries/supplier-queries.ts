@@ -105,50 +105,36 @@ export class SupplierQueries {
     if (!includeDeleted) {
       whereConditions.push(eq(suppliers.status, "active"));
     }
+    const results = await this.db
+      .select({
+        // Supplier fields
+        id: suppliers.id,
+        companyNumber: suppliers.companyNumber,
+        vatNumber: suppliers.vatNumber,
+        legalName: suppliers.legalName,
+        displayName: suppliers.displayName,
+        slug: suppliers.slug,
+        status: suppliers.status,
+        tenantId: suppliers.tenantId,
+        globalSupplierId: suppliers.globalSupplierId,
+        createdAt: suppliers.createdAt,
+        updatedAt: suppliers.updatedAt,
+        deletedAt: suppliers.deletedAt,
+        // Global supplier fields
+        logoUrl: globalSuppliers.logoUrl,
+        globalSupplierLogoFetchStatus: globalSuppliers.logoFetchStatus,
+        globalSupplierPrimaryDomain: globalSuppliers.primaryDomain,
+      })
+      .from(suppliers)
+      .leftJoin(
+        globalSuppliers,
+        eq(suppliers.globalSupplierId, globalSuppliers.id),
+      )
+      .where(and(...whereConditions))
+      .limit(limit)
+      .offset(offset);
 
-    try {
-      const results = await this.db
-        .select({
-          // Supplier fields
-          id: suppliers.id,
-          companyNumber: suppliers.companyNumber,
-          vatNumber: suppliers.vatNumber,
-          legalName: suppliers.legalName,
-          displayName: suppliers.displayName,
-          slug: suppliers.slug,
-          status: suppliers.status,
-          tenantId: suppliers.tenantId,
-          globalSupplierId: suppliers.globalSupplierId,
-          createdAt: suppliers.createdAt,
-          updatedAt: suppliers.updatedAt,
-          deletedAt: suppliers.deletedAt,
-          // Global supplier fields
-          logoUrl: globalSuppliers.logoUrl,
-          globalSupplierLogoFetchStatus: globalSuppliers.logoFetchStatus,
-          globalSupplierPrimaryDomain: globalSuppliers.primaryDomain,
-        })
-        .from(suppliers)
-        .leftJoin(
-          globalSuppliers,
-          eq(suppliers.globalSupplierId, globalSuppliers.id),
-        )
-        .where(and(...whereConditions))
-        .limit(limit)
-        .offset(offset);
-
-      return results;
-    } catch (error: any) {
-      // Log the actual PostgreSQL error
-      console.error("Database error in suppliers.list:", {
-        message: error.message,
-        cause: error.cause,
-        code: error.cause?.code,
-        detail: error.cause?.detail,
-        hint: error.cause?.hint,
-        routine: error.cause?.routine,
-      });
-      throw error;
-    }
+    return results;
   }
 
   /**

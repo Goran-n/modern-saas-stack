@@ -1,5 +1,5 @@
+import { createHash } from "node:crypto";
 import { logger } from "@figgy/utils";
-import { createHash } from "crypto";
 
 export class HashUtils {
   /**
@@ -55,7 +55,7 @@ export class HashUtils {
     if (invoiceDate) {
       const date =
         invoiceDate instanceof Date ? invoiceDate : new Date(invoiceDate);
-      if (!isNaN(date.getTime())) {
+      if (!Number.isNaN(date.getTime())) {
         normalizedDate = date.toISOString().split("T")[0] || "";
       }
     }
@@ -65,7 +65,7 @@ export class HashUtils {
     if (totalAmount !== null && totalAmount !== undefined) {
       const amount =
         typeof totalAmount === "string" ? parseFloat(totalAmount) : totalAmount;
-      if (!isNaN(amount)) {
+      if (!Number.isNaN(amount)) {
         normalizedAmount = amount.toFixed(2);
       }
     }

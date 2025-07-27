@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { globalSuppliers, getDatabaseConnection } from "@figgy/shared-db";
+import { getDatabaseConnection, globalSuppliers } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { eq, isNull, or } from "drizzle-orm";
 
@@ -8,8 +8,10 @@ import { eq, isNull, or } from "drizzle-orm";
 const args = process.argv.slice(2);
 const showHelp = args.includes("--help") || args.includes("-h");
 const enrichAll = args.includes("--all");
-const supplierId = args.find((arg, i) => args[i - 1] === "--supplier");
-const limit = parseInt(args.find((arg, i) => args[i - 1] === "--limit") || "10");
+const supplierId = args.find((_arg, i) => args[i - 1] === "--supplier");
+const limit = parseInt(
+  args.find((_arg, i) => args[i - 1] === "--limit") || "10",
+);
 const dryRun = args.includes("--dry-run");
 
 if (showHelp || (!enrichAll && !supplierId)) {
@@ -34,7 +36,8 @@ Examples:
 }
 
 // Trigger.dev API configuration
-const TRIGGER_API_URL = process.env.TRIGGER_API_URL || "https://api.trigger.dev";
+const TRIGGER_API_URL =
+  process.env.TRIGGER_API_URL || "https://api.trigger.dev";
 const TRIGGER_SECRET_KEY = process.env.TRIGGER_SECRET_KEY;
 
 if (!TRIGGER_SECRET_KEY) {
@@ -43,14 +46,17 @@ if (!TRIGGER_SECRET_KEY) {
 }
 
 async function triggerJob(taskId: string, payload: any) {
-  const response = await fetch(`${TRIGGER_API_URL}/api/v1/tasks/${taskId}/trigger`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${TRIGGER_SECRET_KEY}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${TRIGGER_API_URL}/api/v1/tasks/${taskId}/trigger`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${TRIGGER_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ payload }),
     },
-    body: JSON.stringify({ payload }),
-  });
+  );
 
   if (!response.ok) {
     const error = await response.text();
@@ -95,8 +101,10 @@ async function main() {
           id: supplier.id,
           name: supplier.canonicalName,
           needsDomain: !supplier.primaryDomain,
-          needsLogo: supplier.primaryDomain && supplier.logoFetchStatus !== "success",
-          needsEnrichment: supplier.primaryDomain && supplier.enrichmentStatus !== "completed",
+          needsLogo:
+            supplier.primaryDomain && supplier.logoFetchStatus !== "success",
+          needsEnrichment:
+            supplier.primaryDomain && supplier.enrichmentStatus !== "completed",
         });
         process.exit(0);
       }
@@ -164,7 +172,9 @@ async function main() {
       }
 
       // Group by enrichment needs
-      const noDomain = suppliersNeedingEnrichment.filter((s) => !s.primaryDomain);
+      const noDomain = suppliersNeedingEnrichment.filter(
+        (s) => !s.primaryDomain,
+      );
       const needsEnrichment = suppliersNeedingEnrichment.filter(
         (s) => s.primaryDomain && s.enrichmentStatus !== "completed",
       );
@@ -193,7 +203,9 @@ async function main() {
       const jobs = [];
 
       if (noDomain.length > 0) {
-        logger.info("Triggering domain discovery for suppliers without domains...");
+        logger.info(
+          "Triggering domain discovery for suppliers without domains...",
+        );
         const result = await triggerJob("domain-discovery", {
           globalSupplierIds: noDomain.map((s) => s.id),
         });
@@ -201,7 +213,9 @@ async function main() {
       }
 
       if (needsEnrichment.length > 0) {
-        logger.info("Triggering website analysis for suppliers with domains...");
+        logger.info(
+          "Triggering website analysis for suppliers with domains...",
+        );
         const result = await triggerJob("website-analysis", {
           globalSupplierIds: needsEnrichment.map((s) => s.id),
         });

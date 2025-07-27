@@ -272,9 +272,24 @@ const workspaceId = computed(() => route.query.workspace as string)
 const workspaceName = ref('Workspace')
 
 // Load workspace name on mount
-onMounted(() => {
-  // In a real app, fetch workspace details using workspaceId
-  console.log('Loading workspace:', workspaceId.value)
+onMounted(async () => {
+  if (!workspaceId.value) {
+    await navigateTo('/communications/slack/workspaces')
+    return
+  }
+  
+  isLoading.value = true
+  try {
+    // TODO: Fetch workspace details and users from API
+    // const workspace = await $fetch(`/api/slack/workspaces/${workspaceId.value}`)
+    // workspaceName.value = workspace.name
+    // users.value = await $fetch(`/api/slack/workspaces/${workspaceId.value}/users`)
+    // systemUsers.value = await $fetch('/api/users')
+  } catch (error) {
+    useNotification().error('Failed to load workspace data')
+  } finally {
+    isLoading.value = false
+  }
 })
 
 // State
@@ -296,59 +311,14 @@ const mappingForm = ref({
   canManage: false
 })
 
-// Mock data
-const users = ref<SlackUser[]>([
-  {
-    id: '1',
-    slackId: 'U1234567890',
-    displayName: 'John Doe',
-    email: 'john@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-    isActive: true,
-    mappedUserId: 'user-1',
-    mappedUserName: 'John Doe',
-    lastActive: new Date().toISOString()
-  },
-  {
-    id: '2',
-    slackId: 'U0987654321',
-    displayName: 'Jane Smith',
-    email: 'jane@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-    isActive: true,
-    lastActive: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: '3',
-    slackId: 'U1122334455',
-    displayName: 'Bob Wilson',
-    email: 'bob@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
-    isActive: false,
-    lastActive: new Date(Date.now() - 86400000).toISOString()
-  }
-])
-
-const systemUsers = ref([
-  { 
-    value: 'user-1', 
-    label: 'John Doe', 
-    email: 'john@figgy.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John'
-  },
-  { 
-    value: 'user-2', 
-    label: 'Jane Smith', 
-    email: 'jane@figgy.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane'
-  },
-  { 
-    value: 'user-3', 
-    label: 'Bob Wilson', 
-    email: 'bob@figgy.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob'
-  }
-])
+// Data will be loaded from API
+const users = ref<SlackUser[]>([])
+const systemUsers = ref<Array<{
+  value: string
+  label: string
+  email: string
+  avatar?: string
+}>>([])
 
 // Options
 const statusOptions = [
@@ -548,9 +518,8 @@ const getActionItems = (user: SlackUser) => [
   }]
 ]
 
-const viewUserDetails = (user: SlackUser) => {
-  // Implementation for viewing user details
-  console.log('View details for:', user)
+const viewUserDetails = (_user: SlackUser) => {
+  // TODO: Implementation for viewing user details
 }
 
 const viewUserMessages = (user: SlackUser) => {

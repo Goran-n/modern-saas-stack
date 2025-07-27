@@ -84,7 +84,7 @@ export class SlackService {
     const sigBaseString = `v0:${timestamp}:${body}`;
 
     // Create HMAC with SHA256
-    const crypto = require("crypto");
+    const crypto = require("node:crypto");
     const mySignature =
       "v0=" +
       crypto

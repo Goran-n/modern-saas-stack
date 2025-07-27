@@ -45,7 +45,7 @@ class ConsoleLogger implements Logger {
         // For other objects, use JSON.stringify for full output
         try {
           return JSON.stringify(arg, null, 2);
-        } catch (e) {
+        } catch (_e) {
           return arg; // Fallback if circular reference
         }
       }

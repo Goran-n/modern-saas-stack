@@ -4,9 +4,9 @@ import { SupplierOperations, SupplierQueries } from "@figgy/supplier";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { getDb } from "../db";
 import { createTRPCRouter } from "../trpc";
 import { tenantProcedure } from "../trpc/procedures";
-import { getDb } from "../db";
 
 export const suppliersRouter = createTRPCRouter({
   list: tenantProcedure.query(async ({ ctx }) => {

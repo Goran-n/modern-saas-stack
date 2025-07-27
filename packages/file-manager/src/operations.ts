@@ -965,8 +965,26 @@ export async function reprocessFile(
 
   // Check if file is already being processed
   if (file.processingStatus === "processing") {
-    logger.warn("File is already being processed", { fileId, tenantId });
-    throw new Error("File is already being processed");
+    // Check if the file has been stuck in processing for more than 5 minutes
+    const processingTimeout = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const timeSinceLastUpdate = Date.now() - file.updatedAt.getTime();
+    
+    if (timeSinceLastUpdate < processingTimeout) {
+      logger.warn("File is already being processed", { 
+        fileId, 
+        tenantId,
+        timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000) + "s"
+      });
+      throw new Error("File is already being processed");
+    }
+    
+    // File has been stuck for too long, allow reprocessing
+    logger.warn("File stuck in processing state, allowing reprocess", { 
+      fileId, 
+      tenantId,
+      timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000) + "s",
+      lastUpdated: file.updatedAt.toISOString()
+    });
   }
 
   // Clean up existing data and reset status in a transaction
@@ -1053,6 +1071,87 @@ export async function reprocessFile(
 
   return {
     jobHandle: jobHandle.id,
+  };
+}
+
+/**
+ * Check and fix orphaned files stuck in processing state
+ * @param tenantId - Tenant ID
+ * @param timeoutMinutes - Minutes after which a file is considered orphaned (default: 5)
+ * @returns Promise resolving to list of fixed file IDs
+ */
+export async function fixOrphanedProcessingFiles(
+  tenantId: string,
+  timeoutMinutes: number = 5,
+): Promise<{
+  fixedFiles: string[];
+  errorFiles: string[];
+}> {
+  logger.info("Checking for orphaned processing files", { tenantId, timeoutMinutes });
+
+  const db = getDb();
+  const timeoutMs = timeoutMinutes * 60 * 1000;
+  const cutoffTime = new Date(Date.now() - timeoutMs);
+
+  // Find files stuck in processing state
+  const orphanedFiles = await db
+    .select({
+      id: files.id,
+      fileName: files.fileName,
+      updatedAt: files.updatedAt,
+    })
+    .from(files)
+    .where(
+      and(
+        eq(files.tenantId, tenantId),
+        eq(files.processingStatus, "processing"),
+        sql`${files.updatedAt} < ${cutoffTime}`,
+      ),
+    );
+
+  logger.info("Found orphaned files", {
+    count: orphanedFiles.length,
+    fileIds: orphanedFiles.map((f) => f.id),
+  });
+
+  const fixedFiles: string[] = [];
+  const errorFiles: string[] = [];
+
+  // Fix each orphaned file
+  for (const file of orphanedFiles) {
+    try {
+      // Reset status to failed with explanation
+      await db
+        .update(files)
+        .set({
+          processingStatus: "failed" as ProcessingStatus,
+          metadata: sql`jsonb_set(
+            COALESCE(${files.metadata}, '{}'::jsonb),
+            '{error}',
+            '"processing_timeout"'::jsonb
+          )`,
+          updatedAt: new Date(),
+        })
+        .where(eq(files.id, file.id));
+
+      fixedFiles.push(file.id);
+      logger.info("Fixed orphaned file", {
+        fileId: file.id,
+        fileName: file.fileName,
+        lastUpdate: file.updatedAt,
+      });
+    } catch (error) {
+      errorFiles.push(file.id);
+      logger.error("Failed to fix orphaned file", {
+        fileId: file.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return {
+    fixedFiles,
+    errorFiles,
   };
 }
 

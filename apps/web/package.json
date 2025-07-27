@@ -16,7 +16,6 @@
     "@figgy/trpc": "workspace:*",
     "@figgy/types": "workspace:*",
     "@figgy/ui": "workspace:*",
-    "@iconify/json": "^2.2.363",
     "@pinia/nuxt": "^0.11.2",
     "@tanstack/vue-query": "^5.83.0",
     "@tanstack/vue-query-devtools": "^5.83.0",

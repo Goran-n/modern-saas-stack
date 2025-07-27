@@ -291,12 +291,10 @@ const workspaceCount = computed(() => communicationStore.activeWorkspaces.length
 onMounted(async () => {
   // Wait for tenant to be selected
   if (!tenantStore.selectedTenantId) {
-    console.log('Waiting for tenant selection...')
     await tenantStore.fetchUserTenants()
   }
 
   if (!tenantStore.selectedTenantId) {
-    console.error('No tenant selected')
     useNotification().error(
       'No tenant selected',
       'Please select a tenant to view communications.'
@@ -311,7 +309,6 @@ onMounted(async () => {
       communicationStore.fetchWorkspaces()
     ])
   } catch (error) {
-    console.error('Failed to load communication data:', error)
     useNotification().error(
       'Failed to load data',
       'Unable to load communication data. Please try again.'

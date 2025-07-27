@@ -17,10 +17,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           // User logged in, fetch their tenants
           try {
             await tenantStore.fetchUserTenants();
-          } catch (error) {
+          } catch (_error) {
             // Error is handled inside fetchUserTenants method
             // which already logs and continues gracefully
-            console.error("Failed to fetch user tenants:", error);
+            // Failed to fetch user tenants
           }
         } else {
           // User logged out, clear tenant selection

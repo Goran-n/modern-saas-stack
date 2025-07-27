@@ -29,8 +29,8 @@ program
       // Log environment variables for debugging
       console.log("Raw env vars:", {
         TRIGGER_PROJECT_ID: process.env.TRIGGER_PROJECT_ID,
-        TRIGGER_API_KEY: process.env.TRIGGER_API_KEY?.substring(0, 10) + "...",
-        PORTKEY_API_KEY: process.env.PORTKEY_API_KEY?.substring(0, 10) + "...",
+        TRIGGER_API_KEY: `${process.env.TRIGGER_API_KEY?.substring(0, 10)}...`,
+        PORTKEY_API_KEY: `${process.env.PORTKEY_API_KEY?.substring(0, 10)}...`,
       });
 
       // Validate and get config inside the action

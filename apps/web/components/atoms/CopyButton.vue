@@ -51,7 +51,7 @@ const handleCopy = async () => {
       copied.value = false
     }, 2000)
   } catch (error) {
-    console.error('Failed to copy:', error)
+    // Failed to copy
   }
 }
 </script>

@@ -19,7 +19,6 @@ export function getEnvironmentSchema(
       return productionConfigSchema;
     case "test":
       return testConfigSchema;
-    case "development":
     default:
       return developmentConfigSchema;
   }

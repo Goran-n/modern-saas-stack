@@ -13,7 +13,7 @@ import { getDb } from "../db";
 import { SupplierError } from "../errors";
 import { AttributeNormalizer } from "../ingestion/normalizer";
 import { IngestionValidator } from "../ingestion/validator";
-import { SupplierMatcher, type SupplierMatchData } from "../matching/matcher";
+import { type SupplierMatchData, SupplierMatcher } from "../matching/matcher";
 import {
   AttributeType,
   type SupplierIngestionRequest,

@@ -235,7 +235,7 @@ slack.get("/oauth/callback", async (c) => {
 
     if (error) {
       logger.error("Slack OAuth error:", error);
-      return c.redirect("/slack-install?error=" + error);
+      return c.redirect(`/slack-install?error=${error}`);
     }
 
     if (!code) {

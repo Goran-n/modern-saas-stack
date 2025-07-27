@@ -1,5 +1,5 @@
-import { Search } from "@upstash/search";
 import { createLogger } from "@figgy/utils";
+import { Search } from "@upstash/search";
 
 const logger = createLogger("search-client");
 

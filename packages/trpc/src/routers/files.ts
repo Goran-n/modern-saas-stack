@@ -1,5 +1,6 @@
 import {
   deleteFileByUser,
+  fixOrphanedProcessingFiles,
   generateSignedUrl,
   getFileById,
   getFilesByProcessingStatus,
@@ -414,6 +415,42 @@ export const filesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to reprocess file",
+        });
+      }
+    }),
+
+  fixOrphanedFiles: fileManagerProcedure
+    .input(
+      z.object({
+        timeoutMinutes: z.number().min(1).max(60).optional().default(5),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const result = await fixOrphanedProcessingFiles(
+          ctx.tenantId,
+          input.timeoutMinutes,
+        );
+
+        logger.info("Fixed orphaned files", {
+          tenantId: ctx.tenantId,
+          userId: ctx.user.id,
+          requestId: ctx.requestId,
+          fixedCount: result.fixedFiles.length,
+          errorCount: result.errorFiles.length,
+        });
+
+        return result;
+      } catch (error) {
+        logger.error("Failed to fix orphaned files", {
+          error,
+          tenantId: ctx.tenantId,
+          requestId: ctx.requestId,
+        });
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fix orphaned files",
         });
       }
     }),

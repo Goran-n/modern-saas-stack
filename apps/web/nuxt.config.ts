@@ -13,6 +13,12 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
   ],
 
+  icon: {
+    serverBundle: {
+      collections: ["heroicons", "simple-icons"], // Only include needed icon packs
+    },
+  },
+
   ssr: false,
 
   devtools: { enabled: true },

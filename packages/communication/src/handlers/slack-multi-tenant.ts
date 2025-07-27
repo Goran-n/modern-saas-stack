@@ -161,9 +161,9 @@ export async function handleSlackMultiTenantWebhook(
         }
 
         // Set authenticated and tenantId for the rest of the flow
-        var authenticated = authResult.authenticated;
-        var tenantId = authResult.tenantId;
-        var userId = authResult.userId;
+        var _authenticated = authResult.authenticated;
+        var _tenantId = authResult.tenantId;
+        var _userId = authResult.userId;
       } else {
         // Auto-linking failed, return setup message
         return setupResult;

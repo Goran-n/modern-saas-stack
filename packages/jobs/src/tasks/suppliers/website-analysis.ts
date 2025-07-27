@@ -4,8 +4,8 @@ import { globalSuppliers } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
 import { eq, inArray } from "drizzle-orm";
-import { getDb } from "../../db";
 import { z } from "zod";
+import { getDb } from "../../db";
 
 // Schema for extracted website information
 const websiteInfoSchema = z.object({
@@ -22,7 +22,10 @@ type WebsiteInfo = z.infer<typeof websiteInfoSchema>;
 /**
  * Fetches and converts website content to markdown using Firecrawl
  */
-async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string | null> {
+async function fetchWebsiteContent(
+  url: string,
+  retryCount = 0,
+): Promise<string | null> {
   const config = getConfig().get();
   const apiKey = config.FIRECRAWL_API_KEY;
 
@@ -53,7 +56,7 @@ async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string 
 
     if (!response.ok) {
       const errorText = await response.text();
-      
+
       // Handle specific error codes
       if (response.status === 408 || response.status === 504) {
         logger.warn("Firecrawl timeout error", {
@@ -61,13 +64,15 @@ async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string 
           status: response.status,
           error: errorText,
         });
-        throw new Error(`Website took too long to respond (timeout: ${response.status})`);
+        throw new Error(
+          `Website took too long to respond (timeout: ${response.status})`,
+        );
       } else if (response.status === 403) {
         throw new Error("Firecrawl API authentication failed - check API key");
       } else if (response.status === 429) {
         throw new Error("Firecrawl API rate limit exceeded");
       }
-      
+
       throw new Error(`Firecrawl API error: ${response.status} - ${errorText}`);
     }
 
@@ -81,14 +86,14 @@ async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string 
     return data.data.markdown;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Check if we should retry for timeout or rate limit errors
-    const shouldRetry = retryCount < maxRetries && (
-      errorMessage.includes("timeout") || 
-      errorMessage.includes("rate limit") ||
-      errorMessage.includes("took too long")
-    );
-    
+    const shouldRetry =
+      retryCount < maxRetries &&
+      (errorMessage.includes("timeout") ||
+        errorMessage.includes("rate limit") ||
+        errorMessage.includes("took too long"));
+
     if (shouldRetry) {
       logger.warn("Retrying Firecrawl request after error", {
         url,
@@ -96,12 +101,14 @@ async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string 
         retryCount: retryCount + 1,
         delayMs: retryDelay * (retryCount + 1),
       });
-      
+
       // Wait before retrying with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, retryDelay * (retryCount + 1)),
+      );
       return fetchWebsiteContent(url, retryCount + 1);
     }
-    
+
     logger.error("Failed to fetch website content", {
       url,
       error: errorMessage,
@@ -115,7 +122,9 @@ async function fetchWebsiteContent(url: string, retryCount = 0): Promise<string 
 /**
  * Analyzes website content using LLM to extract business information
  */
-async function analyzeWebsiteContent(websiteContent: string): Promise<WebsiteInfo> {
+async function analyzeWebsiteContent(
+  websiteContent: string,
+): Promise<WebsiteInfo> {
   const portkey = getPortkeyClient();
 
   try {
@@ -143,14 +152,14 @@ IMPORTANT: Return ONLY the JSON object, no other text or formatting. If informat
       model: "claude-3-5-sonnet-20241022",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 2000
+      max_tokens: 2000,
     });
 
     const responseContent = response.choices[0]?.message?.content;
-    if (!responseContent || typeof responseContent !== 'string') {
+    if (!responseContent || typeof responseContent !== "string") {
       throw new Error("No content in LLM response");
     }
 
@@ -159,41 +168,55 @@ IMPORTANT: Return ONLY the JSON object, no other text or formatting. If informat
     try {
       // First, try direct JSON parsing
       parsed = JSON.parse(responseContent);
-    } catch (jsonError) {
+    } catch (_jsonError) {
       // If that fails, try to extract JSON from markdown code blocks
       const jsonMatch = responseContent.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch && jsonMatch[1]) {
+      if (jsonMatch?.[1]) {
         try {
           parsed = JSON.parse(jsonMatch[1].trim());
-        } catch (innerError) {
+        } catch (_innerError) {
           // If that also fails, try to find JSON-like content
-          const jsonStartIndex = responseContent.indexOf('{');
-          const jsonEndIndex = responseContent.lastIndexOf('}');
-          if (jsonStartIndex !== -1 && jsonEndIndex !== -1 && jsonEndIndex > jsonStartIndex) {
-            const possibleJson = responseContent.substring(jsonStartIndex, jsonEndIndex + 1);
+          const jsonStartIndex = responseContent.indexOf("{");
+          const jsonEndIndex = responseContent.lastIndexOf("}");
+          if (
+            jsonStartIndex !== -1 &&
+            jsonEndIndex !== -1 &&
+            jsonEndIndex > jsonStartIndex
+          ) {
+            const possibleJson = responseContent.substring(
+              jsonStartIndex,
+              jsonEndIndex + 1,
+            );
             try {
               parsed = JSON.parse(possibleJson);
             } catch (finalError) {
               logger.error("Failed to parse LLM response as JSON", {
                 responseContent: responseContent.substring(0, 500),
-                error: finalError instanceof Error ? finalError.message : String(finalError),
+                error:
+                  finalError instanceof Error
+                    ? finalError.message
+                    : String(finalError),
               });
-              throw new Error(`Failed to parse LLM response as JSON: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
+              throw new Error(
+                `Failed to parse LLM response as JSON: ${finalError instanceof Error ? finalError.message : String(finalError)}`,
+              );
             }
           } else {
             throw new Error("No JSON content found in LLM response");
           }
         }
       } else {
-        throw new Error("Failed to parse LLM response as JSON and no code block found");
+        throw new Error(
+          "Failed to parse LLM response as JSON and no code block found",
+        );
       }
     }
-    
+
     // Validate against schema
     const result = websiteInfoSchema.parse(parsed);
     return result;
   } catch (error) {
-    logger.error("Failed to analyze website content", { 
+    logger.error("Failed to analyze website content", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -387,13 +410,16 @@ export const websiteAnalysis = task({
       });
 
       // Consider the job failed if all items failed
-      const success = results.analyzed > 0 || results.skipped > 0 || (results.failed === 0 && suppliers.length === 0);
+      const success =
+        results.analyzed > 0 ||
+        results.skipped > 0 ||
+        (results.failed === 0 && suppliers.length === 0);
 
       if (!success) {
         const errorMessage = `Website analysis failed for all ${results.failed} supplier(s)`;
         logger.error(errorMessage, {
           stats: results,
-          failedSuppliers: detailedResults.filter(r => r.status === "error"),
+          failedSuppliers: detailedResults.filter((r) => r.status === "error"),
         });
         throw new Error(errorMessage);
       }
@@ -405,7 +431,7 @@ export const websiteAnalysis = task({
         results: detailedResults,
       };
     } catch (error) {
-      logger.error("Website analysis task failed", { 
+      logger.error("Website analysis task failed", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

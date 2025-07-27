@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import {
   and,
   eq,
@@ -10,7 +11,6 @@ import {
   users,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
-import { randomBytes } from "crypto";
 import { getDb } from "../db";
 
 const logger = createLogger("slack-tenant-context");
@@ -402,7 +402,7 @@ export async function verifyLinkingToken(token: string): Promise<{
     // Check if expired
     if (linkingToken.expiresAt < new Date()) {
       logger.warn(
-        { token: token.substring(0, 10) + "..." },
+        { token: `${token.substring(0, 10)}...` },
         "Linking token expired",
       );
       return { valid: false };
@@ -411,7 +411,7 @@ export async function verifyLinkingToken(token: string): Promise<{
     // Check if already used
     if (linkingToken.usedAt) {
       logger.warn(
-        { token: token.substring(0, 10) + "..." },
+        { token: `${token.substring(0, 10)}...` },
         "Linking token already used",
       );
       return { valid: false };
@@ -444,7 +444,7 @@ export async function consumeLinkingToken(token: string): Promise<void> {
       .where(eq(slackLinkingTokens.token, token));
 
     logger.info(
-      { token: token.substring(0, 10) + "..." },
+      { token: `${token.substring(0, 10)}...` },
       "Consumed linking token",
     );
   } catch (error) {

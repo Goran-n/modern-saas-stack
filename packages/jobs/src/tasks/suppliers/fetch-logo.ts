@@ -264,14 +264,24 @@ export const fetchLogo = task({
       });
 
       // Consider the job failed if all items failed
-      const success = results.success > 0 || results.notFound > 0 || results.skipped > 0 || 
-                      (results.failed === 0 && results.rateLimited === 0 && suppliers.length === 0);
+      const success =
+        results.success > 0 ||
+        results.notFound > 0 ||
+        results.skipped > 0 ||
+        (results.failed === 0 &&
+          results.rateLimited === 0 &&
+          suppliers.length === 0);
 
       if (!success) {
         const errorMessage = `Logo fetch failed for all ${results.failed + results.rateLimited} supplier(s)`;
         logger.error(errorMessage, {
           stats: results,
-          failedSuppliers: detailedResults.filter(r => r.status === "failed" || r.status === "error" || r.status === "rate_limited"),
+          failedSuppliers: detailedResults.filter(
+            (r) =>
+              r.status === "failed" ||
+              r.status === "error" ||
+              r.status === "rate_limited",
+          ),
         });
         throw new Error(errorMessage);
       }
@@ -283,7 +293,7 @@ export const fetchLogo = task({
         results: detailedResults,
       };
     } catch (error) {
-      logger.error("Logo fetch task failed", { 
+      logger.error("Logo fetch task failed", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

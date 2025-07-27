@@ -214,6 +214,6 @@ export const rolePermissions: Record<MemberRole, Permission[]> = {
   ],
 };
 
+export * from "./schemas/company-config.schema";
 // Export company configuration types
 export * from "./types/company-config";
-export * from "./schemas/company-config.schema";

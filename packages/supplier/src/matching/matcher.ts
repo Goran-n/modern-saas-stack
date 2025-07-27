@@ -1,10 +1,10 @@
 import { MATCH_SCORES } from "../constants";
 import type { Identifiers, Supplier } from "../types";
-import { calculateNameMatchScore } from "../utils/fuzzy-match";
 import {
   extractDomainsFromSupplier,
   // domainsMatchWithSubdomains, // TODO: Use when supplier domain loading is implemented
 } from "../utils/domain";
+import { calculateNameMatchScore } from "../utils/fuzzy-match";
 
 export interface MatchResult {
   matched: boolean;
@@ -200,7 +200,7 @@ export class SupplierMatcher {
     details.contactScore = contactScore;
 
     // 7. Bank account matching
-    let bankAccountScore = 0;
+    const bankAccountScore = 0;
     if (supplierData.bankAccounts && supplierData.bankAccounts.length > 0) {
       // TODO: Load supplier bank accounts from attributes table and compare
       // For now, this is a placeholder - requires loading supplier attributes
@@ -276,11 +276,11 @@ export class SupplierMatcher {
     // Address data
     if (supplierData.addresses && supplierData.addresses.length > 0) {
       const addr = supplierData.addresses[0];
-      if (addr && addr.line1 && addr.city && addr.country) {
+      if (addr?.line1 && addr.city && addr.country) {
         score += MATCH_SCORES.ADDRESS.FULL_MATCH;
-      } else if (addr && addr.city && addr.country) {
+      } else if (addr?.city && addr.country) {
         score += MATCH_SCORES.ADDRESS.CITY_COUNTRY;
-      } else if (addr && addr.country) {
+      } else if (addr?.country) {
         score += MATCH_SCORES.ADDRESS.COUNTRY_ONLY;
       }
     }

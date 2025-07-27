@@ -2,7 +2,7 @@
 import { createLogger } from "@figgy/utils/logger";
 import { getDatabaseConfig } from "../config/config";
 import { TriggerSyncUseCase } from "../core/usecases/sync/trigger-sync.usecase";
-import { drizzleClient, pgClient } from "../infrastructure/database/connection";
+import { drizzleClient } from "../infrastructure/database/connection";
 import { addSyncIntegrationJob } from "../jobs/queue.config";
 import { DrizzleIntegrationRepository } from "../repositories/drizzle/integration.repository";
 import { DrizzleSyncJobRepository } from "../repositories/drizzle/sync-job.repository";

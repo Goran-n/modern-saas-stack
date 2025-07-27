@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const packagesToFix = [
   "communication",
@@ -39,7 +39,7 @@ for (const pkg of packagesToFix) {
   if (!existsSync(tsconfigBuildPath)) {
     writeFileSync(
       tsconfigBuildPath,
-      JSON.stringify(tsconfigBuildContent, null, 2) + "\n",
+      `${JSON.stringify(tsconfigBuildContent, null, 2)}\n`,
     );
     console.log(`✅ Created ${tsconfigBuildPath}`);
   } else {
@@ -53,7 +53,7 @@ for (const pkg of packagesToFix) {
       packageJson.scripts.build = "tsc -p tsconfig.build.json";
       writeFileSync(
         packageJsonPath,
-        JSON.stringify(packageJson, null, 2) + "\n",
+        `${JSON.stringify(packageJson, null, 2)}\n`,
       );
       console.log(`✅ Updated build script in ${pkg}/package.json`);
     }

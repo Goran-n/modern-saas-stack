@@ -497,7 +497,7 @@ const reprocessFile = async () => {
       router.push('/files');
     }, 1500);
   } catch (error) {
-    console.error('Reprocess failed:', error);
+    // Reprocess failed
     toast.add({
       title: 'Reprocess failed',
       description: error instanceof Error ? error.message : 'Failed to reprocess file',

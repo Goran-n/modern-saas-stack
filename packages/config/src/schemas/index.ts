@@ -7,7 +7,6 @@ export * from "./communication";
 export * from "./database";
 export * from "./external-services";
 export * from "./portkey";
-export * from "./redis";
 export * from "./slack";
 export * from "./supabase";
 export * from "./trigger";
@@ -20,7 +19,6 @@ import { communicationServiceSchema } from "./communication";
 import { databaseSchema } from "./database";
 import { externalServicesSchema } from "./external-services";
 import { portkeySchema } from "./portkey";
-import { redisSchema } from "./redis";
 import { slackSchema } from "./slack";
 import { supabaseSchema } from "./supabase";
 import { triggerSchema } from "./trigger";
@@ -35,7 +33,6 @@ export const fullConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(supabaseSchema)
   .merge(authSchema)
-  .merge(redisSchema)
   .merge(webSchema)
   .merge(triggerSchema)
   .merge(portkeySchema)

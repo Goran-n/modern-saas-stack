@@ -57,7 +57,7 @@ export function onMessage(
     message: Message,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void,
-  ) => void | boolean,
+  ) => undefined | boolean,
 ): void {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isMessage(message)) {

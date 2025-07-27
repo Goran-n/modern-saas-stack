@@ -118,7 +118,7 @@ const emailDomainSchema = z
 // Phone number validation (basic)
 const phoneNumberSchema = z
   .string()
-  .regex(/^\+?[0-9\s\-\(\)]+$/, "Invalid phone number format");
+  .regex(/^\+?[0-9\s\-()]+$/, "Invalid phone number format");
 
 // Website URL validation
 const websiteSchema = z.string().url("Invalid URL format");

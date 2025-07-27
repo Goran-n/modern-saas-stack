@@ -27,10 +27,6 @@ export interface SlackAuthResult {
 }
 
 export class SlackMultiTenantHandler {
-  constructor() {
-    // Response service instantiated when needed
-  }
-
   /**
    * Handle Slack authentication with multi-tenant support
    */

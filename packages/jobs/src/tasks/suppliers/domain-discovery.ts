@@ -83,10 +83,12 @@ async function searchForDomain(
   try {
     config = getConfig().get();
   } catch (error) {
-    logger.error("Failed to get config", { error: error instanceof Error ? error.message : String(error) });
+    logger.error("Failed to get config", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new Error("Configuration not available");
   }
-  
+
   const apiKey = config.SERPER_API_KEY;
 
   if (!apiKey) {
@@ -305,13 +307,18 @@ export const domainDiscovery = task({
       });
 
       // Consider the job failed if all items failed
-      const success = results.discovered > 0 || results.skipped > 0 || (results.failed === 0 && suppliers.length === 0);
+      const success =
+        results.discovered > 0 ||
+        results.skipped > 0 ||
+        (results.failed === 0 && suppliers.length === 0);
 
       if (!success) {
         const errorMessage = `Domain discovery failed for all ${results.failed} supplier(s)`;
         logger.error(errorMessage, {
           stats: results,
-          failedSuppliers: detailedResults.filter(r => r.status === "error" || r.status === "not_found"),
+          failedSuppliers: detailedResults.filter(
+            (r) => r.status === "error" || r.status === "not_found",
+          ),
         });
         throw new Error(errorMessage);
       }

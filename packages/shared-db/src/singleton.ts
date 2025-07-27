@@ -139,7 +139,6 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     const result = await globalConnection`SELECT 1 as health_check`;
     return result.length > 0 && result[0]?.health_check === 1;
   } catch (error) {
-    console.error("Database health check error:", error);
     logger.error("Database health check failed", {
       error:
         error instanceof Error

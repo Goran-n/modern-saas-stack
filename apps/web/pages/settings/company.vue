@@ -660,7 +660,7 @@ async function loadConfiguration() {
       },
     };
   } catch (e: any) {
-    console.error('Error loading company config:', e);
+    // Error loading company config
     error.value = e;
     toast.add({
       title: 'Error',

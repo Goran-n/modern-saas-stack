@@ -31,7 +31,7 @@ export function getPortkeyClient(): Portkey {
 
     logger.info("Portkey client initialized", {
       hasVirtualKey: true,
-      virtualKey: config.PORTKEY_VIRTUAL_KEY.substring(0, 10) + "...",
+      virtualKey: `${config.PORTKEY_VIRTUAL_KEY.substring(0, 10)}...`,
     });
   }
 

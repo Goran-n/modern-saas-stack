@@ -41,7 +41,7 @@ export default defineContentScript({
               },
             );
           }
-        } catch (e) {
+        } catch (_e) {
           // Not JSON or not our data, ignore
         }
       } else {
@@ -60,7 +60,7 @@ export default defineContentScript({
                 format: format,
               });
             }
-          } catch (e) {
+          } catch (_e) {
             // Not JSON or not our data, ignore
           }
         }
@@ -181,7 +181,7 @@ export default defineContentScript({
             const authData = JSON.parse(supabaseAuth);
             authToken =
               authData.access_token || authData.currentSession?.access_token;
-          } catch (e) {
+          } catch (_e) {
             logger.debug("Failed to parse Supabase auth data");
           }
         }
@@ -198,7 +198,7 @@ export default defineContentScript({
           try {
             const tenant = JSON.parse(tenantInfo);
             tenantId = tenant.id || tenant.tenantId;
-          } catch (e) {
+          } catch (_e) {
             logger.debug("Failed to parse tenant info");
           }
         }

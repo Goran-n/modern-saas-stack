@@ -4,20 +4,20 @@
  */
 import {
   createMessage,
-  type FileErrorPayload,
   type FileDownloadRequestPayload,
   type FileDownloadResponsePayload,
+  type FileErrorPayload,
   type Message,
   MessageType,
 } from "../types/messages";
 import { getConfig } from "../utils/config";
+import { createConsole } from "../utils/console";
 import { createLogger } from "../utils/logger";
 import {
   getSession,
-  initializeAuth,
   getSupabaseClient,
+  initializeAuth,
 } from "../utils/supabase";
-import { createConsole } from "../utils/console";
 
 export default {
   main() {
@@ -462,7 +462,7 @@ export default {
         logger.debug("Got signed URL from REST API", {
           fileName: payload.fileName,
           hasSignedUrl: !!signedUrl,
-          signedUrlSample: signedUrl.substring(0, 100) + "...",
+          signedUrlSample: `${signedUrl.substring(0, 100)}...`,
         });
 
         // Now download the file using the signed URL (in-memory, not to disk)

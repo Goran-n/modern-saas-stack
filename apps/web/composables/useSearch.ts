@@ -1,5 +1,5 @@
-import { ref, computed, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 
 export interface SearchFilters {
   type?: "file" | "supplier" | "document";
@@ -36,9 +36,7 @@ export function useSearch(options: SearchOptions = {}) {
     try {
       // Check if search router is available
       if (!$trpc.search || !$trpc.search.search) {
-        console.warn(
-          "Search functionality not available - Upstash may not be configured",
-        );
+        // Search functionality not available - Upstash may not be configured
         // Return mock results for development
         results.value = [];
         return;
@@ -51,7 +49,7 @@ export function useSearch(options: SearchOptions = {}) {
       });
       results.value = response.results || [];
     } catch (err) {
-      console.error("Search error:", err);
+      // Search error
       error.value = err as Error;
       results.value = [];
     } finally {
@@ -126,7 +124,7 @@ export function useSearchSuggestions(
     isLoading.value = true;
     try {
       if (!$trpc.search || !$trpc.search.suggest) {
-        console.warn("Suggestions functionality not available");
+        // Suggestions functionality not available
         suggestions.value = [];
         return;
       }
@@ -136,8 +134,8 @@ export function useSearchSuggestions(
         limit,
       });
       suggestions.value = response.suggestions || [];
-    } catch (error) {
-      console.error("Failed to fetch suggestions:", error);
+    } catch (_error) {
+      // Failed to fetch suggestions
       suggestions.value = [];
     } finally {
       isLoading.value = false;

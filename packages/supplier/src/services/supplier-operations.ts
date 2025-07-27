@@ -1,4 +1,4 @@
-import { globalSuppliers, supplierAttributes, eq } from "@figgy/shared-db";
+import { eq, globalSuppliers, supplierAttributes } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { inArray } from "drizzle-orm";

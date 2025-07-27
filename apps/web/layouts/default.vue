@@ -6,11 +6,11 @@
         <!-- Logo and Navigation -->
         <div class="flex items-center space-x-8">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center">
+          <NuxtLink to="/" class="flex items-center focus:outline-none">
             <img 
               src="/logo.png" 
               alt="Kibly logo" 
-              class="h-8 w-auto"
+              class="h-8 w-auto select-none"
               @error="handleLogoError"
             />
           </NuxtLink>

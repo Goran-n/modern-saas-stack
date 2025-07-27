@@ -1,10 +1,10 @@
 import {
-  getTenant,
-  updateTenant,
-  type UpdateTenantInput,
   type CompanyConfig,
   companyConfigSchema,
   createDefaultCompanyConfig,
+  getTenant,
+  type UpdateTenantInput,
+  updateTenant,
 } from "@figgy/tenant";
 import { createLogger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";

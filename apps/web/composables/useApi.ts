@@ -65,8 +65,8 @@ export const useApi = (): ApiMethods => {
         try {
           await authStore.signOut();
           auth.signOutSuccess();
-        } catch (error) {
-          console.error("Error during automatic logout:", error);
+        } catch (_error) {
+          // Error during automatic logout
         }
         await navigateTo("/auth/login");
       }

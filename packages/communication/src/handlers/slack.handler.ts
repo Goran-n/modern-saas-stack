@@ -189,7 +189,7 @@ export class SlackMessageHandler extends BaseMessageHandler {
       const result =
         SlackMessageHandler.parseWebhookPayloadWithResult(rawPayload);
       return result.payload;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

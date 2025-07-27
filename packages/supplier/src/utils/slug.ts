@@ -52,7 +52,7 @@ export async function generateSlug(
   for (const row of existingSlugs) {
     const slug = row.slug as string;
     const match = slug.match(suffixPattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       const suffix = parseInt(match[1], 10);
       if (suffix > maxSuffix) {
         maxSuffix = suffix;

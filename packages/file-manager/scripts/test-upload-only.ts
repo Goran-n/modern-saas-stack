@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 import { getConfig } from "@figgy/config";
 import { createClient } from "@supabase/supabase-js";
-import { readFile } from "fs/promises";
-import { basename } from "path";
 
 async function main() {
   const filePath = process.argv[2];

@@ -1,4 +1,4 @@
-import type { UserTenant, Tenant } from "@figgy/types";
+import type { Tenant, UserTenant } from "@figgy/types";
 
 export const useTenantStore = defineStore("tenant", () => {
   // State
@@ -53,11 +53,7 @@ export const useTenantStore = defineStore("tenant", () => {
       }
 
       // Log other errors for debugging
-      console.error("Failed to fetch tenants:", {
-        error: err?.message || error,
-        code: err?.data?.code,
-        stack: err?.stack,
-      });
+      // Failed to fetch tenants
     } finally {
       isLoading.value = false;
     }
@@ -69,7 +65,7 @@ export const useTenantStore = defineStore("tenant", () => {
     if (process.client && window.localStorage) {
       try {
         localStorage.setItem("selectedTenantId", tenantId);
-      } catch (e) {
+      } catch (_e) {
         // Silent fail for localStorage errors
       }
     }
@@ -82,7 +78,7 @@ export const useTenantStore = defineStore("tenant", () => {
         if (stored && userTenants.value.some((ut) => ut.tenant.id === stored)) {
           selectedTenantId.value = stored;
         }
-      } catch (e) {
+      } catch (_e) {
         // Silent fail for localStorage errors
       }
     }
@@ -95,7 +91,7 @@ export const useTenantStore = defineStore("tenant", () => {
     if (process.client && window.localStorage) {
       try {
         localStorage.removeItem("selectedTenantId");
-      } catch (e) {
+      } catch (_e) {
         // Silent fail for localStorage errors
       }
     }

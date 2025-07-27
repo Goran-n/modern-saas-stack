@@ -108,7 +108,7 @@ onMounted(() => {
   extensionCallbackUrl.value = urlParams.get('callback')
   
   if (isFromExtension.value) {
-    console.log('Extension login detected', { callbackUrl: extensionCallbackUrl.value })
+    // Extension login detected
   }
 })
 
@@ -134,7 +134,7 @@ async function onSubmit(event: { data: Schema }) {
     auth.signInSuccess()
     
     if (isFromExtension.value && extensionCallbackUrl.value) {
-      console.log('Redirecting to extension callback', { callbackUrl: extensionCallbackUrl.value })
+      // Redirecting to extension callback
       
       // Show success message before redirecting
       general.success('Success!', 'Redirecting back to browser extension...')
@@ -151,20 +151,20 @@ async function onSubmit(event: { data: Schema }) {
         user: currentSession.user
       } : null
       
-      console.log('Session data to pass:', sessionData)
+      // Session data to pass
       
       // Small delay to show the success message
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Redirect back to extension callback page with session data
       const redirectUrl = `${extensionCallbackUrl.value}?auth_success=true&session=${encodeURIComponent(JSON.stringify(sessionData))}&timestamp=${Date.now()}`
-      console.log('Final redirect URL:', redirectUrl)
+      // Final redirect URL
       window.location.href = redirectUrl
     } else {
       await router.push('/')
     }
   } catch (error) {
-    console.error('Login error:', error)
+    // Login error
     auth.signInFailed(error instanceof Error ? error.message : undefined)
   } finally {
     isLoading.value = false

@@ -55,7 +55,7 @@ export async function validateParsedQuery(
       const start = new Date(query.entities.dateRange.start);
       const end = new Date(query.entities.dateRange.end);
 
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
         errors.push("Invalid date range format");
       } else if (start > end) {
         errors.push("Start date must be before end date");

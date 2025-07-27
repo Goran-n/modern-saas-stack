@@ -3,9 +3,9 @@
  */
 import { defineContentScript } from "wxt/utils/define-content-script";
 import {
-  type FileDropPayload,
   type FileDownloadRequestPayload,
   type FileDownloadResponsePayload,
+  type FileDropPayload,
   MessageType,
 } from "../types/messages";
 import "../styles/theme.css";
@@ -239,8 +239,8 @@ export default defineContentScript({
         };
 
         const distance = Math.sqrt(
-          Math.pow(targetCenter.x - btnCenter.x, 2) +
-            Math.pow(targetCenter.y - btnCenter.y, 2),
+          (targetCenter.x - btnCenter.x) ** 2 +
+            (targetCenter.y - btnCenter.y) ** 2,
         );
 
         if (distance < nearestDistance) {

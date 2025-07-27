@@ -84,12 +84,12 @@ export function validateISODate(date: string): boolean {
   if (!isoDateRegex.test(date)) return false;
 
   const parsedDate = new Date(date);
-  return !isNaN(parsedDate.getTime());
+  return !Number.isNaN(parsedDate.getTime());
 }
 
 // Amount validation
 export function validateAmount(amount: number): boolean {
-  return amount >= 0 && isFinite(amount);
+  return amount >= 0 && Number.isFinite(amount);
 }
 
 // Critical fields validation

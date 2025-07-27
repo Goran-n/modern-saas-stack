@@ -7,7 +7,7 @@ export const cleanFileName = (fileName: string): string => {
   if (!fileName) return "";
 
   // Remove common ID prefixes (e.g., "753201611881_Invoice_24284212.pdf" -> "24284212.pdf")
-  let cleaned = fileName
+  const cleaned = fileName
     .replace(/^\d+_/, "") // Remove leading digits followed by underscore
     .replace(/^Invoice_/i, "") // Remove "Invoice_" prefix (case insensitive)
     .replace(/^Receipt_/i, "") // Remove "Receipt_" prefix

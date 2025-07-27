@@ -20,8 +20,6 @@ export interface MessageRouterOptions {
 }
 
 export class MessageRouter {
-  constructor() {}
-
   async route(
     payload: MessagePayload,
     options: MessageRouterOptions,

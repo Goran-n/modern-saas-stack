@@ -44,7 +44,7 @@ export class SlackCommandParser {
     const inlineMatch = trimmed.match(
       SlackCommandParser.PATTERNS.SWITCH_INLINE,
     );
-    if (inlineMatch && inlineMatch[1] && inlineMatch[2]) {
+    if (inlineMatch?.[1] && inlineMatch[2]) {
       return {
         type: SlackCommandType.SWITCH_TENANT,
         tenant: inlineMatch[1],
@@ -57,7 +57,7 @@ export class SlackCommandParser {
     const switchLongMatch = trimmed.match(
       SlackCommandParser.PATTERNS.SWITCH_LONG,
     );
-    if (switchLongMatch && switchLongMatch[1]) {
+    if (switchLongMatch?.[1]) {
       return {
         type: SlackCommandType.SWITCH_TENANT,
         tenant: switchLongMatch[1].trim(),
@@ -68,7 +68,7 @@ export class SlackCommandParser {
     const switchShortMatch = trimmed.match(
       SlackCommandParser.PATTERNS.SWITCH_SHORT,
     );
-    if (switchShortMatch && switchShortMatch[1]) {
+    if (switchShortMatch?.[1]) {
       return {
         type: SlackCommandType.SWITCH_TENANT,
         tenant: switchShortMatch[1],

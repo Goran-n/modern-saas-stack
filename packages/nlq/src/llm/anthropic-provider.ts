@@ -53,7 +53,7 @@ export class AnthropicProvider extends BaseLLMProvider {
   ): Promise<ParsedQuery> {
     try {
       // Debug logging
-      console.log("Parsing query with Anthropic:", query);
+      // Parsing query with Anthropic
 
       logger.info("Parsing query with Anthropic", { query, context });
 
@@ -82,13 +82,9 @@ export class AnthropicProvider extends BaseLLMProvider {
       });
 
       // Debug: Log full response content for debugging
-      const responseContent = response.choices[0]?.message?.content;
-      console.log("Full Anthropic response:", responseContent);
-      console.log(
-        "Response length:",
-        responseContent?.length || 0,
-        "characters",
-      );
+      // const responseContent = response.choices[0]?.message?.content;
+      // Full Anthropic response
+      // Response length
 
       logger.info("Received Portkey response", {
         hasChoices: !!response.choices,
@@ -112,7 +108,7 @@ export class AnthropicProvider extends BaseLLMProvider {
       try {
         // First try parsing the whole content
         parsed = JSON.parse(content);
-      } catch (error) {
+      } catch (_error) {
         logger.debug("Initial JSON parse failed, attempting extraction", {
           contentLength: content.length,
           contentPreview: content.substring(0, 200),
@@ -164,7 +160,7 @@ export class AnthropicProvider extends BaseLLMProvider {
 
               parsed = JSON.parse(cleanedJson);
               logger.debug("Successfully parsed cleaned JSON");
-            } catch (finalError) {
+            } catch (_finalError) {
               throw new NLQError(
                 "Failed to parse JSON response from LLM",
                 NLQErrorCodes.LLM_ERROR,

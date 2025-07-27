@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
 
 const COLORS = {
   red: "\x1b[31m",
@@ -119,7 +119,7 @@ async function cleanup() {
 
   // Optional: Clear Redis development keys
   try {
-    const readline = await import("readline");
+    const readline = await import("node:readline");
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -131,7 +131,7 @@ async function cleanup() {
           try {
             // This would need to be implemented based on your Redis setup
             log("  ⚠️  Redis cleanup not implemented yet", "yellow");
-          } catch (error) {
+          } catch (_error) {
             log("  ✗ Failed to clear Redis", "red");
           }
         }

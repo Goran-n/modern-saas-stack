@@ -351,7 +351,7 @@ export const categorizeFile = schemaTask({
           fileId,
           bucket: file.bucket,
           error: urlValidation.error,
-          urlPrefix: signedUrl.signedUrl.substring(0, 100) + "...",
+          urlPrefix: `${signedUrl.signedUrl.substring(0, 100)}...`,
         });
         throw new Error(`Invalid storage URL: ${urlValidation.error}`);
       }

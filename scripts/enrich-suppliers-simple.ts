@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { globalSuppliers, getDatabaseConnection } from "@figgy/shared-db";
+import { getDatabaseConnection, globalSuppliers } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { eq, isNull, or } from "drizzle-orm";
 
@@ -8,8 +8,10 @@ import { eq, isNull, or } from "drizzle-orm";
 const args = process.argv.slice(2);
 const showHelp = args.includes("--help") || args.includes("-h");
 const enrichAll = args.includes("--all");
-const supplierId = args.find((arg, i) => args[i - 1] === "--supplier");
-const limit = parseInt(args.find((arg, i) => args[i - 1] === "--limit") || "10");
+const supplierId = args.find((_arg, i) => args[i - 1] === "--supplier");
+const limit = parseInt(
+  args.find((_arg, i) => args[i - 1] === "--limit") || "10",
+);
 const dryRun = args.includes("--dry-run");
 
 if (showHelp || (!enrichAll && !supplierId)) {
@@ -71,8 +73,10 @@ async function main() {
           id: supplier.id,
           name: supplier.canonicalName,
           needsDomain: !supplier.primaryDomain,
-          needsLogo: supplier.primaryDomain && supplier.logoFetchStatus !== "success",
-          needsEnrichment: supplier.primaryDomain && supplier.enrichmentStatus !== "completed",
+          needsLogo:
+            supplier.primaryDomain && supplier.logoFetchStatus !== "success",
+          needsEnrichment:
+            supplier.primaryDomain && supplier.enrichmentStatus !== "completed",
         });
         process.exit(0);
       }
@@ -130,7 +134,9 @@ async function main() {
       }
 
       // Group by enrichment needs
-      const noDomain = suppliersNeedingEnrichment.filter((s) => !s.primaryDomain);
+      const noDomain = suppliersNeedingEnrichment.filter(
+        (s) => !s.primaryDomain,
+      );
       const needsEnrichment = suppliersNeedingEnrichment.filter(
         (s) => s.primaryDomain && s.enrichmentStatus !== "completed",
       );
@@ -176,7 +182,9 @@ async function main() {
       count: jobs.length,
     });
 
-    console.log("\nTo trigger these jobs, use the Trigger.dev dashboard or API:");
+    console.log(
+      "\nTo trigger these jobs, use the Trigger.dev dashboard or API:",
+    );
     jobs.forEach((job, index) => {
       console.log(`\nJob ${index + 1}:`);
       console.log(`  Task: ${job.task}`);
@@ -184,7 +192,9 @@ async function main() {
     });
 
     console.log("\nNote: Jobs are not automatically triggered. Please use:");
-    console.log("  1. The Trigger.dev dashboard to manually trigger these jobs");
+    console.log(
+      "  1. The Trigger.dev dashboard to manually trigger these jobs",
+    );
     console.log("  2. The TRPC API endpoints from your application");
     console.log("  3. The Trigger.dev CLI if you have it installed");
 

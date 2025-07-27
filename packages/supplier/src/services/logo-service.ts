@@ -216,7 +216,7 @@ export class LogoService {
       case "failed":
         // Use exponential backoff for failed attempts
         if (attempts && attempts > 0) {
-          const backoffDays = Math.pow(2, Math.min(attempts - 1, 4)); // Cap at 16 days
+          const backoffDays = 2 ** Math.min(attempts - 1, 4); // Cap at 16 days
           return age > backoffDays * dayInMs;
         }
         // Default to retry after 24 hours

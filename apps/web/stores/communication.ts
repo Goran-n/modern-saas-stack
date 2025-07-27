@@ -68,8 +68,8 @@ export const useCommunicationStore = defineStore("communication", {
           result: { data: { json: CommunicationStats } };
         }>("/trpc/communication.getStats");
         this.stats = response.result.data.json;
-      } catch (error) {
-        console.error("Failed to fetch communication stats:", error);
+      } catch (_error) {
+        // Failed to fetch communication stats
         this.error = "Failed to load statistics";
       } finally {
         this.isLoading = false;
@@ -83,70 +83,50 @@ export const useCommunicationStore = defineStore("communication", {
           result: { data: { json: RecentActivity[] } };
         }>("/trpc/communication.getRecentActivity");
         this.recentActivity = response.result.data.json;
-      } catch (error) {
-        console.error("Failed to fetch recent activity:", error);
+      } catch (_error) {
+        // Failed to fetch recent activity
       }
     },
 
     async fetchVerifications() {
-      try {
-        const api = useApi();
-        const response = await api.get<{
-          result: { data: { json: WhatsAppVerification[] } };
-        }>("/trpc/communication.getVerifications");
-        this.verifications = response.result.data.json;
-      } catch (error) {
-        console.error("Failed to fetch verifications:", error);
-        throw error;
-      }
+      const api = useApi();
+      const response = await api.get<{
+        result: { data: { json: WhatsAppVerification[] } };
+      }>("/trpc/communication.getVerifications");
+      this.verifications = response.result.data.json;
     },
 
     async updateVerification(id: string, verified: boolean) {
-      try {
-        const api = useApi();
-        await api.post("/trpc/communication.updateVerification", {
-          json: { id, verified },
-        });
+      const api = useApi();
+      await api.post("/trpc/communication.updateVerification", {
+        json: { id, verified },
+      });
 
-        // Update local state
-        const verification = this.verifications.find((v) => v.id === id);
-        if (verification) {
-          verification.verified = verified;
-        }
-      } catch (error) {
-        console.error("Failed to update verification:", error);
-        throw error;
+      // Update local state
+      const verification = this.verifications.find((v) => v.id === id);
+      if (verification) {
+        verification.verified = verified;
       }
     },
 
     async fetchWorkspaces() {
-      try {
-        const api = useApi();
-        const response = await api.get<{
-          result: { data: { json: SlackWorkspace[] } };
-        }>("/trpc/communication.getWorkspaces");
-        this.workspaces = response.result.data.json;
-      } catch (error) {
-        console.error("Failed to fetch workspaces:", error);
-        throw error;
-      }
+      const api = useApi();
+      const response = await api.get<{
+        result: { data: { json: SlackWorkspace[] } };
+      }>("/trpc/communication.getWorkspaces");
+      this.workspaces = response.result.data.json;
     },
 
     async retryFailedProcessing(activityId: string) {
-      try {
-        const api = useApi();
-        await api.post("/trpc/communication.retryProcessing", {
-          json: { activityId },
-        });
+      const api = useApi();
+      await api.post("/trpc/communication.retryProcessing", {
+        json: { activityId },
+      });
 
-        // Update activity status
-        const activity = this.recentActivity.find((a) => a.id === activityId);
-        if (activity) {
-          activity.status = "pending";
-        }
-      } catch (error) {
-        console.error("Failed to retry processing:", error);
-        throw error;
+      // Update activity status
+      const activity = this.recentActivity.find((a) => a.id === activityId);
+      if (activity) {
+        activity.status = "pending";
       }
     },
 

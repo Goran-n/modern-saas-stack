@@ -389,7 +389,6 @@ const fetchUsers = async () => {
       throw new Error('No data returned')
     }
   } catch (error) {
-    console.error('Failed to fetch users:', error)
     userOptions.value = []
     
     // Fallback to current user if API fails
@@ -496,7 +495,6 @@ onMounted(async () => {
   }
 
   if (!tenantStore.selectedTenantId) {
-    console.error('No tenant selected')
     useNotification().error(
       'No tenant selected',
       'Please select a tenant to view verifications.'
@@ -512,7 +510,6 @@ onMounted(async () => {
       communicationStore.fetchVerifications()
     ])
   } catch (error) {
-    console.error('Failed to load verifications:', error)
     useNotification().error(
       'Failed to load verifications', 
       'Unable to load verification data. Please try again.'
@@ -532,7 +529,6 @@ const refresh = async () => {
     ])
     useNotification().success('Data refreshed')
   } catch (error) {
-    console.error('Failed to refresh verifications:', error)
     useNotification().error(
       'Failed to refresh data', 
       'The backend API is not available.'
@@ -620,7 +616,6 @@ const resendCode = async (verification: WhatsAppVerification) => {
       throw new Error(data.value?.error?.json?.message || 'Failed to resend code')
     }
   } catch (error) {
-    console.error('Failed to resend code:', error)
     useNotification().error('Error', 'Failed to resend verification code')
   }
 }
@@ -698,7 +693,6 @@ const submitVerificationCode = async () => {
       throw new Error(data.value?.error?.json?.message || 'Failed to verify code')
     }
   } catch (error) {
-    console.error('Failed to verify code:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to verify code. Please try again.'
     useNotification().error('Error', errorMessage)
   } finally {
@@ -775,7 +769,6 @@ const addManualMapping = async () => {
       throw new Error(data.value?.error?.json?.message || 'Failed to create verification')
     }
   } catch (error) {
-    console.error('Failed to add mapping:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to add mapping. Please try again.'
     useNotification().error('Error', errorMessage)
   } finally {

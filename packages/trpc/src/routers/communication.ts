@@ -521,7 +521,7 @@ export const communicationRouter = createTRPCRouter({
       const { token } = input;
 
       logger.info("verifySlackLinkingToken called", {
-        tokenPrefix: token.substring(0, 10) + "...",
+        tokenPrefix: `${token.substring(0, 10)}...`,
       });
 
       try {
@@ -537,7 +537,7 @@ export const communicationRouter = createTRPCRouter({
       } catch (error) {
         logger.error("Failed to verify linking token", {
           error,
-          tokenPrefix: token.substring(0, 10) + "...",
+          tokenPrefix: `${token.substring(0, 10)}...`,
         });
 
         throw new TRPCError({
@@ -560,7 +560,7 @@ export const communicationRouter = createTRPCRouter({
       const userId = ctx.user.id;
 
       logger.info("linkSlackAccount called", {
-        tokenPrefix: token.substring(0, 10) + "...",
+        tokenPrefix: `${token.substring(0, 10)}...`,
         tenantCount: tenantIds.length,
         userId,
         requestId: ctx.requestId,

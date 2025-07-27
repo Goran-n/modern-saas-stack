@@ -3,7 +3,7 @@
  * This detects the successful authentication and notifies the background script
  */
 
-import { MessageType, createMessage } from "../../types/messages";
+import { createMessage, MessageType } from "../../types/messages";
 import { createLogger } from "../../utils/logger";
 
 const logger = createLogger("auth-callback");

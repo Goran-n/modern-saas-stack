@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { serve } from "@hono/node-server";
 import { bootstrap } from "@figgy/config";
 import { checkDatabaseHealth, getDatabaseConnection } from "@figgy/shared-db";
 import { logError, logger } from "@figgy/utils";
+import { serve } from "@hono/node-server";
 // import { configure } from "@trigger.dev/sdk/v3"; // TODO: Update for v3 API
 import { createHonoApp } from "./server";
 

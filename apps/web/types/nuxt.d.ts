@@ -6,5 +6,3 @@ declare module "#app" {
     $trpc: ReturnType<typeof createTRPCProxyClient<AppRouter>>;
   }
 }
-
-export {};

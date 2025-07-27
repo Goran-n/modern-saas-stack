@@ -367,13 +367,13 @@ const configForm = ref({
   retention: '30'
 })
 
-// Mock data for channels
-const channels = ref([
-  { id: '1', name: 'general', isPrivate: false, enabled: true },
-  { id: '2', name: 'random', isPrivate: false, enabled: true },
-  { id: '3', name: 'engineering', isPrivate: false, enabled: false },
-  { id: '4', name: 'private-team', isPrivate: true, enabled: false }
-])
+// Channels data will be loaded from API based on selected workspace
+const channels = ref<Array<{
+  id: string
+  name: string
+  isPrivate: boolean
+  enabled: boolean
+}>>([])
 
 // Options
 const retentionOptions = [
@@ -421,12 +421,10 @@ const breadcrumbs = [
 onMounted(async () => {
   // Wait for tenant to be selected
   if (!tenantStore.selectedTenantId) {
-    console.log('Waiting for tenant selection...')
     await tenantStore.fetchUserTenants()
   }
 
   if (!tenantStore.selectedTenantId) {
-    console.error('No tenant selected')
     useNotification().error(
       'No tenant selected',
       'Please select a tenant to view workspaces.'
@@ -438,7 +436,6 @@ onMounted(async () => {
   try {
     await communicationStore.fetchWorkspaces()
   } catch (error) {
-    console.error('Failed to load workspaces:', error)
     useNotification().error(
       'Failed to load workspaces',
       'Unable to load workspace data. Please try again.'
@@ -455,7 +452,6 @@ const refresh = async () => {
     await communicationStore.fetchWorkspaces()
     useNotification().success('Data refreshed')
   } catch (error) {
-    console.error('Failed to refresh workspaces:', error)
     useNotification().error(
       'Failed to refresh data',
       'The backend API is not available.'

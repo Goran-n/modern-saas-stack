@@ -1,4 +1,3 @@
-import { trpcServer } from "@hono/trpc-server";
 import {
   completeSlackOAuth,
   generateSlackOAuthUrl,
@@ -14,6 +13,7 @@ import { and, eq, files, getDatabaseConnection } from "@figgy/shared-db";
 import { appRouter, createContext } from "@figgy/trpc";
 import type { SlackWebhookBody } from "@figgy/types";
 import { logError, logger } from "@figgy/utils";
+import { trpcServer } from "@hono/trpc-server";
 import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -684,7 +684,7 @@ export function createHonoApp() {
             stateError instanceof Error
               ? stateError.message
               : String(stateError),
-          state: state.substring(0, 100) + "...",
+          state: `${state.substring(0, 100)}...`,
         });
       }
 
@@ -697,9 +697,9 @@ export function createHonoApp() {
       }
 
       logger.info("Processing Slack OAuth callback", {
-        code: code.substring(0, 10) + "...",
+        code: `${code.substring(0, 10)}...`,
         tenantId,
-        stateParam: state.substring(0, 50) + "...",
+        stateParam: `${state.substring(0, 50)}...`,
         tenantIdSource:
           tenantId === "default-tenant" ? "default" : "extracted from state",
       });
