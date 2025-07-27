@@ -1,6 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const FileStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed']);
+export const FileStatusSchema = z.enum([
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
 
 export const FileSchema = z.object({
   id: z.string().uuid(),
@@ -19,10 +24,13 @@ export const FileSchema = z.object({
 
 export const FileGroupByYearSchema = z.object({
   year: z.string(),
-  suppliers: z.record(z.string(), z.object({
-    fileCount: z.number(),
-    files: z.array(FileSchema),
-  })),
+  suppliers: z.record(
+    z.string(),
+    z.object({
+      fileCount: z.number(),
+      files: z.array(FileSchema),
+    }),
+  ),
 });
 
 export const FileDataSchema = z.object({

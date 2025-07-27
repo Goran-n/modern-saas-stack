@@ -94,8 +94,10 @@ export default defineContentScript({
                 type: currentDragData.type,
                 fileId: currentDragData.fileId,
                 fileName: currentDragData.fileName,
-                downloadUrl: currentDragData.downloadUrl ? "PRESENT" : "MISSING"
-              }
+                downloadUrl: currentDragData.downloadUrl
+                  ? "PRESENT"
+                  : "MISSING",
+              },
             });
 
             // Store the drag data with fileId and tenantId for REST API calls

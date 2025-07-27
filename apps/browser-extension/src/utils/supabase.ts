@@ -115,7 +115,7 @@ async function handleSignOut() {
 export async function getSession(): Promise<Session | null> {
   try {
     logger.info("Getting session from Supabase client");
-    
+
     const client = getSupabaseClient();
     const {
       data: { session },
@@ -124,9 +124,9 @@ export async function getSession(): Promise<Session | null> {
 
     if (error) {
       logger.error("Failed to get session from Supabase", { error });
-      
+
       // If we get fetch/network errors, clear storage and try once more
-      if (error.message?.toLowerCase().includes('fetch')) {
+      if (error.message?.toLowerCase().includes("fetch")) {
         logger.warn("Network error detected, clearing auth storage");
         try {
           await clearAuthStorage();
@@ -134,7 +134,7 @@ export async function getSession(): Promise<Session | null> {
           logger.warn("Failed to clear auth storage", { clearError });
         }
       }
-      
+
       return null;
     }
 
@@ -152,7 +152,7 @@ export async function getSession(): Promise<Session | null> {
     return session;
   } catch (error) {
     logger.error("Exception getting session", { error });
-    
+
     // Clear potentially corrupted storage on any exception
     try {
       await clearAuthStorage();
@@ -160,7 +160,7 @@ export async function getSession(): Promise<Session | null> {
     } catch (clearError) {
       logger.warn("Failed to clear auth storage", { clearError });
     }
-    
+
     return null;
   }
 }

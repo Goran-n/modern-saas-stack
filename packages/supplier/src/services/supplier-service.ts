@@ -70,15 +70,15 @@ export class SupplierService {
           legalName: supplier.legalName,
           createdAt: supplier.createdAt,
         };
-        
+
         if (supplier.companyNumber) {
           indexData.companyNumber = supplier.companyNumber;
         }
-        
+
         if (supplier.vatNumber) {
           indexData.vatNumber = supplier.vatNumber;
         }
-        
+
         await searchOps.indexSupplier(indexData);
       } catch (error) {
         logger.error("Failed to index supplier in search", {

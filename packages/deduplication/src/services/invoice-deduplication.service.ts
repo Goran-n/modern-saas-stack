@@ -162,7 +162,8 @@ export class InvoiceDeduplicationService {
 
         return {
           isDuplicate,
-          duplicateExtractionId: (isDuplicate && bestMatch) ? bestMatch.id : undefined,
+          duplicateExtractionId:
+            isDuplicate && bestMatch ? bestMatch.id : undefined,
           invoiceFingerprint,
           duplicateConfidence: scores.overallScore,
           duplicateType,

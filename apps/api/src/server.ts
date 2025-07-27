@@ -190,18 +190,18 @@ export function createHonoApp() {
   app.get("/test/trigger", async (c) => {
     try {
       const { tasks } = await import("@trigger.dev/sdk/v3");
-      
+
       logger.info("Testing Trigger.dev", {
-        tasksAvailable: typeof tasks !== 'undefined',
-        triggerMethodExists: typeof tasks?.trigger === 'function',
+        tasksAvailable: typeof tasks !== "undefined",
+        triggerMethodExists: typeof tasks?.trigger === "function",
       });
-      
+
       // Try to trigger a test job
       const testIds = ["test-global-supplier-1", "test-global-supplier-2"];
       const result = await tasks.trigger("fetch-logo", {
         globalSupplierIds: testIds,
       });
-      
+
       return c.json({
         success: true,
         jobId: result.id,
@@ -210,17 +210,23 @@ export function createHonoApp() {
       });
     } catch (error) {
       logger.error("Test trigger failed", {
-        error: error instanceof Error ? {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        } : error,
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+              }
+            : error,
       });
-      
-      return c.json({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }, 500);
+
+      return c.json(
+        {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        500,
+      );
     }
   });
 
@@ -236,7 +242,9 @@ export function createHonoApp() {
         // Check if we have a response to send back
         if (result.metadata?.responseText) {
           // Extract sender from the webhook payload
-          const from = (body as Record<string, unknown>).From || (body as Record<string, unknown>).from;
+          const from =
+            (body as Record<string, unknown>).From ||
+            (body as Record<string, unknown>).from;
           try {
             if (from) {
               const responseService = new WhatsAppResponseService();
@@ -359,7 +367,7 @@ export function createHonoApp() {
 
     // Initialize body variable for error handling context
     let parsedBody: SlackWebhookBody | undefined;
-    
+
     try {
       // Get raw body for signature verification
       const rawBody = await c.req.text();
@@ -382,13 +390,13 @@ export function createHonoApp() {
         });
         return c.json({ error: "Invalid JSON body" }, 400);
       }
-      
+
       // Now we can safely use parsedBody as it's defined
       const body = parsedBody;
 
-    // Verify Slack signature
-    const signature = c.req.header("x-slack-signature");
-    const timestamp = c.req.header("x-slack-request-timestamp");
+      // Verify Slack signature
+      const signature = c.req.header("x-slack-signature");
+      const timestamp = c.req.header("x-slack-request-timestamp");
 
       if (signature && timestamp) {
         const { getSlackService } = await import("@figgy/communication");
@@ -558,7 +566,7 @@ export function createHonoApp() {
           ),
         },
         bodyType: parsedBody?.type,
-        eventType: parsedBody?.event?.type,  
+        eventType: parsedBody?.event?.type,
         teamId: parsedBody?.team_id,
         userId: parsedBody?.event?.user,
         messagePreview: parsedBody?.event?.text?.substring(0, 100),
@@ -590,7 +598,10 @@ export function createHonoApp() {
         }
       }
 
-      return c.json({ ok: false, error: errorMessage }, statusCode as 400 | 401 | 500);
+      return c.json(
+        { ok: false, error: errorMessage },
+        statusCode as 400 | 401 | 500,
+      );
     }
   });
 

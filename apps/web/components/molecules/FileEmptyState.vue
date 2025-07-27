@@ -2,6 +2,7 @@
   <FigEmptyState
     :type="mappedType"
     :icon="icon"
+    :image="props.image"
     :title="title"
     :description="description"
     :primary-action="primaryAction"
@@ -22,6 +23,7 @@ interface Props {
   title?: string
   description?: string
   icon?: string
+  image?: string
   iconColor?: string
   primaryAction?: EmptyStateAction
 }
@@ -54,6 +56,7 @@ const icon = computed(() => {
   
   return icons[props.type]
 })
+
 
 const title = computed(() => {
   if (props.title) return props.title

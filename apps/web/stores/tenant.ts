@@ -1,4 +1,4 @@
-import type { UserTenant, Tenant } from '@figgy/types';
+import type { UserTenant, Tenant } from "@figgy/types";
 
 export const useTenantStore = defineStore("tenant", () => {
   // State
@@ -42,7 +42,11 @@ export const useTenantStore = defineStore("tenant", () => {
     } catch (error) {
       // Don't throw on error - this allows the app to continue working
       // even if tenant fetching fails temporarily
-      const err = error as { data?: { code?: string }; message?: string; stack?: string };
+      const err = error as {
+        data?: { code?: string };
+        message?: string;
+        stack?: string;
+      };
       if (err?.data?.code === "UNAUTHORIZED") {
         // User is not authenticated, this is expected
         return;

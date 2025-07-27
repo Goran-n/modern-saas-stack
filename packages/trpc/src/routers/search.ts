@@ -22,18 +22,25 @@ export const searchRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { query, filters, limit } = input;
-      
+
       // tenantProcedure ensures tenantId is available
 
       // Clean up filters to remove undefined values
-      const cleanFilters = filters ? Object.entries(filters).reduce((acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {} as any) : undefined;
-      
-      const results = await searchOps.search(ctx.tenantId, query, cleanFilters, limit);
+      const cleanFilters = filters
+        ? Object.entries(filters).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {} as any)
+        : undefined;
+
+      const results = await searchOps.search(
+        ctx.tenantId,
+        query,
+        cleanFilters,
+        limit,
+      );
 
       return {
         results,
@@ -52,7 +59,7 @@ export const searchRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { prefix, limit } = input;
-      
+
       // tenantProcedure ensures tenantId is available
 
       const suggestions = await searchOps.suggest(ctx.tenantId, prefix, limit);

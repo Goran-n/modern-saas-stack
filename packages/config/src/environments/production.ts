@@ -59,11 +59,7 @@ export const productionConfigSchema = z
     DEV_MODE: z.coerce.boolean().default(false),
 
     // Base URL for OAuth callbacks and webhooks
-    BASE_URL: z
-      .string()
-      .url()
-      .optional(), // Optional in production to allow backwards compatibility
-
+    BASE_URL: z.string().url().optional(), // Optional in production to allow backwards compatibility
   })
   .merge(triggerSchema)
   .merge(portkeySchema)

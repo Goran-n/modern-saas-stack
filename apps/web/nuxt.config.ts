@@ -1,4 +1,4 @@
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
@@ -54,7 +54,6 @@ export default defineNuxtConfig({
 
   css: ["~/app.css"],
 
-
   colorMode: {
     classSuffix: "",
     preference: "light",
@@ -94,7 +93,7 @@ export default defineNuxtConfig({
         ws: true,
       },
       "/trpc/**": {
-        target: "http://localhost:8011", 
+        target: "http://localhost:8011",
         changeOrigin: true,
         ws: true,
       },
@@ -110,8 +109,8 @@ export default defineNuxtConfig({
     dirs: [
       "~/components",
       "~/components/atoms",
-      "~/components/molecules", 
-      "~/components/organisms"
+      "~/components/molecules",
+      "~/components/organisms",
     ],
   },
 

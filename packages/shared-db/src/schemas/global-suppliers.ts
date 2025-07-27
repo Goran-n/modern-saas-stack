@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -17,6 +18,14 @@ export const logoFetchStatusEnum = pgEnum("logo_fetch_status", [
   "success",
   "not_found",
   "failed",
+]);
+
+export const enrichmentStatusEnum = pgEnum("enrichment_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+  "manual",
 ]);
 
 // Global suppliers table - shared across all tenants
@@ -39,8 +48,22 @@ export const globalSuppliers = pgTable(
     logoFetchStatus: logoFetchStatusEnum("logo_fetch_status")
       .notNull()
       .default("pending"),
-    logoFetchAttempts: integer("logo_fetch_attempts").notNull().default(0),
-    logoLastFailedAt: timestamp("logo_last_failed_at", { withTimezone: true }),
+
+    // Enrichment fields
+    enrichmentStatus: enrichmentStatusEnum("enrichment_status")
+      .notNull()
+      .default("pending"),
+    enrichmentData: jsonb("enrichment_data").$type<{
+      industry?: string;
+      companyType?: string;
+      services?: string[];
+      companySize?: string;
+      certifications?: string[];
+      targetMarket?: string;
+      websiteAnalyzedAt?: string;
+    }>(),
+    lastEnrichmentAt: timestamp("last_enrichment_at", { withTimezone: true }),
+    enrichmentAttempts: integer("enrichment_attempts").notNull().default(0),
 
     // Timestamps
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -61,6 +84,9 @@ export const globalSuppliers = pgTable(
     ),
     logoFetchStatusIdx: index("idx_global_suppliers_logo_fetch_status").on(
       table.logoFetchStatus,
+    ),
+    enrichmentStatusIdx: index("idx_global_suppliers_enrichment_status").on(
+      table.enrichmentStatus,
     ),
 
     // Unique constraints

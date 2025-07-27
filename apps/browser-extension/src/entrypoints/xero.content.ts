@@ -44,15 +44,18 @@ export default defineContentScript({
         if (!tenantId) {
           const storage = await chrome.storage.local.get([
             "currentTenantId",
-            "copiedFileData", 
-            "currentDragData"
+            "copiedFileData",
+            "currentDragData",
           ]);
-          
-          tenantId = storage.currentTenantId || storage.currentDragData?.tenantId;
+
+          tenantId =
+            storage.currentTenantId || storage.currentDragData?.tenantId;
         }
 
         if (!tenantId) {
-          throw new Error("No tenant ID available. Please ensure you are logged in to Figgy.");
+          throw new Error(
+            "No tenant ID available. Please ensure you are logged in to Figgy.",
+          );
         }
 
         // Request file download from background (it will get signed URL from REST API)
@@ -99,14 +102,14 @@ export default defineContentScript({
 
           try {
             fileInput.files = dataTransfer.files;
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            fileInput.dispatchEvent(new Event("change", { bubbles: true }));
             logger.debug("File set on input", { fileName: file.name });
           } catch (err) {
             logger.warn("Failed to set file on input", { error: err });
           }
 
           // Flash success
-          fileInput.classList.add('drop-zone-active');
+          fileInput.classList.add("drop-zone-active");
           setTimeout(() => {
             fileInput.style.outline = "";
           }, 1000);
@@ -143,21 +146,26 @@ export default defineContentScript({
         // Common button text patterns
         'button:is([aria-label*="attach" i], [aria-label*="upload" i])',
         // Text content matching
-        'button, a[role="button"]'
+        'button, a[role="button"]',
       ];
 
       const buttons: Element[] = [];
-      
+
       for (const selector of buttonSelectors) {
         const elements = document.querySelectorAll(selector);
-        elements.forEach(el => {
-          const text = el.textContent?.toLowerCase() || '';
-          const title = el.getAttribute('title')?.toLowerCase() || '';
-          const ariaLabel = el.getAttribute('aria-label')?.toLowerCase() || '';
-          
-          if (text.includes('attach') || text.includes('upload') ||
-              title.includes('attach') || title.includes('upload') ||
-              ariaLabel.includes('attach') || ariaLabel.includes('upload')) {
+        elements.forEach((el) => {
+          const text = el.textContent?.toLowerCase() || "";
+          const title = el.getAttribute("title")?.toLowerCase() || "";
+          const ariaLabel = el.getAttribute("aria-label")?.toLowerCase() || "";
+
+          if (
+            text.includes("attach") ||
+            text.includes("upload") ||
+            title.includes("attach") ||
+            title.includes("upload") ||
+            ariaLabel.includes("attach") ||
+            ariaLabel.includes("upload")
+          ) {
             buttons.push(el);
           }
         });
@@ -165,10 +173,11 @@ export default defineContentScript({
 
       // Look for paperclip icons (common attachment symbol)
       const iconButtons = document.querySelectorAll('button, a[role="button"]');
-      iconButtons.forEach(btn => {
-        const hasClipIcon = btn.querySelector('svg, i, span')?.textContent?.includes('📎') ||
-                           btn.innerHTML.includes('clip') ||
-                           btn.className.toLowerCase().includes('attach');
+      iconButtons.forEach((btn) => {
+        const hasClipIcon =
+          btn.querySelector("svg, i, span")?.textContent?.includes("📎") ||
+          btn.innerHTML.includes("clip") ||
+          btn.className.toLowerCase().includes("attach");
         if (hasClipIcon) {
           buttons.push(btn);
         }
@@ -180,29 +189,34 @@ export default defineContentScript({
     // Highlight upload buttons during drag
     function highlightUploadButtons(): void {
       const buttons = findUploadButtons();
-      buttons.forEach(btn => {
-        btn.setAttribute('data-figgy-highlighted', 'true');
-        (btn as HTMLElement).classList.add('drop-zone-active');
-        (btn as HTMLElement).style.outlineOffset = '2px';
-        (btn as HTMLElement).style.backgroundColor = 'var(--drop-zone-success-bg)';
+      buttons.forEach((btn) => {
+        btn.setAttribute("data-figgy-highlighted", "true");
+        (btn as HTMLElement).classList.add("drop-zone-active");
+        (btn as HTMLElement).style.outlineOffset = "2px";
+        (btn as HTMLElement).style.backgroundColor =
+          "var(--drop-zone-success-bg)";
       });
-      
+
       logger.debug("Highlighted upload buttons", { count: buttons.length });
     }
 
     // Remove upload button highlighting
     function removeUploadButtonHighlighting(): void {
-      const highlightedButtons = document.querySelectorAll('[data-figgy-highlighted="true"]');
-      highlightedButtons.forEach(btn => {
-        btn.removeAttribute('data-figgy-highlighted');
-        (btn as HTMLElement).style.outline = '';
-        (btn as HTMLElement).style.outlineOffset = '';
-        (btn as HTMLElement).style.backgroundColor = '';
+      const highlightedButtons = document.querySelectorAll(
+        '[data-figgy-highlighted="true"]',
+      );
+      highlightedButtons.forEach((btn) => {
+        btn.removeAttribute("data-figgy-highlighted");
+        (btn as HTMLElement).style.outline = "";
+        (btn as HTMLElement).style.outlineOffset = "";
+        (btn as HTMLElement).style.backgroundColor = "";
       });
     }
 
     // Find the nearest upload button to the drop target
-    function findNearestUploadButton(nearElement: Element | null): Element | null {
+    function findNearestUploadButton(
+      nearElement: Element | null,
+    ): Element | null {
       const buttons = findUploadButtons();
       if (buttons.length === 0) return null;
       if (!nearElement) return buttons[0];
@@ -214,19 +228,19 @@ export default defineContentScript({
       const targetRect = nearElement.getBoundingClientRect();
       const targetCenter = {
         x: targetRect.left + targetRect.width / 2,
-        y: targetRect.top + targetRect.height / 2
+        y: targetRect.top + targetRect.height / 2,
       };
 
-      buttons.forEach(btn => {
+      buttons.forEach((btn) => {
         const btnRect = btn.getBoundingClientRect();
         const btnCenter = {
           x: btnRect.left + btnRect.width / 2,
-          y: btnRect.top + btnRect.height / 2
+          y: btnRect.top + btnRect.height / 2,
         };
 
         const distance = Math.sqrt(
-          Math.pow(targetCenter.x - btnCenter.x, 2) + 
-          Math.pow(targetCenter.y - btnCenter.y, 2)
+          Math.pow(targetCenter.x - btnCenter.x, 2) +
+            Math.pow(targetCenter.y - btnCenter.y, 2),
         );
 
         if (distance < nearestDistance) {
@@ -239,11 +253,14 @@ export default defineContentScript({
     }
 
     // Process file by clicking upload button and waiting for file input
-    async function processFileViaButton(fileData: any, uploadButton: Element): Promise<void> {
+    async function processFileViaButton(
+      fileData: any,
+      uploadButton: Element,
+    ): Promise<void> {
       try {
         logger.debug("Processing file via upload button", {
           buttonText: uploadButton.textContent?.trim(),
-          fileName: fileData.fileName
+          fileName: fileData.fileName,
         });
 
         // Download the file first
@@ -252,8 +269,8 @@ export default defineContentScript({
           {
             fileName: fileData.fileName,
             fileId: fileData.fileId,
-            tenantId: fileData.tenantId || await getTenantId()
-          }
+            tenantId: fileData.tenantId || (await getTenantId()),
+          },
         );
 
         if (!response || response.type !== MessageType.FILE_DOWNLOAD_RESPONSE) {
@@ -261,7 +278,7 @@ export default defineContentScript({
         }
 
         const responseData = response.payload;
-        
+
         // Create File object
         const byteString = atob(responseData.content);
         const ab = new ArrayBuffer(byteString.length);
@@ -281,24 +298,25 @@ export default defineContentScript({
         // Wait for file input to appear and set our file
         setTimeout(async () => {
           const fileInputs = document.querySelectorAll('input[type="file"]');
-          const newFileInput = Array.from(fileInputs).find(input => 
-            !input.hasAttribute('data-figgy-processed')
+          const newFileInput = Array.from(fileInputs).find(
+            (input) => !input.hasAttribute("data-figgy-processed"),
           ) as HTMLInputElement;
 
           if (newFileInput) {
-            newFileInput.setAttribute('data-figgy-processed', 'true');
-            
+            newFileInput.setAttribute("data-figgy-processed", "true");
+
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
             newFileInput.files = dataTransfer.files;
-            newFileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            logger.info("File set on upload button input", { fileName: file.name });
+            newFileInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+            logger.info("File set on upload button input", {
+              fileName: file.name,
+            });
           } else {
             logger.warn("No new file input found after clicking upload button");
           }
         }, 100);
-
       } catch (error) {
         logger.error("Failed to process file via button", { error });
         throw error;
@@ -309,14 +327,11 @@ export default defineContentScript({
     async function getTenantId(): Promise<string> {
       const storage = await chrome.storage.local.get([
         "currentTenantId",
-        "currentDragData"
+        "currentDragData",
       ]);
-      
-      return storage.currentTenantId || 
-        storage.currentDragData?.tenantId || 
-        "";
-    }
 
+      return storage.currentTenantId || storage.currentDragData?.tenantId || "";
+    }
 
     // Enhanced visibility check for modern web apps that hide file inputs
     function isFileInputUsable(input: HTMLInputElement): boolean {
@@ -324,12 +339,12 @@ export default defineContentScript({
       if (input.style.display === "none") {
         return false;
       }
-      
+
       // Check if input is actually in the DOM
       if (!document.contains(input)) {
         return false;
       }
-      
+
       // For hidden inputs, we can still use them programmatically
       // Modern file upload UIs often hide the actual input with opacity: 0 or position: absolute
       return true;
@@ -341,8 +356,8 @@ export default defineContentScript({
     ): HTMLInputElement | null {
       let fileInput: HTMLInputElement | null = null;
 
-      logger.debug("Searching for file input", { 
-        hasPreferredContext: !!preferredContext
+      logger.debug("Searching for file input", {
+        hasPreferredContext: !!preferredContext,
       });
 
       // First check preferred context (e.g., active element for paste)
@@ -373,15 +388,15 @@ export default defineContentScript({
       if (!fileInput) {
         const allInputs = document.querySelectorAll('input[type="file"]');
         logger.debug("Scanning all file inputs");
-        
+
         for (const input of allInputs) {
           if (input instanceof HTMLInputElement && isFileInputUsable(input)) {
             fileInput = input;
-            
+
             logger.debug("Found usable file input", {
               id: input.id,
               className: input.className,
-              accept: input.accept
+              accept: input.accept,
             });
             break;
           }
@@ -400,14 +415,16 @@ export default defineContentScript({
           '[data-automation-id*="attachment"] input[type="file"]',
           // Bank reconciliation specific
           '.bank-reconciliation input[type="file"]',
-          '.transaction-attachments input[type="file"]'
+          '.transaction-attachments input[type="file"]',
         ];
 
         for (const selector of xeroSelectors) {
           const input = document.querySelector(selector) as HTMLInputElement;
           if (input && isFileInputUsable(input)) {
             fileInput = input;
-            logger.debug("Found file input using Xero-specific selector", { selector });
+            logger.debug("Found file input using Xero-specific selector", {
+              selector,
+            });
             break;
           }
         }
@@ -415,7 +432,9 @@ export default defineContentScript({
 
       // Last resort: create a temporary file input if none found
       if (!fileInput) {
-        logger.warn("No existing file input found, attempting to create temporary one");
+        logger.warn(
+          "No existing file input found, attempting to create temporary one",
+        );
         fileInput = createTemporaryFileInput();
       }
 
@@ -425,25 +444,25 @@ export default defineContentScript({
     // Create a temporary file input as a last resort
     function createTemporaryFileInput(): HTMLInputElement | null {
       try {
-        const tempInput = document.createElement('input');
-        tempInput.type = 'file';
-        tempInput.style.opacity = '0';
-        tempInput.style.position = 'absolute';
-        tempInput.style.left = '-9999px';
-        tempInput.style.pointerEvents = 'none';
-        
+        const tempInput = document.createElement("input");
+        tempInput.type = "file";
+        tempInput.style.opacity = "0";
+        tempInput.style.position = "absolute";
+        tempInput.style.left = "-9999px";
+        tempInput.style.pointerEvents = "none";
+
         // Add to DOM temporarily
         document.body.appendChild(tempInput);
-        
+
         // Set up cleanup after use
-        tempInput.addEventListener('change', () => {
+        tempInput.addEventListener("change", () => {
           setTimeout(() => {
             if (tempInput.parentNode) {
               tempInput.parentNode.removeChild(tempInput);
             }
           }, 1000);
         });
-        
+
         logger.info("Created temporary file input as fallback");
         return tempInput;
       } catch (error) {
@@ -451,7 +470,6 @@ export default defineContentScript({
         return null;
       }
     }
-
 
     // Drag and drop handlers
     let draggedOver: Element | null = null;
@@ -516,7 +534,7 @@ export default defineContentScript({
             await processFile(data, fileInput, "drop");
           } else {
             throw new Error(
-              "No upload button or file input found. Please look for 'Attach files' or 'Upload' buttons on this page."
+              "No upload button or file input found. Please look for 'Attach files' or 'Upload' buttons on this page.",
             );
           }
         }
@@ -545,7 +563,7 @@ export default defineContentScript({
         parent.addEventListener("dragover", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          parent.classList.add('drag-active');
+          parent.classList.add("drag-active");
         });
 
         parent.addEventListener("dragleave", () => {

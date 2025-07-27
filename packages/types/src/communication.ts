@@ -1,7 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Communication types
-export const CommunicationChannelSchema = z.enum(['slack', 'whatsapp', 'email']);
+export const CommunicationChannelSchema = z.enum([
+  "slack",
+  "whatsapp",
+  "email",
+]);
 
 export const SlackWorkspaceSchema = z.object({
   id: z.string(),

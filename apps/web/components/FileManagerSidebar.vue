@@ -23,7 +23,7 @@
           @click="$emit('status-selected', 'processing')"
           @keydown.enter.prevent="$emit('status-selected', 'processing')"
           @keydown.space.prevent="$emit('status-selected', 'processing')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'processing'
               ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'
@@ -50,7 +50,7 @@
           @click="$emit('status-selected', 'failed')"
           @keydown.enter.prevent="$emit('status-selected', 'failed')"
           @keydown.space.prevent="$emit('status-selected', 'failed')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'failed'
               ? 'bg-error-100 text-error-800 border border-error-300 shadow-sm'
@@ -95,7 +95,7 @@
             @click="selectYear(year)"
             @keydown.enter.prevent="selectYear(year)"
             @keydown.space.prevent="selectYear(year)"
-            class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
             :class="[
               selectedYear === year
                 ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'

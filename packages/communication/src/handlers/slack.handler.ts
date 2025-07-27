@@ -130,15 +130,19 @@ export class SlackMessageHandler extends BaseMessageHandler {
     }
   }
 
-  static parseWebhookPayloadWithResult(rawPayload: unknown): { payload: MessagePayload | null; skipped?: boolean; skipReason?: string } {
+  static parseWebhookPayloadWithResult(rawPayload: unknown): {
+    payload: MessagePayload | null;
+    skipped?: boolean;
+    skipReason?: string;
+  } {
     try {
       const result = parseSlackPayloadWithResult(rawPayload);
 
-      if (result.type === 'skipped') {
+      if (result.type === "skipped") {
         return { payload: null, skipped: true, skipReason: result.reason };
       }
 
-      if (result.type === 'error') {
+      if (result.type === "error") {
         throw result.error;
       }
 
@@ -182,7 +186,8 @@ export class SlackMessageHandler extends BaseMessageHandler {
 
   static parseWebhookPayload(rawPayload: unknown): MessagePayload | null {
     try {
-      const result = SlackMessageHandler.parseWebhookPayloadWithResult(rawPayload);
+      const result =
+        SlackMessageHandler.parseWebhookPayloadWithResult(rawPayload);
       return result.payload;
     } catch (error) {
       return null;

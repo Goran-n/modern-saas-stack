@@ -105,10 +105,10 @@
   --color-neutral-800: var(--color-gray-800);
   --color-neutral-900: var(--color-gray-900);
   
-  /* Background - Cream Canvas */
-  --color-canvas: #faf2e8; /* creamCanvas - Backgrounds */
-  --color-canvas-light: #fdf8f1;
-  --color-canvas-dark: #f7ebdd;
+  /* Background - Neutral Canvas */
+  --color-canvas: #f8fafc; /* neutralCanvas - Backgrounds */
+  --color-canvas-light: #ffffff;
+  --color-canvas-dark: #f1f5f9;
   
   /* Blue colors for info elements */
   --color-blue-50: #eff6ff;

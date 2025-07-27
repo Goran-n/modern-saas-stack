@@ -12,6 +12,9 @@ export type Color =
   | "info";
 
 // Vue class prop type that supports string, object, and array formats
-export type ClassProp = string | Record<string, boolean> | (string | Record<string, boolean>)[];
+export type ClassProp =
+  | string
+  | Record<string, boolean>
+  | (string | Record<string, boolean>)[];
 
 // Component prop types will be exported from their respective files

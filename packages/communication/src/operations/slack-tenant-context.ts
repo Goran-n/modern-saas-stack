@@ -379,9 +379,7 @@ export async function generateLinkingToken(
 /**
  * Verify and consume a linking token
  */
-export async function verifyLinkingToken(
-  token: string,
-): Promise<{
+export async function verifyLinkingToken(token: string): Promise<{
   valid: boolean;
   slackUserId?: string;
   workspaceId?: string;

@@ -47,9 +47,10 @@ app.post("/signed-urls", async (c) => {
             tenantId,
             error,
           });
-          errors[filename] = error instanceof Error ? error.message : "Unknown error";
+          errors[filename] =
+            error instanceof Error ? error.message : "Unknown error";
         }
-      })
+      }),
     );
 
     const response = {
@@ -60,13 +61,13 @@ app.post("/signed-urls", async (c) => {
     return c.json(response);
   } catch (error) {
     logger.error("Failed to process signed URLs request", { error });
-    
+
     if (error instanceof HTTPException) {
       throw error;
     }
-    
+
     throw new HTTPException(500, {
-      message: "Failed to generate signed URLs"
+      message: "Failed to generate signed URLs",
     });
   }
 });
@@ -81,7 +82,9 @@ app.get("/:fileId/signed-url", async (c) => {
     const tenantId = c.req.header("X-Tenant-ID");
 
     if (!tenantId) {
-      throw new HTTPException(400, { message: "X-Tenant-ID header is required" });
+      throw new HTTPException(400, {
+        message: "X-Tenant-ID header is required",
+      });
     }
 
     logger.info("Generating single signed URL", { fileId, tenantId });
@@ -91,13 +94,13 @@ app.get("/:fileId/signed-url", async (c) => {
     return c.json({ signedUrl });
   } catch (error) {
     logger.error("Failed to generate single signed URL", { error });
-    
+
     if (error instanceof HTTPException) {
       throw error;
     }
-    
+
     throw new HTTPException(500, {
-      message: "Failed to generate signed URL"
+      message: "Failed to generate signed URL",
     });
   }
 });

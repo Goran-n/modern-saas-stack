@@ -291,7 +291,7 @@ export class SupplierIngestionService {
           const globalSupplierService = new GlobalSupplierService();
           const globalSupplierId =
             await globalSupplierService.findOrCreateGlobalSupplier(supplier);
-          
+
           if (globalSupplierId) {
             await globalSupplierService.linkToGlobalSupplier(
               supplier.id,
@@ -315,15 +315,15 @@ export class SupplierIngestionService {
               legalName: supplier.legalName,
               createdAt: supplier.createdAt,
             };
-            
+
             if (supplier.companyNumber) {
               indexData.companyNumber = supplier.companyNumber;
             }
-            
+
             if (supplier.vatNumber) {
               indexData.vatNumber = supplier.vatNumber;
             }
-            
+
             await searchOps.indexSupplier(indexData);
           } catch (error) {
             logger.error("Failed to index supplier in search", {
@@ -344,7 +344,9 @@ export class SupplierIngestionService {
         // Trigger logo fetch for newly created global supplier
         if (result.globalSupplierId) {
           const operations = new SupplierOperations();
-          await operations.triggerLogoFetchForGlobalSupplier(result.globalSupplierId);
+          await operations.triggerLogoFetchForGlobalSupplier(
+            result.globalSupplierId,
+          );
         }
 
         return result;

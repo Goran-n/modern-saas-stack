@@ -8,7 +8,11 @@ const logger = createLogger("search-operations");
  * Generate a unique ID for a resource in the index
  * Format: tenantId:type:id
  */
-function getResourceId(type: ResourceType, id: string, tenantId: string): string {
+function getResourceId(
+  type: ResourceType,
+  id: string,
+  tenantId: string,
+): string {
   return `${tenantId}:${type}:${id}`;
 }
 
@@ -35,14 +39,16 @@ export async function indexFile(data: {
       data.supplierName,
       data.category,
       data.mimeType,
-    ].filter(Boolean).join(" ");
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     await index.upsert({
-      id: getResourceId('file', data.id, data.tenantId),
+      id: getResourceId("file", data.id, data.tenantId),
       content: {
         text, // Main searchable text
         tenantId: data.tenantId,
-        type: 'file',
+        type: "file",
         fileName: data.fileName,
         mimeType: data.mimeType,
         supplierName: data.supplierName,
@@ -75,24 +81,26 @@ export async function updateFile(
     documentType?: string;
     invoiceNumber?: string;
     amount?: number;
-  }
+  },
 ): Promise<void> {
   const index = await getUpstashIndex(tenantId);
   if (!index) return;
 
   try {
-    const resourceId = getResourceId('file', id, tenantId);
-    
+    const resourceId = getResourceId("file", id, tenantId);
+
     // For updates, we need to re-index the entire document
     // Upstash Search doesn't support partial updates
-    
+
     // Create new searchable text including updates
     const text = [
       updates.supplierName,
       updates.category || updates.documentType,
       updates.invoiceNumber,
       updates.extractedText,
-    ].filter(Boolean).join(" ");
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     await index.upsert({
       id: resourceId,
@@ -120,7 +128,7 @@ export async function removeFile(id: string, tenantId: string): Promise<void> {
   if (!index) return;
 
   try {
-    await index.delete(getResourceId('file', id, tenantId));
+    await index.delete(getResourceId("file", id, tenantId));
     logger.debug("Removed file from index", { fileId: id, tenantId });
   } catch (error) {
     logger.error("Failed to remove file", {
@@ -151,14 +159,16 @@ export async function indexSupplier(data: {
       data.legalName,
       data.companyNumber,
       data.vatNumber,
-    ].filter(Boolean).join(" ");
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     await index.upsert({
-      id: getResourceId('supplier', data.id, data.tenantId),
+      id: getResourceId("supplier", data.id, data.tenantId),
       content: {
         text,
         tenantId: data.tenantId,
-        type: 'supplier',
+        type: "supplier",
         displayName: data.displayName,
         legalName: data.legalName,
         companyNumber: data.companyNumber,
@@ -167,7 +177,10 @@ export async function indexSupplier(data: {
       },
     });
 
-    logger.debug("Indexed supplier", { supplierId: data.id, tenantId: data.tenantId });
+    logger.debug("Indexed supplier", {
+      supplierId: data.id,
+      tenantId: data.tenantId,
+    });
   } catch (error) {
     logger.error("Failed to index supplier", {
       supplierId: data.id,
@@ -186,14 +199,14 @@ export async function updateSupplier(
     logoUrl?: string;
     enriched?: boolean;
     fileCount?: number;
-  }
+  },
 ): Promise<void> {
   const index = await getUpstashIndex(tenantId);
   if (!index) return;
 
   try {
-    const resourceId = getResourceId('supplier', id, tenantId);
-    
+    const resourceId = getResourceId("supplier", id, tenantId);
+
     // For minor updates that don't affect searchability,
     // we can just update the metadata
     await index.upsert({
@@ -217,12 +230,15 @@ export async function updateSupplier(
 /**
  * Remove a supplier from the index
  */
-export async function removeSupplier(id: string, tenantId: string): Promise<void> {
+export async function removeSupplier(
+  id: string,
+  tenantId: string,
+): Promise<void> {
   const index = await getUpstashIndex(tenantId);
   if (!index) return;
 
   try {
-    await index.delete(getResourceId('supplier', id, tenantId));
+    await index.delete(getResourceId("supplier", id, tenantId));
     logger.debug("Removed supplier from index", { supplierId: id, tenantId });
   } catch (error) {
     logger.error("Failed to remove supplier", {
@@ -239,17 +255,17 @@ export async function search(
   tenantId: string,
   query: string,
   filters?: SearchFilters,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<SearchResult[]> {
   const index = await getUpstashIndex(tenantId);
   if (!index) return [];
 
   try {
     const searchOptions: any = {
-      query: query || '*',
+      query: query || "*",
       limit,
     };
-    
+
     // Upstash Search returns results directly as an array
     const results = await index.search(searchOptions);
 
@@ -264,19 +280,25 @@ export async function search(
 
     // Apply additional filters if needed
     let filteredResults = tenantResults;
-    
+
     if (filters?.type) {
-      filteredResults = filteredResults.filter(r => r.content?.type === filters.type);
+      filteredResults = filteredResults.filter(
+        (r) => r.content?.type === filters.type,
+      );
     }
     if (filters?.category) {
-      filteredResults = filteredResults.filter(r => r.content?.category === filters.category);
+      filteredResults = filteredResults.filter(
+        (r) => r.content?.category === filters.category,
+      );
     }
     if (filters?.supplierId) {
-      filteredResults = filteredResults.filter(r => r.content?.supplierId === filters.supplierId);
+      filteredResults = filteredResults.filter(
+        (r) => r.content?.supplierId === filters.supplierId,
+      );
     }
 
     return filteredResults.map((result: any) => ({
-      id: String(result.id).replace(`${tenantId}:`, ''), // Remove tenant prefix
+      id: String(result.id).replace(`${tenantId}:`, ""), // Remove tenant prefix
       score: result.score || 0,
       metadata: result.content || {}, // Content contains the data
     }));
@@ -296,21 +318,21 @@ export async function search(
 export async function suggest(
   tenantId: string,
   prefix: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<string[]> {
   // Use regular search with the prefix
   const results = await search(tenantId, prefix, undefined, limit);
-  
+
   // Extract unique display names from results
   const suggestions = new Set<string>();
-  
-  results.forEach(result => {
+
+  results.forEach((result) => {
     if (result.metadata.displayName) {
       suggestions.add(result.metadata.displayName);
     } else if (result.metadata.fileName) {
       suggestions.add(result.metadata.fileName);
     }
   });
-  
+
   return Array.from(suggestions).slice(0, limit);
 }

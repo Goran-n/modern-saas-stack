@@ -2,9 +2,21 @@ import type { FetchOptions } from "ofetch";
 
 interface ApiMethods {
   get: <T = unknown>(url: string, options?: FetchOptions) => Promise<T>;
-  post: <T = unknown>(url: string, body?: unknown, options?: FetchOptions) => Promise<T>;
-  put: <T = unknown>(url: string, body?: unknown, options?: FetchOptions) => Promise<T>;
-  patch: <T = unknown>(url: string, body?: unknown, options?: FetchOptions) => Promise<T>;
+  post: <T = unknown>(
+    url: string,
+    body?: unknown,
+    options?: FetchOptions,
+  ) => Promise<T>;
+  put: <T = unknown>(
+    url: string,
+    body?: unknown,
+    options?: FetchOptions,
+  ) => Promise<T>;
+  patch: <T = unknown>(
+    url: string,
+    body?: unknown,
+    options?: FetchOptions,
+  ) => Promise<T>;
   delete: <T = unknown>(url: string, options?: FetchOptions) => Promise<T>;
 }
 
@@ -41,7 +53,8 @@ export const useApi = (): ApiMethods => {
             (options.headers as Headers).set(key, value);
           });
         } else {
-          const existingHeaders = (options.headers as Record<string, string>) || {};
+          const existingHeaders =
+            (options.headers as Record<string, string>) || {};
           options.headers = { ...existingHeaders, ...headers } as any;
         }
       }
@@ -64,14 +77,38 @@ export const useApi = (): ApiMethods => {
     get: <T = unknown>(url: string, options?: FetchOptions): Promise<T> =>
       apiFetch<T>(url, { ...options, method: "GET" }) as Promise<T>,
 
-    post: <T = unknown>(url: string, body?: unknown, options?: FetchOptions): Promise<T> =>
-      apiFetch<T>(url, { ...options, method: "POST", body: body as any }) as Promise<T>,
+    post: <T = unknown>(
+      url: string,
+      body?: unknown,
+      options?: FetchOptions,
+    ): Promise<T> =>
+      apiFetch<T>(url, {
+        ...options,
+        method: "POST",
+        body: body as any,
+      }) as Promise<T>,
 
-    put: <T = unknown>(url: string, body?: unknown, options?: FetchOptions): Promise<T> =>
-      apiFetch<T>(url, { ...options, method: "PUT", body: body as any }) as Promise<T>,
+    put: <T = unknown>(
+      url: string,
+      body?: unknown,
+      options?: FetchOptions,
+    ): Promise<T> =>
+      apiFetch<T>(url, {
+        ...options,
+        method: "PUT",
+        body: body as any,
+      }) as Promise<T>,
 
-    patch: <T = unknown>(url: string, body?: unknown, options?: FetchOptions): Promise<T> =>
-      apiFetch<T>(url, { ...options, method: "PATCH", body: body as any }) as Promise<T>,
+    patch: <T = unknown>(
+      url: string,
+      body?: unknown,
+      options?: FetchOptions,
+    ): Promise<T> =>
+      apiFetch<T>(url, {
+        ...options,
+        method: "PATCH",
+        body: body as any,
+      }) as Promise<T>,
 
     delete: <T = unknown>(url: string, options?: FetchOptions): Promise<T> =>
       apiFetch<T>(url, { ...options, method: "DELETE" }) as Promise<T>,

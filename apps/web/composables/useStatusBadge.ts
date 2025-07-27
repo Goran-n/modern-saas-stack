@@ -1,22 +1,25 @@
-import type { StatusType, StatusBadgeProps } from '@figgy/ui';
-import { getStatusColor, getStatusDisplayText } from '@figgy/ui';
+import type { StatusType, StatusBadgeProps } from "@figgy/ui";
+import { getStatusColor, getStatusDisplayText } from "@figgy/ui";
 
 export interface UseStatusBadgeOptions {
   type?: StatusType;
-  variant?: StatusBadgeProps['variant'];
-  size?: StatusBadgeProps['size'];
+  variant?: StatusBadgeProps["variant"];
+  size?: StatusBadgeProps["size"];
 }
 
 /**
  * Composable for consistent status badge handling across the application
  */
 export function useStatusBadge(options: UseStatusBadgeOptions = {}) {
-  const { type, variant = 'soft', size = 'md' } = options;
+  const { type, variant = "soft", size = "md" } = options;
 
   /**
    * Get badge props for a given status
    */
-  const getBadgeProps = (status: string | number, overrides?: Partial<StatusBadgeProps>): StatusBadgeProps => {
+  const getBadgeProps = (
+    status: string | number,
+    overrides?: Partial<StatusBadgeProps>,
+  ): StatusBadgeProps => {
     return {
       status,
       type,
@@ -43,9 +46,12 @@ export function useStatusBadge(options: UseStatusBadgeOptions = {}) {
   /**
    * Helper for confidence scores
    */
-  const getConfidenceBadgeProps = (confidence: number, overrides?: Partial<StatusBadgeProps>): StatusBadgeProps => {
+  const getConfidenceBadgeProps = (
+    confidence: number,
+    overrides?: Partial<StatusBadgeProps>,
+  ): StatusBadgeProps => {
     return getBadgeProps(confidence, {
-      type: 'confidence',
+      type: "confidence",
       ...overrides,
     });
   };
@@ -53,9 +59,12 @@ export function useStatusBadge(options: UseStatusBadgeOptions = {}) {
   /**
    * Helper for processing status
    */
-  const getProcessingBadgeProps = (status: string, overrides?: Partial<StatusBadgeProps>): StatusBadgeProps => {
+  const getProcessingBadgeProps = (
+    status: string,
+    overrides?: Partial<StatusBadgeProps>,
+  ): StatusBadgeProps => {
     return getBadgeProps(status, {
-      type: 'processing',
+      type: "processing",
       ...overrides,
     });
   };
@@ -63,9 +72,12 @@ export function useStatusBadge(options: UseStatusBadgeOptions = {}) {
   /**
    * Helper for verification status
    */
-  const getVerificationBadgeProps = (status: string, overrides?: Partial<StatusBadgeProps>): StatusBadgeProps => {
+  const getVerificationBadgeProps = (
+    status: string,
+    overrides?: Partial<StatusBadgeProps>,
+  ): StatusBadgeProps => {
     return getBadgeProps(status, {
-      type: 'verification',
+      type: "verification",
       ...overrides,
     });
   };
@@ -73,9 +85,12 @@ export function useStatusBadge(options: UseStatusBadgeOptions = {}) {
   /**
    * Helper for connection status
    */
-  const getConnectionBadgeProps = (status: string, overrides?: Partial<StatusBadgeProps>): StatusBadgeProps => {
+  const getConnectionBadgeProps = (
+    status: string,
+    overrides?: Partial<StatusBadgeProps>,
+  ): StatusBadgeProps => {
     return getBadgeProps(status, {
-      type: 'connection',
+      type: "connection",
       ...overrides,
     });
   };

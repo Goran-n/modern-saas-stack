@@ -24,20 +24,20 @@ function getTimestamp(): string {
 
 class ConsoleLogger implements Logger {
   private prefix: string;
-  public level: string = 'debug';
-  
+  public level: string = "debug";
+
   constructor(name?: string) {
-    this.prefix = name ? `${name}: ` : '';
+    this.prefix = name ? `${name}: ` : "";
   }
-  
+
   info(...args: any[]) {
-    console.log(getTimestamp(), 'INFO:', this.prefix, ...args);
+    console.log(getTimestamp(), "INFO:", this.prefix, ...args);
   }
-  
+
   error(...args: any[]) {
     // Special handling for objects to ensure they're fully displayed
-    const processedArgs = args.map(arg => {
-      if (arg && typeof arg === 'object') {
+    const processedArgs = args.map((arg) => {
+      if (arg && typeof arg === "object") {
         // For error objects, include the full error
         if (arg instanceof Error) {
           return `Error: ${arg.message}\nStack: ${arg.stack}`;
@@ -51,29 +51,29 @@ class ConsoleLogger implements Logger {
       }
       return arg;
     });
-    console.error(getTimestamp(), 'ERROR:', this.prefix, ...processedArgs);
+    console.error(getTimestamp(), "ERROR:", this.prefix, ...processedArgs);
   }
-  
+
   warn(...args: any[]) {
-    console.warn(getTimestamp(), 'WARN:', this.prefix, ...args);
+    console.warn(getTimestamp(), "WARN:", this.prefix, ...args);
   }
-  
+
   debug(...args: any[]) {
-    console.log(getTimestamp(), 'DEBUG:', this.prefix, ...args);
+    console.log(getTimestamp(), "DEBUG:", this.prefix, ...args);
   }
-  
+
   trace(...args: any[]) {
-    console.log(getTimestamp(), 'TRACE:', this.prefix, ...args);
+    console.log(getTimestamp(), "TRACE:", this.prefix, ...args);
   }
-  
+
   fatal(...args: any[]) {
-    console.error(getTimestamp(), 'FATAL:', this.prefix, ...args);
+    console.error(getTimestamp(), "FATAL:", this.prefix, ...args);
   }
-  
+
   silent(..._args: any[]) {
     // No-op - silent logging
   }
-  
+
   child(bindings: Record<string, any>): Logger {
     return new ConsoleLogger(bindings.service || this.prefix);
   }
@@ -81,7 +81,10 @@ class ConsoleLogger implements Logger {
 
 export const logger = new ConsoleLogger();
 
-export function createLogger(name: string, _bindings?: Record<string, any>): Logger {
+export function createLogger(
+  name: string,
+  _bindings?: Record<string, any>,
+): Logger {
   return new ConsoleLogger(name);
 }
 

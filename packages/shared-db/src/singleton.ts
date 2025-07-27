@@ -101,6 +101,19 @@ export function getDatabaseConnection(
 }
 
 /**
+ * Get database connection using environment configuration
+ * Useful for CLI tools and scripts that need a simple DB connection
+ */
+export function getDb(): DrizzleClient {
+  // This will use the DATABASE_URL from environment
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+  return getDatabaseConnection(databaseUrl);
+}
+
+/**
  * Closes the global database connection
  * Useful for graceful shutdown
  */

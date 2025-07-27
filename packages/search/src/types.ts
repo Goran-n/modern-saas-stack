@@ -1,4 +1,4 @@
-export type ResourceType = 'file' | 'supplier' | 'document';
+export type ResourceType = "file" | "supplier" | "document";
 
 export interface SearchResult {
   id: string;

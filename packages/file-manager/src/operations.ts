@@ -114,19 +114,19 @@ export async function uploadFile(
       mimeType: record.mimeType,
       createdAt: record.createdAt,
     };
-    
+
     if (input.metadata?.supplierName) {
       indexData.supplierName = input.metadata.supplierName as string;
     }
-    
+
     if (input.metadata?.category) {
       indexData.category = input.metadata.category as string;
     }
-    
+
     if (record.fileSize) {
       indexData.size = record.fileSize;
     }
-    
+
     await searchOps.indexFile(indexData);
   } catch (error) {
     logger.error("Failed to index file in search", {
@@ -138,18 +138,22 @@ export async function uploadFile(
 
   // Trigger categorization job with tenant-based concurrency control
   try {
-    await tasks.trigger("categorize-file", {
-      fileId: record.id,
-      tenantId: record.tenantId,
-      mimeType: record.mimeType,
-      size: record.size,
-      pathTokens: record.pathTokens,
-      source: record.source,
-    } satisfies CategorizeFilePayload, {
-      queue: {
-        name: `tenant-${record.tenantId}`,
+    await tasks.trigger(
+      "categorize-file",
+      {
+        fileId: record.id,
+        tenantId: record.tenantId,
+        mimeType: record.mimeType,
+        size: record.size,
+        pathTokens: record.pathTokens,
+        source: record.source,
+      } satisfies CategorizeFilePayload,
+      {
+        queue: {
+          name: `tenant-${record.tenantId}`,
+        },
       },
-    });
+    );
 
     logger.info("File categorization job triggered with concurrency control", {
       fileId: record.id,
@@ -352,18 +356,22 @@ export async function uploadFileFromBase64(input: {
 
   // Trigger categorization job with tenant-based concurrency control
   try {
-    await tasks.trigger("categorize-file", {
-      fileId: fileRecord.id,
-      tenantId: fileRecord.tenantId,
-      mimeType: fileRecord.mimeType,
-      size: fileRecord.size,
-      pathTokens: fileRecord.pathTokens,
-      source: fileRecord.source,
-    } satisfies CategorizeFilePayload, {
-      queue: {
-        name: `tenant-${fileRecord.tenantId}`,
+    await tasks.trigger(
+      "categorize-file",
+      {
+        fileId: fileRecord.id,
+        tenantId: fileRecord.tenantId,
+        mimeType: fileRecord.mimeType,
+        size: fileRecord.size,
+        pathTokens: fileRecord.pathTokens,
+        source: fileRecord.source,
+      } satisfies CategorizeFilePayload,
+      {
+        queue: {
+          name: `tenant-${fileRecord.tenantId}`,
+        },
       },
-    });
+    );
 
     logger.info("File categorization job triggered with concurrency control", {
       fileId: fileRecord.id,
@@ -970,23 +978,23 @@ export async function reprocessFile(
       .where(
         and(
           eq(documentExtractions.fileId, fileId),
-          ne(documentExtractions.duplicateCandidateId, sql`NULL`)
-        )
+          ne(documentExtractions.duplicateCandidateId, sql`NULL`),
+        ),
       );
-    
+
     // Also clear references FROM other extractions TO this file's extractions
     const fileExtractions = await tx
       .select({ id: documentExtractions.id })
       .from(documentExtractions)
       .where(eq(documentExtractions.fileId, fileId));
-    
+
     for (const extraction of fileExtractions) {
       await tx
         .update(documentExtractions)
         .set({ duplicateCandidateId: null })
         .where(eq(documentExtractions.duplicateCandidateId, extraction.id));
     }
-    
+
     // Now safe to delete existing document extractions
     await tx
       .delete(documentExtractions)
@@ -1019,18 +1027,22 @@ export async function reprocessFile(
   });
 
   // Trigger new categorization job with tenant-based concurrency control
-  const jobHandle = await tasks.trigger("categorize-file", {
-    fileId: file.id,
-    tenantId: file.tenantId,
-    mimeType: file.mimeType,
-    size: file.size,
-    pathTokens: file.pathTokens,
-    source: file.source,
-  } satisfies CategorizeFilePayload, {
-    queue: {
-      name: `tenant-${file.tenantId}`,
+  const jobHandle = await tasks.trigger(
+    "categorize-file",
+    {
+      fileId: file.id,
+      tenantId: file.tenantId,
+      mimeType: file.mimeType,
+      size: file.size,
+      pathTokens: file.pathTokens,
+      source: file.source,
+    } satisfies CategorizeFilePayload,
+    {
+      queue: {
+        name: `tenant-${file.tenantId}`,
+      },
     },
-  });
+  );
 
   logger.info("Triggered file reprocessing job with concurrency control", {
     fileId,
@@ -1046,6 +1058,7 @@ export async function reprocessFile(
 
 /**
  * Get files grouped by year and supplier
+ * Suppliers are sorted alphabetically within each year for consistent ordering
  * @param tenantId - Tenant ID
  * @returns Promise resolving to grouped file data
  */
@@ -1153,6 +1166,22 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
     groupedData[year].suppliers[supplierName].files.push(fileData);
     groupedData[year].suppliers[supplierName].fileCount++;
     groupedData[year].totalFiles++;
+  });
+
+  // Sort suppliers alphabetically within each year
+  Object.keys(groupedData).forEach((year) => {
+    const suppliers = groupedData[year].suppliers;
+    const sortedSupplierNames = Object.keys(suppliers).sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase()),
+    );
+
+    // Create new suppliers object with sorted keys
+    const sortedSuppliers: Record<string, any> = {};
+    sortedSupplierNames.forEach((supplierName) => {
+      sortedSuppliers[supplierName] = suppliers[supplierName];
+    });
+
+    groupedData[year].suppliers = sortedSuppliers;
   });
 
   return {

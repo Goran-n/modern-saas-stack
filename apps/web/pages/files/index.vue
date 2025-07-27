@@ -143,6 +143,7 @@
         <molecules-file-empty-state
           v-else-if="!currentFiles.length"
           type="empty"
+          image="/empty-coffee-receipts.png"
           :description="currentView === 'status' 
             ? `No ${selectedStatus} files at the moment` 
             : 'Select a year and supplier to view files'"

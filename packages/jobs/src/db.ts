@@ -19,8 +19,10 @@ export function getDb(): DrizzleClient {
       if (!databaseUrl) {
         throw new Error("DATABASE_URL not found in environment");
       }
-      
-      logger.debug("Using DATABASE_URL from environment for database connection");
+
+      logger.debug(
+        "Using DATABASE_URL from environment for database connection",
+      );
       dbInstance = getDatabaseConnection(databaseUrl);
     }
   }

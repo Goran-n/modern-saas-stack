@@ -90,7 +90,9 @@ export const processInvoiceSupplier = task({
 
         // Transform extraction data to supplier format
         // Extract vendor data from JSONB fields using helper with confidence scores
-        const vendorData = extractVendorDataWithConfidence(extraction.extractedFields);
+        const vendorData = extractVendorDataWithConfidence(
+          extraction.extractedFields,
+        );
         const supplierRequest = transformInvoiceToSupplier(
           {
             id: extraction.id,
@@ -222,7 +224,8 @@ export const processInvoiceSupplier = task({
             .set({
               matchedSupplierId: null,
               matchConfidence: CONFIDENCE_SCORES.LOW_MATCH,
-              processingNotes: "Skipped for manual review - low confidence match",
+              processingNotes:
+                "Skipped for manual review - low confidence match",
             })
             .where(eq(documentExtractions.id, documentExtractionId));
 

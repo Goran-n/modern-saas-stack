@@ -1,6 +1,6 @@
-import { 
-  getTenant, 
-  updateTenant, 
+import {
+  getTenant,
+  updateTenant,
   type UpdateTenantInput,
   type CompanyConfig,
   companyConfigSchema,
@@ -26,7 +26,7 @@ export const tenantRouter = createTRPCRouter({
 
     try {
       const tenant = await getTenant(tenantId);
-      
+
       if (!tenant) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -62,7 +62,7 @@ export const tenantRouter = createTRPCRouter({
 
     try {
       const tenant = await getTenant(tenantId);
-      
+
       if (!tenant) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -71,8 +71,10 @@ export const tenantRouter = createTRPCRouter({
       }
 
       // Return company config from settings, or default if not set
-      const companyConfig = tenant.settings?.companyConfig as CompanyConfig | undefined;
-      
+      const companyConfig = tenant.settings?.companyConfig as
+        | CompanyConfig
+        | undefined;
+
       return companyConfig || createDefaultCompanyConfig();
     } catch (error) {
       logger.error("Failed to get company configuration", {
@@ -105,7 +107,7 @@ export const tenantRouter = createTRPCRouter({
       try {
         // Get current tenant
         const tenant = await getTenant(tenantId);
-        
+
         if (!tenant) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -115,7 +117,9 @@ export const tenantRouter = createTRPCRouter({
 
         // Get existing settings
         const existingSettings = tenant.settings || {};
-        const existingConfig = existingSettings.companyConfig as CompanyConfig | undefined || createDefaultCompanyConfig();
+        const existingConfig =
+          (existingSettings.companyConfig as CompanyConfig | undefined) ||
+          createDefaultCompanyConfig();
 
         // Deep merge the configuration
         const updatedConfig: CompanyConfig = {
@@ -187,9 +191,16 @@ export const tenantRouter = createTRPCRouter({
   updateCompanyConfigSection: tenantProcedure
     .input(
       z.object({
-        section: z.enum(["names", "identifiers", "addresses", "matching", "business", "vat"]),
+        section: z.enum([
+          "names",
+          "identifiers",
+          "addresses",
+          "matching",
+          "business",
+          "vat",
+        ]),
         data: z.record(z.string(), z.unknown()),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { tenantId, user } = ctx;
@@ -205,7 +216,7 @@ export const tenantRouter = createTRPCRouter({
       try {
         // Get current tenant
         const tenant = await getTenant(tenantId);
-        
+
         if (!tenant) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -215,7 +226,9 @@ export const tenantRouter = createTRPCRouter({
 
         // Get existing settings
         const existingSettings = tenant.settings || {};
-        const existingConfig = existingSettings.companyConfig as CompanyConfig | undefined || createDefaultCompanyConfig();
+        const existingConfig =
+          (existingSettings.companyConfig as CompanyConfig | undefined) ||
+          createDefaultCompanyConfig();
 
         // Update specific section
         const updatedConfig: CompanyConfig = {
@@ -228,7 +241,7 @@ export const tenantRouter = createTRPCRouter({
 
         // Validate the updated configuration
         const validationResult = companyConfigSchema.safeParse(updatedConfig);
-        
+
         if (!validationResult.success) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -283,7 +296,7 @@ export const tenantRouter = createTRPCRouter({
       z.object({
         vatNumber: z.string(),
         country: z.string().length(2),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { vatNumber, country } = input;
@@ -297,9 +310,9 @@ export const tenantRouter = createTRPCRouter({
       try {
         // Import the validation function
         const { validateVATNumber } = await import("@figgy/tenant");
-        
+
         const isValid = validateVATNumber(vatNumber, country);
-        
+
         return {
           valid: isValid,
           vatNumber,

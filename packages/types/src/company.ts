@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Address schema - matching tenant package
 export const AddressSchema = z.object({
@@ -20,7 +20,12 @@ export const VATRegistrationSchema = z.object({
   id: z.string().uuid(),
   number: z.string(),
   country: z.string().min(2).max(2),
-  scheme: z.enum(["standard", "flat_rate", "cash_accounting", "annual_accounting"]),
+  scheme: z.enum([
+    "standard",
+    "flat_rate",
+    "cash_accounting",
+    "annual_accounting",
+  ]),
   flatRatePercentage: z.number().min(0).max(100).optional(),
   isActive: z.boolean().default(true),
   validFrom: z.date().nullable(),
@@ -32,7 +37,12 @@ export const CompanyRegistrationSchema = z.object({
   id: z.string().uuid(),
   number: z.string().min(1, "Registration number is required"),
   jurisdiction: z.string().min(1, "Jurisdiction is required"),
-  type: z.enum(["company_number", "charity_number", "partnership_number", "other"]),
+  type: z.enum([
+    "company_number",
+    "charity_number",
+    "partnership_number",
+    "other",
+  ]),
   validFrom: z.date().nullable(),
   validTo: z.date().nullable(),
 });
@@ -57,7 +67,12 @@ export const NameHistorySchema = z.object({
 // VAT scheme history schema
 export const VATSchemeHistorySchema = z.object({
   id: z.string().uuid(),
-  scheme: z.enum(["standard", "flat_rate", "cash_accounting", "annual_accounting"]),
+  scheme: z.enum([
+    "standard",
+    "flat_rate",
+    "cash_accounting",
+    "annual_accounting",
+  ]),
   flatRatePercentage: z.number().min(0).max(100).optional(),
   annualLimit: z.number().positive().optional(),
   validFrom: z.date().nullable(),
@@ -138,9 +153,33 @@ export type CompanyConfig = z.infer<typeof CompanyConfigSchema>;
 
 // EU Countries
 export const euCountries = [
-  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
-  'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
-  'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
+  "AT",
+  "BE",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FI",
+  "FR",
+  "DE",
+  "GR",
+  "HU",
+  "IE",
+  "IT",
+  "LV",
+  "LT",
+  "LU",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
 ] as const;
 
-export type EUCountry = typeof euCountries[number];
+export type EUCountry = (typeof euCountries)[number];

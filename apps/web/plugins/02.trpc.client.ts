@@ -7,13 +7,16 @@ export default defineNuxtPlugin(() => {
   const supabase = useSupabaseClient();
 
   // Determine if we're in development mode
-  const isDev = process.dev || window.location.hostname === 'localhost';
-  
+  const isDev = process.dev || window.location.hostname === "localhost";
+
   // For now, use direct URL to API server to bypass proxy issues
   // TODO: Fix proxy configuration and revert to using '/trpc' in development
   const trpcUrl = `${config.public.apiUrl}/trpc`;
-  
-  console.log('[TRPC Client] Initializing with URL:', trpcUrl, { isDev, apiUrl: config.public.apiUrl });
+
+  console.log("[TRPC Client] Initializing with URL:", trpcUrl, {
+    isDev,
+    apiUrl: config.public.apiUrl,
+  });
 
   // Create the tRPC client with batch link
   const trpc = createTRPCProxyClient<AppRouter>({
@@ -54,17 +57,21 @@ export default defineNuxtPlugin(() => {
         },
         // Add fetch options for better error handling
         fetch(url, options) {
-          console.log('[TRPC Client] Making request to:', url);
+          console.log("[TRPC Client] Making request to:", url);
           return fetch(url, {
             ...options,
             credentials: "include",
-          }).then(response => {
-            console.log('[TRPC Client] Response:', response.status, response.statusText);
+          }).then((response) => {
+            console.log(
+              "[TRPC Client] Response:",
+              response.status,
+              response.statusText,
+            );
             if (!response.ok) {
-              console.error('[TRPC Client] Request failed:', {
+              console.error("[TRPC Client] Request failed:", {
                 url,
                 status: response.status,
-                statusText: response.statusText
+                statusText: response.statusText,
               });
             }
             return response;

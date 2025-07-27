@@ -27,6 +27,11 @@ export interface EmptyStateProps {
   icon?: string;
 
   /**
+   * Custom image to use instead of icon
+   */
+  image?: string;
+
+  /**
    * Custom title to override the default
    */
   title?: string;

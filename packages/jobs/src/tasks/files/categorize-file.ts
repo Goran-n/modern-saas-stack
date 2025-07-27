@@ -483,18 +483,20 @@ export const categorizeFile = schemaTask({
       try {
         const updateData: Parameters<typeof searchOps.updateFile>[2] = {
           category: extraction.documentType,
-          extractedText: extraction.fields?.description ? String(extraction.fields.description) : "",
+          extractedText: extraction.fields?.description
+            ? String(extraction.fields.description)
+            : "",
           documentType: extraction.documentType,
         };
-        
+
         if (extraction.fields?.invoiceNumber) {
           updateData.invoiceNumber = String(extraction.fields.invoiceNumber);
         }
-        
+
         if (extraction.fields?.amount) {
           updateData.amount = Number(extraction.fields.amount);
         }
-        
+
         await searchOps.updateFile(fileId, tenantId, updateData);
       } catch (error) {
         logger.error("Failed to update search index", {

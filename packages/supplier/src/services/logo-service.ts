@@ -22,7 +22,7 @@ export class LogoService {
   constructor(config?: Partial<LogoConfig>) {
     // In jobs context, use environment variable directly
     const logoDevToken = process.env.LOGO_DEV_TOKEN || "";
-    
+
     this.config = {
       token: config?.token || logoDevToken,
       size: config?.size || 200,
@@ -59,13 +59,13 @@ export class LogoService {
     try {
       // Clean domain (remove protocol, www, path)
       const cleanDomain = this.cleanDomain(domain);
-      
+
       // Construct logo URL with parameters
       const logoUrl = `${this.baseUrl}/${cleanDomain}?token=${this.config.token}&size=${this.config.size}&format=${this.config.format}&transparent=true`;
 
       // Logo.dev returns a default image even for domains without logos
       // So we'll just return the URL and let the frontend handle missing logos
-      logger.info("Logo.dev API request", { 
+      logger.info("Logo.dev API request", {
         event: "logo_api_request",
         domain: cleanDomain,
         url: logoUrl,
@@ -75,9 +75,9 @@ export class LogoService {
           api: "logo.dev",
           action: "fetch_logo",
           domain: cleanDomain,
-        }
+        },
       });
-      
+
       return {
         success: true,
         logoUrl,
@@ -112,10 +112,10 @@ export class LogoService {
     if (this.shouldSkipBasedOnFailures(globalSupplier)) {
       logger.info("Skipping logo fetch due to repeated failures", {
         globalSupplierId,
-        attempts: globalSupplier.logoFetchAttempts,
-        lastFailedAt: globalSupplier.logoLastFailedAt,
+        attempts: 0, // Column doesn't exist
+        lastFailedAt: null, // Column doesn't exist
       });
-      
+
       return {
         success: false,
         error: "Skipped due to repeated failures",
@@ -129,7 +129,7 @@ export class LogoService {
         .set({
           logoFetchStatus: "not_found",
           logoFetchedAt: new Date(),
-          logoFetchAttempts: (globalSupplier.logoFetchAttempts || 0) + 1,
+          // logoFetchAttempts column doesn't exist
           updatedAt: new Date(),
         })
         .where(eq(globalSuppliers.id, globalSupplierId));
@@ -151,8 +151,8 @@ export class LogoService {
           logoUrl: result.logoUrl,
           logoFetchStatus: "success",
           logoFetchedAt: new Date(),
-          logoFetchAttempts: (globalSupplier.logoFetchAttempts || 0) + 1,
-          logoLastFailedAt: null, // Clear failure timestamp on success
+          // logoFetchAttempts column doesn't exist
+          // logoLastFailedAt column doesn't exist
           updatedAt: new Date(),
         })
         .where(eq(globalSuppliers.id, globalSupplierId));
@@ -162,7 +162,7 @@ export class LogoService {
         .set({
           logoFetchStatus: "not_found",
           logoFetchedAt: new Date(),
-          logoFetchAttempts: (globalSupplier.logoFetchAttempts || 0) + 1,
+          // logoFetchAttempts column doesn't exist
           updatedAt: new Date(),
         })
         .where(eq(globalSuppliers.id, globalSupplierId));
@@ -173,8 +173,8 @@ export class LogoService {
         .set({
           logoFetchStatus: "failed",
           logoFetchedAt: new Date(),
-          logoFetchAttempts: (globalSupplier.logoFetchAttempts || 0) + 1,
-          logoLastFailedAt: new Date(),
+          // logoFetchAttempts column doesn't exist
+          // logoLastFailedAt column doesn't exist
           updatedAt: new Date(),
         })
         .where(eq(globalSuppliers.id, globalSupplierId));
@@ -186,35 +186,21 @@ export class LogoService {
   /**
    * Check if we should skip fetching based on previous failures
    */
-  private shouldSkipBasedOnFailures(globalSupplier: any): boolean {
-    const attempts = globalSupplier.logoFetchAttempts || 0;
-    const lastFailedAt = globalSupplier.logoLastFailedAt;
-    
-    // Skip if we've tried more than 5 times
-    if (attempts >= 5) {
-      // But allow retry after 30 days
-      if (lastFailedAt) {
-        const daysSinceLastFailure = (Date.now() - new Date(lastFailedAt).getTime()) / (24 * 60 * 60 * 1000);
-        return daysSinceLastFailure < 30;
-      }
-      return true;
-    }
-    
-    // For fewer attempts, use exponential backoff
-    if (lastFailedAt && attempts > 0) {
-      const hoursSinceLastFailure = (Date.now() - new Date(lastFailedAt).getTime()) / (60 * 60 * 1000);
-      const backoffHours = Math.pow(2, attempts - 1) * 24; // 1 day, 2 days, 4 days, 8 days
-      
-      return hoursSinceLastFailure < backoffHours;
-    }
-    
+  private shouldSkipBasedOnFailures(_globalSupplier: any): boolean {
+    // Since logoFetchAttempts and logoLastFailedAt columns don't exist,
+    // we can't implement retry logic based on them
+    // Always allow retry for now
     return false;
   }
 
   /**
    * Check if logo needs refresh
    */
-  needsRefresh(fetchedAt: Date | null, status: string, attempts?: number): boolean {
+  needsRefresh(
+    fetchedAt: Date | null,
+    status: string,
+    attempts?: number,
+  ): boolean {
     if (!fetchedAt) return true;
 
     const age = Date.now() - fetchedAt.getTime();
@@ -246,21 +232,21 @@ export class LogoService {
   private cleanDomain(domain: string): string {
     // Remove protocol
     let clean = domain.replace(/^https?:\/\//, "");
-    
+
     // Remove www
     clean = clean.replace(/^www\./, "");
-    
+
     // Remove path and query
     const parts = clean.split("/");
     clean = parts[0] || clean;
-    
+
     const queryParts = clean.split("?");
     clean = queryParts[0] || clean;
-    
+
     // Remove port
     const portParts = clean.split(":");
     clean = portParts[0] || clean;
-    
+
     return clean.toLowerCase().trim();
   }
 }

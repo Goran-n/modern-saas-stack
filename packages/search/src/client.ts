@@ -29,11 +29,11 @@ export async function getUpstashIndex(tenantId: string): Promise<any | null> {
       url: searchUrl,
       token: searchToken,
     });
-    
+
     // All tenants use the same "default" index
     const index = searchClient.index("default");
     clientCache.set(tenantId, index);
-    
+
     return index;
   } catch (error) {
     logger.error("Failed to create Upstash Search client", {

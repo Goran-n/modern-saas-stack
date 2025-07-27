@@ -144,12 +144,12 @@ export default {
       },
       gridTemplateColumns: {
         // Custom grid layouts for file preview modal
-        'file-preview': '1fr 400px',
+        "file-preview": "1fr 400px",
       },
       height: {
         // Custom heights for file preview modal
-        'file-preview-mobile': '300px',
-        'file-preview-desktop': '80vh',
+        "file-preview-mobile": "300px",
+        "file-preview-desktop": "80vh",
       },
     },
   },

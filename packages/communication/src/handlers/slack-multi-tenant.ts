@@ -29,8 +29,9 @@ export async function handleSlackMultiTenantWebhook(
     }
 
     // Parse webhook payload
-    const parseResult = SlackMessageHandler.parseWebhookPayloadWithResult(payload);
-    
+    const parseResult =
+      SlackMessageHandler.parseWebhookPayloadWithResult(payload);
+
     // Handle skipped messages (like bot messages)
     if (parseResult.skipped) {
       logger.info("Slack message skipped", {
@@ -45,7 +46,7 @@ export async function handleSlackMultiTenantWebhook(
         },
       };
     }
-    
+
     const messagePayload = parseResult.payload;
     if (!messagePayload) {
       return {
@@ -54,7 +55,7 @@ export async function handleSlackMultiTenantWebhook(
       };
     }
 
-    // Note: Duplicate detection is now handled atomically in storeMessage() 
+    // Note: Duplicate detection is now handled atomically in storeMessage()
     // via database upsert, eliminating race conditions
 
     workspaceId = messagePayload.metadata?.workspaceId as string;

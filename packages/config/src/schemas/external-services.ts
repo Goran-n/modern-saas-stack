@@ -28,6 +28,24 @@ export const externalServicesSchema = z.object({
    * Authentication token for Upstash Search
    */
   UPSTASH_SEARCH_REST_TOKEN: z.string().min(1).optional(),
+
+  /**
+   * Serper API Key
+   * For domain discovery and search
+   * @see https://serper.dev
+   */
+  SERPER_API_KEY: z
+    .string()
+    .min(1, "SERPER_API_KEY is required for domain discovery"),
+
+  /**
+   * Firecrawl API Key
+   * For website content extraction
+   * @see https://firecrawl.dev
+   */
+  FIRECRAWL_API_KEY: z
+    .string()
+    .min(1, "FIRECRAWL_API_KEY is required for website analysis"),
 });
 
 export type ExternalServicesConfig = z.infer<typeof externalServicesSchema>;
