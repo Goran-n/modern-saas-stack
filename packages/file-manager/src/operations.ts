@@ -170,6 +170,36 @@ export async function uploadFile(
     // Don't throw - file is already uploaded successfully
   }
 
+  // Trigger thumbnail generation for PDFs
+  if (record.mimeType === "application/pdf") {
+    try {
+      await tasks.trigger(
+        "generate-thumbnail",
+        {
+          fileId: record.id,
+          tenantId: record.tenantId,
+          mimeType: record.mimeType,
+        },
+        {
+          queue: {
+            name: `thumbnail-${record.tenantId}`,
+          },
+        },
+      );
+
+      logger.info("Thumbnail generation job triggered", {
+        fileId: record.id,
+        tenantId: record.tenantId,
+      });
+    } catch (error) {
+      logger.error("Failed to trigger thumbnail generation", {
+        fileId: record.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Don't throw - thumbnail is non-critical
+    }
+  }
+
   return record.id;
 }
 
@@ -383,6 +413,36 @@ export async function uploadFileFromBase64(input: {
       error: error instanceof Error ? error.message : String(error),
     });
     // Don't throw - file is already uploaded successfully
+  }
+
+  // Trigger thumbnail generation for PDFs
+  if (fileRecord.mimeType === "application/pdf") {
+    try {
+      await tasks.trigger(
+        "generate-thumbnail",
+        {
+          fileId: fileRecord.id,
+          tenantId: fileRecord.tenantId,
+          mimeType: fileRecord.mimeType,
+        },
+        {
+          queue: {
+            name: `thumbnail-${fileRecord.tenantId}`,
+          },
+        },
+      );
+
+      logger.info("Thumbnail generation job triggered", {
+        fileId: fileRecord.id,
+        tenantId: fileRecord.tenantId,
+      });
+    } catch (error) {
+      logger.error("Failed to trigger thumbnail generation", {
+        fileId: fileRecord.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Don't throw - thumbnail is non-critical
+    }
   }
 
   return {
@@ -1191,6 +1251,8 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       mimeType: files.mimeType,
       size: files.size,
       processingStatus: files.processingStatus,
+      bucket: files.bucket,
+      thumbnailPath: files.thumbnailPath,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
       extraction: {
@@ -1257,6 +1319,8 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       mimeType: file.mimeType,
       size: file.size,
       processingStatus: file.processingStatus,
+      bucket: file.bucket,
+      thumbnailPath: file.thumbnailPath,
       createdAt: file.createdAt,
       updatedAt: file.updatedAt,
       extraction: file.extraction?.id ? file.extraction : null,
@@ -1376,6 +1440,8 @@ export async function getFilesBySupplierAndYear(
     mimeType: string;
     size: number;
     processingStatus: ProcessingStatus | null;
+    bucket: string;
+    thumbnailPath: string | null;
     createdAt: Date;
     updatedAt: Date;
     extraction: any | null;
@@ -1409,6 +1475,8 @@ export async function getFilesBySupplierAndYear(
       mimeType: files.mimeType,
       size: files.size,
       processingStatus: files.processingStatus,
+      bucket: files.bucket,
+      thumbnailPath: files.thumbnailPath,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
       extraction: {
@@ -1440,6 +1508,8 @@ export async function getFilesBySupplierAndYear(
     mimeType: file.mimeType,
     size: file.size,
     processingStatus: file.processingStatus,
+    bucket: file.bucket,
+    thumbnailPath: file.thumbnailPath,
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
     extraction: file.extraction?.id ? file.extraction : null,

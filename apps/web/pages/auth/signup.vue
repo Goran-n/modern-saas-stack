@@ -9,80 +9,91 @@
       </p>
     </div>
 
-    <UForm :schema="schema" :state="state" @submit="onSubmit" class="space-y-4">
-      <UFormField name="email" label="Email">
-        <UInput 
+    <form @submit.prevent="onSubmit" class="space-y-4">
+      <FigFormField 
+        label="Email" 
+        :error="errors.email"
+        required
+      >
+        <FigInput 
           v-model="state.email" 
           type="email" 
           placeholder="Enter your email"
           size="lg"
-          class="w-full"
           autofocus
+          @blur="validateField('email')"
         />
-      </UFormField>
+      </FigFormField>
 
-      <UFormField name="password" label="Password">
-        <UInput 
+      <FigFormField 
+        label="Password" 
+        :error="errors.password"
+        required
+      >
+        <FigInput 
           v-model="state.password" 
           type="password" 
           placeholder="Create a password"
           size="lg"
-          class="w-full"
+          @blur="validateField('password')"
         />
-      </UFormField>
+      </FigFormField>
 
-      <UFormField name="confirmPassword" label="Confirm Password">
-        <UInput 
+      <FigFormField 
+        label="Confirm Password" 
+        :error="errors.confirmPassword"
+        required
+      >
+        <FigInput 
           v-model="state.confirmPassword" 
           type="password" 
           placeholder="Confirm your password"
           size="lg"
-          class="w-full"
+          @blur="validateField('confirmPassword')"
         />
-      </UFormField>
+      </FigFormField>
 
-      <UFormField name="terms">
-        <UCheckbox 
+      <FigFormField :error="errors.terms">
+        <FigCheckbox 
           v-model="state.terms" 
           label="I agree to the Terms and Privacy Policy"
         />
-      </UFormField>
+      </FigFormField>
 
-      <UButton 
+      <FigButton 
         type="submit" 
-        block 
+        class="w-full"
         size="lg"
         :loading="isLoading"
       >
         Create account
-      </UButton>
-    </UForm>
+      </FigButton>
+    </form>
 
-    <UDivider label="or continue with" />
+    <FigDivider label="or continue with" class="my-6" />
 
-    <UButton
-      block
+    <FigButton
+      class="w-full"
       size="lg"
       color="neutral"
       variant="outline"
       @click="signUpWithProvider"
     >
-      <template #leading>
-        <UIcon name="i-simple-icons-google" class="w-4 h-4" />
-      </template>
+      <NuxtIcon name="simple-icons:google" class="w-4 h-4 mr-2" />
       Continue with Google
-    </UButton>
+    </FigButton>
 
     <p class="text-center text-sm text-slate-500">
       Already have an account?
-      <ULink to="/auth/login" class="font-medium text-primary-600 hover:text-primary-700">
+      <NuxtLink to="/auth/login" class="font-medium text-primary-600 hover:text-primary-700">
         Sign in
-      </ULink>
+      </NuxtLink>
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { FigButton, FigInput, FigFormField, FigCheckbox, FigDivider } from '@figgy/ui';
 import { z } from 'zod'
 
 definePageMeta({
@@ -95,6 +106,7 @@ const { auth, general } = useNotifications()
 const router = useRouter()
 
 const isLoading = ref(false)
+const errors = ref<Record<string, string>>({})
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -118,10 +130,64 @@ const state = ref<Schema>({
   terms: false
 })
 
-async function onSubmit(event: { data: Schema }) {
+function validateField(field: keyof Schema) {
+  try {
+    if (field === 'confirmPassword') {
+      if (state.value.password !== state.value.confirmPassword) {
+        errors.value.confirmPassword = "Passwords don't match";
+        return;
+      }
+    }
+    
+    const fieldSchemas = {
+      email: z.string().email('Invalid email address'),
+      password: z.string().min(8, 'Password must be at least 8 characters'),
+      confirmPassword: z.string(),
+      terms: z.boolean()
+    };
+    
+    fieldSchemas[field].parse(state.value[field]);
+    
+    if (field === 'terms' && !state.value.terms) {
+      errors.value.terms = 'You must accept the terms and conditions';
+      return;
+    }
+    
+    delete errors.value[field];
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      errors.value[field] = error.issues[0]?.message || 'Invalid input';
+    }
+  }
+}
+
+function validateForm(): boolean {
+  errors.value = {};
+  
+  try {
+    schema.parse(state.value);
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors.value[issue.path[0].toString()] = issue.message;
+        }
+      });
+    }
+    return false;
+  }
+}
+
+async function onSubmit() {
+  if (!validateForm()) {
+    return;
+  }
+  
+  const formData = state.value;
   try {
     isLoading.value = true
-    await authStore.signUp(event.data.email, event.data.password)
+    await authStore.signUp(formData.email, formData.password)
     
     auth.signUpSuccess()
     

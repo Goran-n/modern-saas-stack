@@ -73,9 +73,8 @@
             <FigCard
               v-for="file in fileResults"
               :key="file.id"
-              clickable
+              class="cursor-pointer hover:border-primary-300 transition-colors"
               @click="navigateToFile(file)"
-              class="p-4"
             >
               <div class="flex items-start gap-4">
                 <Icon name="heroicons:document" class="h-10 w-10 text-neutral-400 flex-shrink-0" />
@@ -109,9 +108,8 @@
             <FigCard
               v-for="supplier in supplierResults"
               :key="supplier.id"
-              clickable
+              class="cursor-pointer hover:border-primary-300 transition-colors"
               @click="navigateToSupplier(supplier)"
-              class="p-4"
             >
               <div class="flex items-start gap-4">
                 <Icon name="heroicons:building-office" class="h-10 w-10 text-neutral-400 flex-shrink-0" />

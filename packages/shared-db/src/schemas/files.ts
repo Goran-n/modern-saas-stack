@@ -34,6 +34,8 @@ export const files = pgTable("files", {
   // Deduplication fields
   contentHash: text("content_hash"), // SHA256 hash
   fileSize: bigint("file_size", { mode: "number" }), // For validation
+  // Thumbnail field
+  thumbnailPath: text("thumbnail_path"), // Path to thumbnail image
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

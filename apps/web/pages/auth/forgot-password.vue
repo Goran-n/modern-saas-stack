@@ -7,38 +7,43 @@
       No worries, we'll send you reset instructions.
     </p>
 
-    <UForm :schema="schema" :state="state" @submit="onSubmit" class="space-y-4">
-      <UFormGroup label="Email" name="email">
-        <UInput 
+    <form @submit.prevent="onSubmit" class="space-y-4">
+      <FigFormField 
+        label="Email" 
+        :error="errors.email"
+        required
+      >
+        <FigInput 
           v-model="state.email" 
           type="email" 
           placeholder="Enter your email"
           size="lg"
-          icon="i-heroicons-envelope"
           autofocus
+          @blur="validateField('email')"
         />
-      </UFormGroup>
+      </FigFormField>
 
-      <UButton 
+      <FigButton 
         type="submit" 
-        block 
+        class="w-full"
         size="lg"
         :loading="isLoading"
       >
         Send reset instructions
-      </UButton>
-    </UForm>
+      </FigButton>
+    </form>
 
     <div class="mt-8 text-center">
-      <ULink to="/auth/login" class="text-sm text-primary-600 hover:text-primary-500">
-        <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
+      <NuxtLink to="/auth/login" class="text-sm text-primary-600 hover:text-primary-500 inline-flex items-center">
+        <NuxtIcon name="heroicons:arrow-left" class="w-4 h-4 mr-1" />
         Back to sign in
-      </ULink>
+      </NuxtLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { FigButton, FigInput, FigFormField } from '@figgy/ui';
 import { z } from 'zod'
 
 definePageMeta({
@@ -60,11 +65,47 @@ const state = ref<Schema>({
 })
 
 const isLoading = ref(false)
+const errors = ref<Record<string, string>>({})
 
-async function onSubmit(event: { data: Schema }) {
+function validateField(field: keyof Schema) {
+  try {
+    const fieldSchema = z.string().email('Invalid email address');
+    fieldSchema.parse(state.value[field]);
+    delete errors.value[field];
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      errors.value[field] = error.issues[0]?.message || 'Invalid input';
+    }
+  }
+}
+
+function validateForm(): boolean {
+  errors.value = {};
+  
+  try {
+    schema.parse(state.value);
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors.value[issue.path[0].toString()] = issue.message;
+        }
+      });
+    }
+    return false;
+  }
+}
+
+async function onSubmit() {
+  if (!validateForm()) {
+    return;
+  }
+  
+  const formData = state.value;
   try {
     isLoading.value = true
-    await authStore.resetPassword(event.data.email)
+    await authStore.resetPassword(formData.email)
     
     auth.passwordResetSent()
     

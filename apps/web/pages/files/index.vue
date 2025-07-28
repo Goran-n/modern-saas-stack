@@ -85,7 +85,7 @@
         </div>
 
         <!-- Error State -->
-        <molecules-file-empty-state
+        <FigEmptyState
           v-else-if="error"
           type="error"
           :description="error?.message || 'There was an error loading your files'"
@@ -107,7 +107,7 @@
               v-for="supplier in currentSuppliers"
               :key="supplier.id"
               @click="handleSupplierSelected(supplier.name)"
-              class="cursor-pointer hover:shadow-md transition-all duration-200 bg-white rounded-lg border border-neutral-200 hover:border-primary-300 p-4"
+              class="cursor-pointer transition-all duration-200 bg-white rounded-lg border border-neutral-200 hover:border-primary-300 p-4"
             >
               <div class="aspect-square flex flex-col items-center justify-center">
                 <!-- Supplier Logo -->
@@ -140,7 +140,7 @@
         </div>
 
         <!-- Empty State -->
-        <molecules-file-empty-state
+        <FigEmptyState
           v-else-if="!currentFiles.length"
           type="empty"
           image="/empty-coffee-receipts.webp"
@@ -191,7 +191,7 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import type { File, FileItem } from '@figgy/types';
-import { FigButton, FigSkeleton } from '@figgy/ui';
+import { FigButton, FigSkeleton, FigEmptyState } from '@figgy/ui';
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue';
 
 // Local interfaces
@@ -215,6 +215,18 @@ interface FileDataSerializedWithLogo {
 // Composables
 const api = useApi()
 const tenantStore = useTenantStore()
+
+// localStorage keys
+const STORAGE_KEYS = {
+  selectedYear: 'files_selected_year',
+  selectedSupplier: 'files_selected_supplier',
+  selectedStatus: 'files_selected_status',
+  currentView: 'files_current_view',
+  viewMode: 'files_view_mode'
+}
+
+// Helper to get current year
+const getCurrentYear = () => new Date().getFullYear().toString()
 
 // Reactive state
 const selectedYear = ref<string | null>(null)
@@ -352,12 +364,23 @@ const handleYearSelected = (year: string) => {
   selectedSupplier.value = null
   selectedStatus.value = null
   currentView.value = 'default'
+  
+  // Save to localStorage
+  localStorage.setItem(STORAGE_KEYS.selectedYear, year)
+  localStorage.removeItem(STORAGE_KEYS.selectedSupplier)
+  localStorage.removeItem(STORAGE_KEYS.selectedStatus)
+  localStorage.setItem(STORAGE_KEYS.currentView, 'default')
 }
 
 const handleSupplierSelected = (supplier: string) => {
   selectedSupplier.value = supplier
   selectedStatus.value = null
   currentView.value = 'supplier'
+  
+  // Save to localStorage
+  localStorage.setItem(STORAGE_KEYS.selectedSupplier, supplier)
+  localStorage.removeItem(STORAGE_KEYS.selectedStatus)
+  localStorage.setItem(STORAGE_KEYS.currentView, 'supplier')
 }
 
 const handleStatusSelected = (status: 'processing' | 'failed') => {
@@ -365,6 +388,12 @@ const handleStatusSelected = (status: 'processing' | 'failed') => {
   selectedYear.value = null
   selectedSupplier.value = null
   currentView.value = 'status'
+  
+  // Save to localStorage
+  localStorage.setItem(STORAGE_KEYS.selectedStatus, status)
+  localStorage.removeItem(STORAGE_KEYS.selectedYear)
+  localStorage.removeItem(STORAGE_KEYS.selectedSupplier)
+  localStorage.setItem(STORAGE_KEYS.currentView, 'status')
 }
 
 const handleFileSelected = (file: FileItem | null) => {
@@ -372,6 +401,79 @@ const handleFileSelected = (file: FileItem | null) => {
     selectedFile.value = file
   }
 }
+
+// Watch viewMode changes and save to localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem(STORAGE_KEYS.viewMode, newMode)
+})
+
+// Initialize from localStorage and auto-select
+onMounted(() => {
+  // Restore view mode
+  const savedViewMode = localStorage.getItem(STORAGE_KEYS.viewMode) as 'grid' | 'list' | null
+  if (savedViewMode) {
+    viewMode.value = savedViewMode
+  }
+  
+  // Restore selections
+  const savedView = localStorage.getItem(STORAGE_KEYS.currentView) as 'default' | 'supplier' | 'status' | null
+  const savedYear = localStorage.getItem(STORAGE_KEYS.selectedYear) || null
+  const savedSupplier = localStorage.getItem(STORAGE_KEYS.selectedSupplier) || null
+  const savedStatus = localStorage.getItem(STORAGE_KEYS.selectedStatus) as 'processing' | 'failed' | null
+  
+  // Wait for data to load
+  let unwatch: (() => void) | null = null
+  unwatch = watch([fileData, statusFiles], ([data, status]) => {
+    if (!data && !status) return
+    
+    let hasValidSelection = false
+    
+    // Try to restore previous selections
+    if (savedView === 'status' && savedStatus) {
+      // Check if we have files with this status
+      const statusHasFiles = savedStatus === 'processing' 
+        ? (status?.processing?.length || 0) > 0
+        : (status?.failed?.length || 0) > 0
+        
+      if (statusHasFiles) {
+        selectedStatus.value = savedStatus
+        currentView.value = 'status'
+        hasValidSelection = true
+      }
+    } else if (savedYear && data?.byYear[savedYear]) {
+      // Restore year selection
+      selectedYear.value = savedYear
+      currentView.value = savedSupplier ? 'supplier' : 'default'
+      
+      // Check if saved supplier still exists
+      if (savedSupplier && data.byYear[savedYear].suppliers[savedSupplier]) {
+        selectedSupplier.value = savedSupplier
+      }
+      hasValidSelection = true
+    }
+    
+    // If no valid saved selection, auto-select current year
+    if (!hasValidSelection && data?.byYear) {
+      const currentYear = getCurrentYear()
+      const years = Object.keys(data.byYear).sort().reverse()
+      
+      // Try current year first
+      if (data.byYear[currentYear]) {
+        selectedYear.value = currentYear
+        currentView.value = 'default'
+      } else if (years.length > 0) {
+        // Otherwise select the most recent year
+        selectedYear.value = years[0] || null
+        currentView.value = 'default'
+      }
+    }
+    
+    // Unwatch after initialization
+    if (unwatch) {
+      unwatch()
+    }
+  }, { immediate: true })
+})
 
 // SEO
 useSeoMeta({

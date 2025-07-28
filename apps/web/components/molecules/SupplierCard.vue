@@ -1,7 +1,7 @@
 <template>
   <article 
     class="group relative bg-white rounded-lg border border-neutral-200 p-6 
-           transition-all duration-200 hover:border-primary-300 hover:shadow-md
+           transition-all duration-200 hover:border-primary-300
            cursor-pointer"
     @click="handleClick"
     @keydown.enter="handleClick"
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { FigStatusBadge } from '@figgy/ui'
+import { FigStatusBadge, FigIcon } from '@figgy/ui'
 import SupplierLogo from '../atoms/SupplierLogo.vue'
 
 interface Address {

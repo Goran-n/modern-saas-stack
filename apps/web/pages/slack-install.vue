@@ -21,7 +21,7 @@
         
         <div v-else-if="!tenantId" class="text-center">
           <p class="text-gray-600 mb-4">
-            No organization selected. Please select an organization from your dashboard first.
+            No organisation selected. Please select an organisation from your dashboard first.
           </p>
           <NuxtLink 
             to="/dashboard" 
@@ -99,7 +99,7 @@ const installing = ref(false)
 await tenantStore.fetchUserTenants()
 
 const tenantId = computed(() => tenantStore.selectedTenantId)
-const tenantName = computed(() => tenantStore.selectedTenant?.name || 'your organization')
+const tenantName = computed(() => tenantStore.selectedTenant?.name || 'your organisation')
 
 async function installSlack() {
   if (!user.value) {
@@ -109,14 +109,19 @@ async function installSlack() {
   
   if (!tenantId.value) {
     // No tenant selected
-    alert('Please select an organization first')
+    alert('Please select an organisation first')
     return
   }
   
   installing.value = true
   
   // Use the OAuth-specific API URL from runtime config
-  const oauthApiUrl = config.public.oauthApiUrl || config.public.apiUrl || 'http://localhost:5001'
+  const oauthApiUrl = config.public.oauthApiUrl || config.public.apiUrl
+  if (!oauthApiUrl) {
+    alert('OAuth API URL not configured. Please contact support.')
+    installing.value = false
+    return
+  }
   const installUrl = `${oauthApiUrl}/oauth/slack/install?tenantId=${tenantId.value}`
   window.location.href = installUrl
 }

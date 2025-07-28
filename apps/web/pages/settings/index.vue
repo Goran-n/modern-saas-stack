@@ -12,7 +12,7 @@
         <!-- Settings Navigation -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <NuxtLink to="/settings/company" class="block">
-            <FigCard class="hover:shadow-lg transition-shadow cursor-pointer">
+            <FigCard class="cursor-pointer hover:border-primary-300 transition-colors">
               <div class="flex items-start gap-4">
                 <div class="p-3 bg-primary-100 rounded-lg">
                   <Icon name="heroicons:building-office" class="h-6 w-6 text-primary-600" />
@@ -28,7 +28,7 @@
           </NuxtLink>
 
           <NuxtLink to="/settings/account" class="block">
-            <FigCard class="hover:shadow-lg transition-shadow cursor-pointer">
+            <FigCard class="cursor-pointer hover:border-primary-300 transition-colors">
               <div class="flex items-start gap-4">
                 <div class="p-3 bg-blue-100 rounded-lg">
                   <Icon name="heroicons:user-circle" class="h-6 w-6 text-blue-600" />
@@ -44,7 +44,7 @@
           </NuxtLink>
 
           <NuxtLink to="/settings/billing" class="block">
-            <FigCard class="hover:shadow-lg transition-shadow cursor-pointer">
+            <FigCard class="cursor-pointer hover:border-primary-300 transition-colors">
               <div class="flex items-start gap-4">
                 <div class="p-3 bg-green-100 rounded-lg">
                   <Icon name="heroicons:credit-card" class="h-6 w-6 text-green-600" />
@@ -60,7 +60,7 @@
           </NuxtLink>
 
           <NuxtLink to="/settings/integrations" class="block">
-            <FigCard class="hover:shadow-lg transition-shadow cursor-pointer">
+            <FigCard class="cursor-pointer hover:border-primary-300 transition-colors">
               <div class="flex items-start gap-4">
                 <div class="p-3 bg-purple-100 rounded-lg">
                   <Icon name="heroicons:puzzle-piece" class="h-6 w-6 text-purple-600" />

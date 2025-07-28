@@ -116,6 +116,7 @@ export function createHonoApp() {
   app.get("/api/files/proxy/:fileId", async (c) => {
     const fileId = c.req.param("fileId");
     const tenantId = c.req.header("x-tenant-id") || c.req.query("tenantId");
+    const isThumbnail = c.req.query("thumbnail") === "true";
 
     if (!tenantId) {
       return c.json({ error: "Tenant ID required" }, 401);
@@ -136,6 +137,11 @@ export function createHonoApp() {
       }
 
       const file = fileResult[0];
+      
+      // Check if we need to serve thumbnail
+      if (isThumbnail && !file.thumbnailPath) {
+        return c.json({ error: "No thumbnail available" }, 404);
+      }
 
       // Create Supabase client
       const supabase = createClient(
@@ -147,7 +153,10 @@ export function createHonoApp() {
       const storageBucket = config.STORAGE_BUCKET;
 
       // Generate signed URL from Supabase
-      const filePath = file.pathTokens.join("/");
+      const filePath = isThumbnail && file.thumbnailPath 
+        ? file.thumbnailPath 
+        : file.pathTokens.join("/");
+        
       const { data: signedData, error: signedError } = await supabase.storage
         .from(storageBucket)
         .createSignedUrl(filePath, 3600);
@@ -173,9 +182,13 @@ export function createHonoApp() {
       }
 
       // Return file with proper headers for inline display
+      const contentType = isThumbnail 
+        ? "image/webp" 
+        : (file.mimeType || "application/octet-stream");
+        
       return new Response(response.body, {
         headers: {
-          "Content-Type": file.mimeType || "application/octet-stream",
+          "Content-Type": contentType,
           "Content-Disposition": "inline",
           "Cache-Control": "private, max-age=3600",
         },

@@ -41,7 +41,9 @@
     "db:seed": "turbo run db:seed --filter @figgy/api",
     "dev:cleanup": "bun scripts/cleanup-dev.ts",
     "dev:clean": "bun scripts/cleanup-dev.ts",
-    "enrich": "bun run scripts/enrich-suppliers.ts"
+    "enrich": "bun run scripts/enrich-suppliers.ts",
+    "thumbnails:check": "cd packages/file-manager && bun run thumbnails:check",
+    "thumbnails:generate": "cd packages/file-manager && bun run thumbnails:generate"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.2",

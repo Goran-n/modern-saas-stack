@@ -286,7 +286,7 @@ onMounted(async () => {
     // users.value = await $fetch(`/api/slack/workspaces/${workspaceId.value}/users`)
     // systemUsers.value = await $fetch('/api/users')
   } catch (error) {
-    useNotification().error('Failed to load workspace data')
+    useNotification().error('Failed to load workspace data', error instanceof Error ? error.message : 'Unknown error occurred')
   } finally {
     isLoading.value = false
   }
@@ -425,7 +425,7 @@ const refresh = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     useNotification().success('Data refreshed')
   } catch (error) {
-    useNotification().error('Failed to refresh data')
+    useNotification().error('Failed to refresh data', error instanceof Error ? error.message : 'Unknown error occurred')
   } finally {
     isRefreshing.value = false
   }
@@ -437,7 +437,7 @@ const syncUsers = async () => {
     await new Promise(resolve => setTimeout(resolve, 2000))
     useNotification().success('Users synced', 'Successfully synced users from Slack')
   } catch (error) {
-    useNotification().error('Sync failed', 'Could not sync users from Slack')
+    useNotification().error('Sync failed', error instanceof Error ? error.message : 'Could not sync users from Slack')
   }
 }
 
@@ -472,7 +472,7 @@ const unmapUser = async (user: SlackUser) => {
       
       useNotification().success('User unmapped', 'User mapping has been removed')
     } catch (error) {
-      useNotification().error('Failed to unmap user')
+      useNotification().error('Failed to unmap user', error instanceof Error ? error.message : 'Unknown error occurred')
     }
   }
 }
@@ -494,7 +494,7 @@ const saveMapping = async () => {
     useNotification().success('User mapped', 'Slack user has been mapped successfully')
     showMapModal.value = false
   } catch (error) {
-    useNotification().error('Mapping failed', 'Could not map the user')
+    useNotification().error('Mapping failed', error instanceof Error ? error.message : 'Could not map the user')
   } finally {
     isSaving.value = false
   }
@@ -537,7 +537,7 @@ const toggleUserStatus = async (user: SlackUser) => {
       `${user.displayName} has been ${user.isActive ? 'activated' : 'deactivated'}`
     )
   } catch (error) {
-    useNotification().error('Status update failed')
+    useNotification().error('Status update failed', error instanceof Error ? error.message : 'Unknown error occurred')
   }
 }
 

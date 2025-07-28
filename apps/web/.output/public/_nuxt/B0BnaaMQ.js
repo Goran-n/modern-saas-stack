@@ -1,0 +1,1 @@
+var __defProp=Object.defineProperty;var __name=(target,value)=>__defProp(target,"name",{value,configurable:!0});const _export_sfc=__name((sfc,props)=>{const target=sfc.__vccOpts||sfc;for(const[key,val]of props)target[key]=val;return target},"_export_sfc");export{_export_sfc as _};

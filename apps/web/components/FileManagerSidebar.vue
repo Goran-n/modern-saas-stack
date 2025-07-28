@@ -105,6 +105,15 @@
             <div class="flex items-center gap-2">
               <FigIcon name="i-heroicons-calendar-days" class="text-sm text-neutral-600" />
               <span class="text-sm font-medium">{{ year }}</span>
+              <FigBadge
+                v-if="isCurrentYear(year)"
+                color="primary"
+                variant="soft"
+                size="xs"
+                class="ml-1"
+              >
+                Current
+              </FigBadge>
             </div>
             <FigBadge
               v-if="getYearFileCount(year) > 0"
@@ -129,7 +138,7 @@
 
 <script setup lang="ts">
 import { FigBadge, FigSkeleton } from '@figgy/ui';
-import { nextTick, onMounted } from 'vue';
+import { nextTick, onMounted, computed } from 'vue';
 
 interface YearData {
   year: string
@@ -190,6 +199,11 @@ const selectYear = (year: string) => {
 const getYearFileCount = (year: string): number => {
   if (!props.fileData?.byYear[year]) return 0
   return props.fileData.byYear[year].totalFiles
+}
+
+const isCurrentYear = (year: string): boolean => {
+  const currentYear = new Date().getFullYear().toString()
+  return year === currentYear
 }
 
 

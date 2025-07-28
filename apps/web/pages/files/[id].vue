@@ -371,11 +371,14 @@ const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
 });
 
 // Get proxy URL for file display (inline viewing)
+// SECURITY: Tenant validation must happen server-side based on authenticated user context
+// Never pass tenantId in URL parameters
 const proxyUrl = computed(() => {
   if (!fileId || !selectedTenantId.value) return null;
   const config = useRuntimeConfig();
   const apiUrl = config.public.apiUrl;
-  return `${apiUrl}/api/files/proxy/${fileId}?tenantId=${selectedTenantId.value}#toolbar=0`;
+  // The server should validate tenant access based on the authenticated user's session
+  return `${apiUrl}/api/files/proxy/${fileId}#toolbar=0`;
 });
 
 // Get signed URL for download

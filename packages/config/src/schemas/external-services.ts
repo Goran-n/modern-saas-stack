@@ -46,6 +46,16 @@ export const externalServicesSchema = z.object({
   FIRECRAWL_API_KEY: z
     .string()
     .min(1, "FIRECRAWL_API_KEY is required for website analysis"),
+
+  /**
+   * PDF.co API Key
+   * For PDF to image conversion and thumbnail generation
+   * @see https://pdf.co
+   */
+  PDF_CO_API_KEY: z
+    .string()
+    .min(1, "PDF_CO_API_KEY is required for PDF thumbnail generation")
+    .optional(),
 });
 
 export type ExternalServicesConfig = z.infer<typeof externalServicesSchema>;

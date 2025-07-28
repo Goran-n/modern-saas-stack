@@ -1,5 +1,13 @@
 import { computed, type Ref, ref } from "vue";
 
+interface SupplierAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+}
+
 interface Supplier {
   id: string;
   legalName: string;
@@ -9,7 +17,7 @@ interface Supplier {
   logoUrl?: string;
   email?: string;
   phone?: string;
-  address?: any;
+  address?: SupplierAddress;
 }
 
 export const useSupplierSearch = (suppliers: Ref<Supplier[] | undefined>) => {
@@ -40,7 +48,7 @@ export const useSupplierSearch = (suppliers: Ref<Supplier[] | undefined>) => {
     }
 
     // Sort alphabetically by displayName (or legalName if displayName is not available)
-    return result.sort((a, b) => {
+    return [...result].sort((a, b) => {
       const nameA = (a.displayName || a.legalName).toLowerCase();
       const nameB = (b.displayName || b.legalName).toLowerCase();
       return nameA.localeCompare(nameB);

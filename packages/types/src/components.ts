@@ -10,6 +10,8 @@ export interface FileItem {
   processingStatus?: string;
   uploadedBy?: string;
   supplier?: string;
+  bucket?: string;
+  thumbnailPath?: string;
   metadata?: {
     displayName?: string;
     supplierName?: string;

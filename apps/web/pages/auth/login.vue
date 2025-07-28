@@ -15,76 +15,83 @@
       </div>
     </div>
 
-    <UForm :schema="schema" :state="state" @submit="onSubmit" class="space-y-4">
-      <UFormField name="email" label="Email">
-        <UInput 
+    <form @submit.prevent="onSubmit" class="space-y-4">
+      <FigFormField 
+        label="Email" 
+        :error="errors.email"
+        required
+      >
+        <FigInput 
           v-model="state.email" 
           type="email" 
           placeholder="Enter your email"
           size="lg"
-          class="w-full"
           autofocus
+          @blur="validateField('email')"
         />
-      </UFormField>
+      </FigFormField>
 
-      <UFormField name="password" label="Password">
-        <UInput 
+      <FigFormField 
+        label="Password" 
+        :error="errors.password"
+        required
+      >
+        <FigInput 
           v-model="state.password" 
           type="password" 
           placeholder="Enter your password"
           size="lg"
-          class="w-full"
+          @blur="validateField('password')"
         />
-      </UFormField>
+      </FigFormField>
 
       <div class="flex items-center justify-between">
-        <UCheckbox 
+        <FigCheckbox 
           v-model="state.remember" 
           label="Remember me"
         />
-        <ULink 
+        <NuxtLink 
           to="/auth/forgot-password" 
-          class="text-sm text-primary-600 hover:text-primary-700"
+          class="text-sm text-primary-600 hover:text-primary-700 font-medium"
         >
           Forgot password?
-        </ULink>
+        </NuxtLink>
       </div>
 
-      <UButton 
+      <FigButton 
         type="submit" 
-        block 
+        class="w-full"
         size="lg"
         :loading="isLoading"
       >
         Sign In
-      </UButton>
-    </UForm>
+      </FigButton>
+    </form>
 
-    <UDivider label="or continue with" />
+    <FigDivider label="or continue with" class="my-6" />
 
-    <UButton
-      block
+    <FigButton
+      class="w-full"
       size="lg"
       color="neutral"
       variant="outline"
       @click="signInWithProvider"
     >
-      <template #leading>
-        <UIcon name="i-simple-icons-google" class="w-4 h-4" />
-      </template>
+      <NuxtIcon name="simple-icons:google" class="w-4 h-4 mr-2" />
       Continue with Google
-    </UButton>
+    </FigButton>
 
     <p class="text-center text-sm text-slate-500">
       New to Figgy?
-      <ULink to="/auth/signup" class="font-medium text-primary-600 hover:text-primary-700">
+      <NuxtLink to="/auth/signup" class="font-medium text-primary-600 hover:text-primary-700">
         Create an account
-      </ULink>
+      </NuxtLink>
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { FigButton, FigInput, FigFormField, FigCheckbox, FigDivider } from '@figgy/ui';
 import { z } from 'zod'
 
 definePageMeta({
@@ -97,6 +104,7 @@ const { auth, general } = useNotifications()
 const router = useRouter()
 
 const isLoading = ref(false)
+const errors = ref<Record<string, string>>({})
 
 // Check if coming from extension
 const isFromExtension = ref(false)
@@ -126,10 +134,50 @@ const state = ref<Schema>({
   remember: false
 })
 
-async function onSubmit(event: { data: Schema }) {
+function validateField(field: keyof Schema) {
+  try {
+    const fieldSchema = {
+      email: z.string().email('Invalid email address'),
+      password: z.string().min(6, 'Password must be at least 6 characters'),
+      remember: z.boolean()
+    }[field];
+    
+    fieldSchema.parse(state.value[field]);
+    delete errors.value[field];
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      errors.value[field] = error.issues[0]?.message || 'Invalid input';
+    }
+  }
+}
+
+function validateForm(): boolean {
+  errors.value = {};
+  
+  try {
+    schema.parse(state.value);
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors.value[issue.path[0].toString()] = issue.message;
+        }
+      });
+    }
+    return false;
+  }
+}
+
+async function onSubmit() {
+  if (!validateForm()) {
+    return;
+  }
+  
+  const formData = state.value;
   try {
     isLoading.value = true
-    await authStore.signIn(event.data.email, event.data.password)
+    await authStore.signIn(formData.email, formData.password)
     
     auth.signInSuccess()
     
