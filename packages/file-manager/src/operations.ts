@@ -1,6 +1,6 @@
 import { getConfig } from "@figgy/config";
 import { DeduplicationService, HashUtils } from "@figgy/deduplication";
-import type { CategorizeFilePayload } from "@figgy/jobs";
+import type { CategorizeFilePayload } from "@figgy/types";
 import * as searchOps from "@figgy/search";
 import {
   and,

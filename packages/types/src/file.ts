@@ -38,7 +38,17 @@ export const FileDataSchema = z.object({
   totalFiles: z.number(),
 });
 
+export const CategorizeFileSchema = z.object({
+  fileId: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  mimeType: z.string(),
+  size: z.number(),
+  pathTokens: z.array(z.string()),
+  source: z.enum(["integration", "user_upload", "whatsapp", "slack"]),
+});
+
 export type File = z.infer<typeof FileSchema>;
 export type FileStatus = z.infer<typeof FileStatusSchema>;
 export type FileGroupByYear = z.infer<typeof FileGroupByYearSchema>;
 export type FileData = z.infer<typeof FileDataSchema>;
+export type CategorizeFilePayload = z.infer<typeof CategorizeFileSchema>;

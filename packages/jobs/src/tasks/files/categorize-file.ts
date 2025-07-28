@@ -11,13 +11,13 @@ import {
 } from "@figgy/shared-db";
 import { SupabaseStorageClient } from "@figgy/supabase-storage";
 import { logger } from "@figgy/utils";
+import { CategorizeFileSchema } from "@figgy/types";
 import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
 import { DocumentExtractor } from "../../lib/document-extraction/extractor";
-import { categorizeFileSchema } from "../../schemas/file";
 
 export const categorizeFile = schemaTask({
   id: "categorize-file",
-  schema: categorizeFileSchema,
+  schema: CategorizeFileSchema,
   maxDuration: 60,
   retry: {
     maxAttempts: 3,
