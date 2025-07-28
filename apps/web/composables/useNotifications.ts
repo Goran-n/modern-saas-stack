@@ -103,5 +103,21 @@ export const useNotifications = () => {
           color: "info",
         }),
     },
+
+    communication: {
+      slackLinked: () =>
+        toast.add({
+          title: "Slack account linked!",
+          description: "You can now use Figgy in your Slack workspace.",
+          color: "success",
+        }),
+
+      slackLinkFailed: (error?: string) =>
+        toast.add({
+          title: "Failed to link Slack account",
+          description: error || "Please try again or contact support.",
+          color: "error",
+        }),
+    },
   };
 };

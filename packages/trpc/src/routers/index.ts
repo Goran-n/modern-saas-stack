@@ -1,6 +1,5 @@
 import { createTRPCRouter } from "../trpc";
 import { authRouter } from "./auth";
-import { communicationRouter } from "./communication";
 import { debugRouter } from "./debug";
 import { duplicatesRouter } from "./duplicates";
 import { filesRouter } from "./files";
@@ -18,7 +17,6 @@ export const appRouter = createTRPCRouter({
   search: searchRouter,
   suppliers: suppliersRouter,
   tenant: tenantRouter,
-  communication: communicationRouter,
   duplicates: duplicatesRouter,
   users: usersRouter,
   ...(isDevelopment ? { debug: debugRouter } : {}),

@@ -111,10 +111,6 @@ const navigationItems = [
     to: '/suppliers'
   },
   {
-    label: 'Communications',
-    to: '/communications'
-  },
-  {
     label: 'Settings',
     to: '/settings'
   }
