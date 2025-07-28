@@ -2,6 +2,7 @@ import { createTRPCRouter } from "../trpc";
 import { authRouter } from "./auth";
 import { debugRouter } from "./debug";
 import { duplicatesRouter } from "./duplicates";
+import { emailRouter } from "./email";
 import { filesRouter } from "./files";
 import { searchRouter } from "./search";
 import { suppliersRouter } from "./suppliers";
@@ -13,6 +14,7 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
+  email: emailRouter,
   files: filesRouter,
   search: searchRouter,
   suppliers: suppliersRouter,
