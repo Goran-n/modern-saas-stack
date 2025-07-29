@@ -13,6 +13,7 @@
     "@figgy/communication": "workspace:*",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",
+    "@figgy/email-ingestion": "workspace:*",
     "@figgy/jobs": "workspace:*",
     "@figgy/search": "workspace:*",
     "@figgy/shared-db": "workspace:*",

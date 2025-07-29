@@ -937,6 +937,10 @@ export function createHonoApp() {
     }
   });
 
+  // Email webhook routes
+  const { emailWebhookRoutes } = await import("./routes/email-webhooks");
+  app.route("/email", emailWebhookRoutes);
+
   app.use(
     "/trpc/*",
     trpcServer({

@@ -1,0 +1,37 @@
+{
+  "name": "@figgy/email-ingestion",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@figgy/config": "workspace:*",
+    "@figgy/shared-db": "workspace:*",
+    "@figgy/utils": "workspace:*",
+    "@google-cloud/pubsub": "^4.0.6",
+    "@googleapis/gmail": "^3.0.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@microsoft/microsoft-graph-types": "^2.40.0",
+    "@azure/identity": "^4.0.0",
+    "crypto-js": "^4.2.0",
+    "google-auth-library": "^9.4.1",
+    "imapflow": "^1.0.149",
+    "jsonwebtoken": "^9.0.2",
+    "mailparser": "^3.6.5",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.1",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.4",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  }
+}
