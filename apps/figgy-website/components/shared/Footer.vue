@@ -23,15 +23,12 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         <!-- Company info -->
         <div class="lg:col-span-2">
-          <div class="flex items-center space-x-2 mb-4">
-            <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-lg">F</span>
-            </div>
-            <span class="text-xl font-bold">Figgy</span>
+          <div class="mb-4">
+            <img src="/logo.png" alt="Figgy" class="h-10 w-auto brightness-0 invert" />
           </div>
           <p class="text-neutral-400 mb-6 max-w-sm">
-            Your AI accountant that never sleeps. Automate invoice processing and bookkeeping 
-            with the power of artificial intelligence.
+            The future of bookkeeping is invisible. No logins, no folders, no admin stress. 
+            Just forward and forget.
           </p>
           <div class="flex space-x-4">
             <a href="#" class="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center hover:bg-neutral-700 transition-colors">
@@ -147,7 +144,7 @@
       <div class="mt-12 pt-8 border-t border-neutral-800">
         <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div class="text-neutral-400 text-sm">
-            © 2024 Figgy. All rights reserved.
+            © 2025 Figgy. All rights reserved.
           </div>
           <div class="flex space-x-6 text-sm">
             <a href="#" class="text-neutral-400 hover:text-white transition-colors">

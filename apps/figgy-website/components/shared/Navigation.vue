@@ -4,11 +4,8 @@
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <div class="flex items-center">
-          <a href="/" class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-lg">F</span>
-            </div>
-            <span class="text-xl font-bold text-neutral-800">Figgy</span>
+          <a href="/" class="flex items-center">
+            <img src="/logo.png" alt="Figgy" class="h-10 w-auto" />
           </a>
         </div>
 

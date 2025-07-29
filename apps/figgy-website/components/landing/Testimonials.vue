@@ -4,10 +4,10 @@
       <!-- Section header -->
       <div class="text-center mb-16">
         <h2 class="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
-          Loved by businesses everywhere
+          Real results from real businesses
         </h2>
         <p class="text-xl text-neutral-600 max-w-3xl mx-auto">
-          Join thousands who've simplified their bookkeeping with Figgy
+          Here's what our customers say about their time and money saved
         </p>
       </div>
 
@@ -21,8 +21,8 @@
             </div>
           </div>
           <p class="text-neutral-700 mb-6 leading-relaxed">
-            "Figgy has saved me at least 20 hours a month. I just forward receipts to WhatsApp and 
-            everything gets sorted automatically. My accountant loves it too!"
+            "We cut month-end from 3 days to 3 hours. Just forward receipts to WhatsApp — 
+            Figgy does everything else. My accountant couldn't believe the difference."
           </p>
           <div class="flex items-center">
             <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
@@ -43,8 +43,8 @@
             </div>
           </div>
           <p class="text-neutral-700 mb-6 leading-relaxed">
-            "The VAT tracking alone has paid for Figgy 10x over. Last quarter it found £1,200 in 
-            VAT claims I would have missed. Absolute game-changer."
+            "Used to miss VAT claims constantly. Now Figgy catches everything — blurry photos, 
+            foreign receipts, everything. Never leaving money on the table again."
           </p>
           <div class="flex items-center">
             <div class="w-12 h-12 bg-success-100 rounded-full flex items-center justify-center mr-4">
@@ -109,8 +109,8 @@
             </div>
           </div>
           <p class="text-neutral-700 mb-6 leading-relaxed">
-            "I was skeptical about AI handling finances, but Figgy is incredibly accurate. 
-            The monthly reports give me insights I never had before."
+            "No more 'What's this payment for?' emails. Figgy matches everything automatically. 
+            My accountant says it's the cleanest books they've ever seen."
           </p>
           <div class="flex items-center">
             <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
@@ -146,26 +146,14 @@
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="mt-20 bg-primary-500 rounded-2xl p-12">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div class="text-4xl font-bold text-white mb-2">5,000+</div>
-            <p class="text-primary-100">Happy users</p>
-          </div>
-          <div>
-            <div class="text-4xl font-bold text-white mb-2">£2.5M</div>
-            <p class="text-primary-100">VAT recovered</p>
-          </div>
-          <div>
-            <div class="text-4xl font-bold text-white mb-2">100K+</div>
-            <p class="text-primary-100">Hours saved</p>
-          </div>
-          <div>
-            <div class="text-4xl font-bold text-white mb-2">4.9/5</div>
-            <p class="text-primary-100">Average rating</p>
-          </div>
-        </div>
+      <!-- CTA -->
+      <div class="mt-20 text-center">
+        <p class="text-lg text-neutral-600 mb-6">
+          Ready to get your time back?
+        </p>
+        <button class="px-8 py-4 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-floating">
+          Start Your Free Trial
+        </button>
       </div>
     </div>
   </section>
