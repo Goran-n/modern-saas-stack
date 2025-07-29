@@ -140,7 +140,7 @@
       <!-- CTA -->
       <div class="text-center mt-12">
         <button class="inline-flex items-center px-8 py-4 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-floating">
-          Try it free for 14 days
+          Get Started Now
           <Icon name="heroicons:arrow-right" class="w-5 h-5 ml-2" />
         </button>
       </div>

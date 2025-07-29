@@ -34,7 +34,6 @@
   "devDependencies": {
     "@trigger.dev/build": "^3.3.17",
     "@types/sharp": "^0.32.0",
-    "trigger.dev": "^3.3.17",
-    "tsx": "^4.20.3"
+    "trigger.dev": "^3.3.17"
   }
 }

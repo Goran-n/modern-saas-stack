@@ -28,6 +28,21 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true,
+    includeWorkspace: false,
+    tsConfig: {
+      exclude: [
+        "../../packages/email/**",
+        "../../../packages/email/**",
+        "**/node_modules/@figgy/email/**"
+      ],
+      include: [
+        "./nuxt.d.ts",
+        "./**/*",
+        "./modules/*/runtime/**/*",
+        "./layers/*/app/**/*",
+        "./shared/**/*"
+      ]
+    }
   },
 
   runtimeConfig: {

@@ -111,12 +111,11 @@ export const generateThumbnail = schemaTask({
           .webp({ quality: 80 })
           .toBuffer();
           
-        const { error: uploadError } = await storage.client.storage
-          .from(file.bucket)
-          .upload(thumbnailPath, placeholderBuffer, {
-            contentType: "image/webp",
-            upsert: true,
-          });
+        const { error: uploadError } = await storage.uploadBuffer(
+          thumbnailPath,
+          placeholderBuffer,
+          { contentType: "image/webp" }
+        );
 
         if (uploadError) {
           throw new Error(`Failed to upload placeholder: ${uploadError.message}`);
@@ -176,12 +175,11 @@ export const generateThumbnail = schemaTask({
 
           // Upload thumbnail to storage
           logger.info("Uploading thumbnail", { fileId, thumbnailPath });
-          const { error: uploadError } = await storage.client.storage
-            .from(file.bucket)
-            .upload(thumbnailPath, thumbnailBuffer, {
-              contentType: "image/webp",
-              upsert: true,
-            });
+          const { error: uploadError } = await storage.uploadBuffer(
+            thumbnailPath,
+            thumbnailBuffer,
+            { contentType: "image/webp" }
+          );
 
           if (uploadError) {
             throw new Error(`Failed to upload thumbnail: ${uploadError.message}`);
@@ -204,12 +202,11 @@ export const generateThumbnail = schemaTask({
             .webp({ quality: 80 })
             .toBuffer();
             
-          const { error: uploadError } = await storage.client.storage
-            .from(file.bucket)
-            .upload(thumbnailPath, placeholderBuffer, {
-              contentType: "image/webp",
-              upsert: true,
-            });
+          const { error: uploadError } = await storage.uploadBuffer(
+            thumbnailPath,
+            placeholderBuffer,
+            { contentType: "image/webp" }
+          );
 
           if (uploadError) {
             throw new Error(`Failed to upload placeholder: ${uploadError.message}`);

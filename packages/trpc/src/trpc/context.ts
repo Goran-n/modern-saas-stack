@@ -17,6 +17,17 @@ export interface Context {
   headers: Headers;
 }
 
+// Context type for procedures that require authentication
+export interface AuthenticatedContext extends Context {
+  user: User;
+}
+
+// Context type for procedures that require tenant access
+export interface TenantContext extends AuthenticatedContext {
+  tenantId: string;
+  tenant: Tenant;
+}
+
 export async function createContext({
   req,
 }: FetchCreateContextFnOptions): Promise<Context> {

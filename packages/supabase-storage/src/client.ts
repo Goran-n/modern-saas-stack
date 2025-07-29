@@ -57,4 +57,37 @@ export class SupabaseStorageClient {
       return { data: null, error: error as Error };
     }
   }
+
+  async uploadBuffer(
+    path: string, 
+    buffer: Buffer | ArrayBuffer | Blob,
+    options?: { contentType?: string; upsert?: boolean }
+  ): Promise<{ data: { path: string } | null; error: Error | null }> {
+    try {
+      const uploadOptions: any = {
+        upsert: options?.upsert ?? true,
+        cacheControl: "3600",
+      };
+      
+      if (options?.contentType) {
+        uploadOptions.contentType = options.contentType;
+      }
+
+      const { data, error } = await this.client.storage
+        .from(this.bucket)
+        .upload(path, buffer, uploadOptions);
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  }
+
+  getStorageClient() {
+    return this.client.storage;
+  }
 }

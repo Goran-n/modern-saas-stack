@@ -10,10 +10,10 @@
           Join thousands of businesses saving time and money with Figgy
         </p>
         <button class="px-8 py-4 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-floating">
-          Start your free trial
+          Get Started
         </button>
         <p class="mt-4 text-sm text-primary-100">
-          No credit card required • 14 days free
+          Join thousands of businesses automating with Figgy
         </p>
       </div>
     </div>

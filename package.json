@@ -40,8 +40,8 @@
     "db:migrate": "doppler run -- drizzle-kit migrate",
     "db:studio": "doppler run -- drizzle-kit studio",
     "db:seed": "turbo run db:seed --filter @figgy/api",
-    "dev:cleanup": "bun scripts/cleanup-dev.ts",
-    "dev:clean": "bun scripts/cleanup-dev.ts",
+    "dev:cleanup": "bun dev-scripts/cleanup-dev.ts",
+    "dev:clean": "bun dev-scripts/cleanup-dev.ts",
     "enrich": "bun run scripts/enrich-suppliers.ts",
     "thumbnails:check": "cd packages/file-manager && bun run thumbnails:check",
     "thumbnails:generate": "cd packages/file-manager && bun run thumbnails:generate"

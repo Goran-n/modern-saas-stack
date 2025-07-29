@@ -42,7 +42,7 @@
             </li>
           </ul>
           <button class="w-full py-3 px-6 rounded-lg bg-neutral-100 text-neutral-700 font-medium hover:bg-neutral-200 transition-colors">
-            Start free trial
+            Get Started
           </button>
         </div>
 
@@ -90,7 +90,7 @@
             </li>
           </ul>
           <button class="w-full py-3 px-6 rounded-lg bg-secondary-500 text-white font-medium hover:bg-secondary-600 transition-all transform hover:scale-105 shadow-floating">
-            Start free trial
+            Get Started
           </button>
         </div>
 
@@ -143,11 +143,11 @@
           </div>
           <div class="flex items-center justify-center space-x-3">
             <Icon name="heroicons:clock" class="w-5 h-5 text-primary-500" />
-            <span class="text-neutral-700">14-day free trial</span>
+            <span class="text-neutral-700">Full feature access</span>
           </div>
           <div class="flex items-center justify-center space-x-3">
             <Icon name="heroicons:credit-card" class="w-5 h-5 text-primary-500" />
-            <span class="text-neutral-700">No credit card required</span>
+            <span class="text-neutral-700">Cancel anytime</span>
           </div>
         </div>
       </div>

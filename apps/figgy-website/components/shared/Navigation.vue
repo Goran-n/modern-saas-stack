@@ -40,7 +40,7 @@
             href="/auth/signup" 
             class="inline-flex items-center px-4 py-2 rounded-lg bg-secondary-500 text-white font-medium hover:bg-secondary-600 transition-colors shadow-subtle"
           >
-            Get Started Free
+            Get Started
           </a>
         </div>
 
@@ -76,7 +76,7 @@
             Sign In
           </a>
           <a href="/auth/signup" class="block px-3 py-2 bg-secondary-500 text-white text-center rounded-lg font-medium hover:bg-secondary-600">
-            Get Started Free
+            Get Started
           </a>
         </div>
       </div>

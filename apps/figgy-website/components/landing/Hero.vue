@@ -38,12 +38,12 @@
             />
           </div>
           <button class="w-full sm:w-auto px-8 py-4 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-floating">
-            Start Free Trial
+            Get Started
           </button>
         </div>
 
         <p class="text-sm text-neutral-500">
-          No credit card required • 14-day free trial • Cancel anytime
+          Join thousands of businesses automating their bookkeeping
         </p>
 
         <!-- Stats -->

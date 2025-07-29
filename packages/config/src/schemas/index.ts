@@ -5,6 +5,7 @@ export * from "./auth";
 export * from "./base";
 export * from "./communication";
 export * from "./database";
+export * from "./email";
 export * from "./external-services";
 export * from "./portkey";
 export * from "./slack";
@@ -17,6 +18,7 @@ import { authSchema } from "./auth";
 import { baseSchema } from "./base";
 import { communicationServiceSchema } from "./communication";
 import { databaseSchema } from "./database";
+import { emailSchema } from "./email";
 import { externalServicesSchema } from "./external-services";
 import { portkeySchema } from "./portkey";
 import { slackSchema } from "./slack";
@@ -33,6 +35,7 @@ export const fullConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(supabaseSchema)
   .merge(authSchema)
+  .merge(emailSchema)
   .merge(webSchema)
   .merge(triggerSchema)
   .merge(portkeySchema)
@@ -70,7 +73,8 @@ export const webAppConfigSchema = baseSchema
  */
 export const tenantConfigSchema = baseSchema
   .merge(databaseSchema)
-  .merge(authSchema);
+  .merge(authSchema)
+  .merge(emailSchema.partial());
 
 /**
  * Communication service specific configuration schema

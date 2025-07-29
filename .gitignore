@@ -49,6 +49,17 @@ coverage/
 # Dependency directories
 jspm_packages/
 
+# Nuxt/Next output directories
+.output/
+**/.output/
+
+# Browser extension build outputs  
+apps/browser-extension/.output/
+
+# Package-specific node_modules (should not be in git)
+packages/*/node_modules/
+apps/*/node_modules/
+
 # Optional npm cache directory
 .npm
 
@@ -67,9 +78,9 @@ jspm_packages/
 # Turbo
 .turbo/
 
-# Trigger.dev temporary files
-.trigger/tmp/
-**/.trigger/tmp/
+# Trigger.dev temporary files and build artifacts
+.trigger/
+**/.trigger/
 
 # Bun
 .bun/

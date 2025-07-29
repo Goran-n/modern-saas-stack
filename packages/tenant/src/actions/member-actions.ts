@@ -1,9 +1,12 @@
+import { getConfig } from "@figgy/config";
+import type { EmailService } from "@figgy/email";
 import {
   and,
   eq,
   invitations,
   isNull,
   tenantMembers,
+  tenants,
   users,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils/logger";
@@ -29,6 +32,7 @@ const logger = createLogger("member-actions");
 
 export async function inviteMember(
   input: InviteMemberInput,
+  emailService?: EmailService,
 ): Promise<Invitation> {
   const validated = inviteMemberSchema.parse(input);
 
@@ -83,6 +87,49 @@ export async function inviteMember(
   }
 
   logger.info("Invitation created", { invitationId: invitation.id });
+
+  // Send invitation email if email service is provided
+  if (emailService) {
+    try {
+      // Get tenant details for the email
+      const [tenant] = await db
+        .select()
+        .from(tenants)
+        .where(eq(tenants.id, validated.tenantId))
+        .limit(1);
+
+      // Get inviter details
+      const [inviter] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, validated.invitedBy))
+        .limit(1);
+
+      if (tenant && inviter) {
+        const config = getConfig().get();
+        const invitationBaseUrl = config.INVITATION_BASE_URL || config.BASE_URL;
+        
+        await emailService.sendInvitation({
+          to: validated.email,
+          inviterName: inviter.name,
+          tenantName: tenant.name,
+          invitationLink: `${invitationBaseUrl}/auth/accept-invite?token=${invitation.token}`,
+          expiresAt: invitation.expiresAt,
+        });
+        
+        logger.info("Invitation email sent", {
+          invitationId: invitation.id,
+          email: validated.email,
+        });
+      }
+    } catch (error) {
+      // Log error but don't fail the invitation
+      logger.error("Failed to send invitation email", {
+        error,
+        invitationId: invitation.id,
+      });
+    }
+  }
 
   return invitation;
 }

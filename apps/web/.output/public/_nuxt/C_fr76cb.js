@@ -1,1 +1,0 @@
-import{F as defineNuxtRouteMiddleware,a as useSupabaseUser,n as navigateTo}from"./BGn8T2aB.js";import"./BRSJK7Xo.js";const auth=defineNuxtRouteMiddleware(to=>{const user=useSupabaseUser();if(!to.path.startsWith("/auth")&&!user.value)return navigateTo("/auth/login")});export{auth as default};
