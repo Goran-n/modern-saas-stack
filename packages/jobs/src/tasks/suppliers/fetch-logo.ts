@@ -25,10 +25,10 @@ class RateLimiter {
   async waitIfNeeded(): Promise<void> {
     const now = Date.now();
     const oneMinuteAgo = now - 60000;
-    
+
     // Clean up old request times
-    this.requestTimes = this.requestTimes.filter(time => time > oneMinuteAgo);
-    
+    this.requestTimes = this.requestTimes.filter((time) => time > oneMinuteAgo);
+
     // Check if we're at the rate limit
     if (this.requestTimes.length >= RATE_LIMIT_CONFIG.maxRequestsPerMinute) {
       const oldestRequest = this.requestTimes[0];
@@ -36,29 +36,31 @@ class RateLimiter {
         throw new Error("Unexpected undefined oldest request");
       }
       const waitTime = Math.max(0, oldestRequest + 60000 - now);
-      
+
       logger.info("Rate limit reached, waiting", {
         waitTimeMs: waitTime,
         requestsInWindow: this.requestTimes.length,
       });
-      
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
-    
+
     // Add current request time
     this.requestTimes.push(now);
-    
+
     // Apply delay
-    await new Promise(resolve => setTimeout(resolve, this.currentDelay));
+    await new Promise((resolve) => setTimeout(resolve, this.currentDelay));
   }
 
   increaseDelay(): void {
     this.currentDelay = Math.min(
       this.currentDelay * RATE_LIMIT_CONFIG.backoffMultiplier,
-      RATE_LIMIT_CONFIG.maxDelayMs
+      RATE_LIMIT_CONFIG.maxDelayMs,
     );
-    
-    logger.info("Increased rate limit delay", { newDelayMs: this.currentDelay });
+
+    logger.info("Increased rate limit delay", {
+      newDelayMs: this.currentDelay,
+    });
   }
 
   resetDelay(): void {
@@ -71,7 +73,7 @@ export const fetchLogo = task({
   maxDuration: 300, // 5 minutes
   run: async (payload: { globalSupplierIds: string[] }) => {
     const { globalSupplierIds } = payload;
-    
+
     if (!globalSupplierIds || globalSupplierIds.length === 0) {
       logger.warn("No supplier IDs provided for logo fetch");
       return {
@@ -88,8 +90,8 @@ export const fetchLogo = task({
     const logoService = new LogoService();
     const rateLimiter = new RateLimiter();
 
-    logger.info("Starting logo fetch task", { 
-      supplierCount: globalSupplierIds.length 
+    logger.info("Starting logo fetch task", {
+      supplierCount: globalSupplierIds.length,
     });
 
     const results = {
@@ -118,15 +120,17 @@ export const fetchLogo = task({
       for (const supplier of suppliers) {
         try {
           // Check if logo fetch is needed
-          if (!logoService.needsRefresh(
-            supplier.logoFetchedAt,
-            supplier.logoFetchStatus,
-            supplier.logoFetchAttempts,
-          )) {
+          if (
+            !logoService.needsRefresh(
+              supplier.logoFetchedAt,
+              supplier.logoFetchStatus,
+              0, // logoFetchAttempts column doesn't exist
+            )
+          ) {
             logger.debug("Logo fetch not needed", {
               globalSupplierId: supplier.id,
               status: supplier.logoFetchStatus,
-              attempts: supplier.logoFetchAttempts,
+              attempts: 0,
             });
             results.skipped++;
             detailedResults.push({
@@ -143,7 +147,7 @@ export const fetchLogo = task({
               globalSupplierId: supplier.id,
               name: supplier.canonicalName,
             });
-            
+
             // Update status to indicate no domain
             await db
               .update(globalSuppliers)
@@ -185,7 +189,10 @@ export const fetchLogo = task({
               status: "not_found",
               error: result.error,
             });
-          } else if (result.error === "Rate limit exceeded" || result.error?.includes("429")) {
+          } else if (
+            result.error === "Rate limit exceeded" ||
+            result.error?.includes("429")
+          ) {
             results.rateLimited++;
             detailedResults.push({
               globalSupplierId: supplier.id,
@@ -194,11 +201,12 @@ export const fetchLogo = task({
             });
             // Increase delay on rate limit
             rateLimiter.increaseDelay();
-            
+
             // Continue processing with backoff instead of stopping
             logger.warn("Rate limit hit, continuing with backoff", {
               currentDelay: rateLimiter.getCurrentDelay,
-              remainingSuppliers: suppliers.length - suppliers.indexOf(supplier) - 1,
+              remainingSuppliers:
+                suppliers.length - suppliers.indexOf(supplier) - 1,
             });
           } else {
             results.failed++;
@@ -226,9 +234,9 @@ export const fetchLogo = task({
       }
 
       // Handle missing suppliers
-      const foundIds = new Set(suppliers.map(s => s.id));
-      const missingIds = globalSupplierIds.filter(id => !foundIds.has(id));
-      
+      const foundIds = new Set(suppliers.map((s) => s.id));
+      const missingIds = globalSupplierIds.filter((id) => !foundIds.has(id));
+
       if (missingIds.length > 0) {
         logger.warn("Some supplier IDs were not found", { missingIds });
         for (const id of missingIds) {
@@ -252,17 +260,43 @@ export const fetchLogo = task({
           requests_made: results.success + results.notFound + results.failed,
           successful_fetches: results.success,
           cost_estimate: `$${((results.success + results.notFound + results.failed) * 0.001).toFixed(3)}`, // Assuming $0.001 per request
-        }
+        },
       });
 
+      // Consider the job failed if all items failed
+      const success =
+        results.success > 0 ||
+        results.notFound > 0 ||
+        results.skipped > 0 ||
+        (results.failed === 0 &&
+          results.rateLimited === 0 &&
+          suppliers.length === 0);
+
+      if (!success) {
+        const errorMessage = `Logo fetch failed for all ${results.failed + results.rateLimited} supplier(s)`;
+        logger.error(errorMessage, {
+          stats: results,
+          failedSuppliers: detailedResults.filter(
+            (r) =>
+              r.status === "failed" ||
+              r.status === "error" ||
+              r.status === "rate_limited",
+          ),
+        });
+        throw new Error(errorMessage);
+      }
+
       return {
-        success: true,
+        success,
         processed: suppliers.length,
         stats: results,
         results: detailedResults,
       };
     } catch (error) {
-      logger.error("Logo fetch task failed", { error });
+      logger.error("Logo fetch task failed", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   },

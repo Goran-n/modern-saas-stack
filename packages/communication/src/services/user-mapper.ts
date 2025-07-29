@@ -214,9 +214,9 @@ export class UserMapperService {
 
     // Add + prefix if not present
     if (!phoneNumber.startsWith("+")) {
-      cleaned = "+" + cleaned;
+      cleaned = `+${cleaned}`;
     } else {
-      cleaned = "+" + cleaned;
+      cleaned = `+${cleaned}`;
     }
 
     return cleaned;

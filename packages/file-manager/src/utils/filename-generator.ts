@@ -60,10 +60,10 @@ export function generateDescriptiveFileName(options: FileNameOptions): string {
   if (docDate) {
     try {
       const date = new Date(docDate);
-      if (!isNaN(date.getTime())) {
+      if (!Number.isNaN(date.getTime())) {
         parts.push(format(date, "yyyy-MM-dd"));
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore date parsing errors
     }
   }
@@ -77,7 +77,7 @@ export function generateDescriptiveFileName(options: FileNameOptions): string {
     const amount = extractedFields.totalAmount?.value;
     const currency = extractedFields.currency?.value || "GBP";
 
-    if (amount && !isNaN(parseFloat(amount))) {
+    if (amount && !Number.isNaN(parseFloat(amount))) {
       const formattedAmount = parseFloat(amount).toFixed(2);
       parts.push(`${currency}${formattedAmount}`);
     }
@@ -150,10 +150,10 @@ export function generateDisplayName(options: FileNameOptions): string {
   if (docDate) {
     try {
       const date = new Date(docDate);
-      if (!isNaN(date.getTime())) {
+      if (!Number.isNaN(date.getTime())) {
         parts.push(format(date, "d MMM yyyy"));
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore date parsing errors
     }
   }

@@ -1,3 +1,4 @@
+import * as searchOps from "@figgy/search";
 import { and, eq, supplierAttributes, suppliers } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { getDb } from "../db";
@@ -59,6 +60,32 @@ export class SupplierService {
         name: supplier.displayName,
         tenantId,
       });
+
+      // Index supplier in search
+      try {
+        const indexData: Parameters<typeof searchOps.indexSupplier>[0] = {
+          id: supplier.id,
+          tenantId: supplier.tenantId,
+          displayName: supplier.displayName,
+          legalName: supplier.legalName,
+          createdAt: supplier.createdAt,
+        };
+
+        if (supplier.companyNumber) {
+          indexData.companyNumber = supplier.companyNumber;
+        }
+
+        if (supplier.vatNumber) {
+          indexData.vatNumber = supplier.vatNumber;
+        }
+
+        await searchOps.indexSupplier(indexData);
+      } catch (error) {
+        logger.error("Failed to index supplier in search", {
+          supplierId: supplier.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
 
       return supplier;
     } catch (error: any) {
@@ -140,6 +167,16 @@ export class SupplierService {
         updatedAt: new Date(),
       })
       .where(eq(suppliers.id, supplierId));
+
+    // Remove from search index
+    try {
+      await searchOps.removeSupplier(supplierId, tenantId);
+    } catch (error) {
+      logger.error("Failed to remove supplier from search", {
+        supplierId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     logger.info("Soft deleted supplier", {
       supplierId,

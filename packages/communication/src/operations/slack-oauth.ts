@@ -131,7 +131,7 @@ export async function completeSlackOAuth(
 
     logger.info("Exchanging code for access token", {
       clientId: config.SLACK_CLIENT_ID,
-      codePrefix: code.substring(0, 20) + "...",
+      codePrefix: `${code.substring(0, 20)}...`,
       redirectUri,
     });
 
@@ -265,7 +265,7 @@ export async function completeSlackOAuth(
     logger.error("Failed to complete Slack OAuth", {
       error: error instanceof Error ? error.message : String(error),
       errorStack: error instanceof Error ? error.stack : undefined,
-      code: code.substring(0, 10) + "...",
+      code: `${code.substring(0, 10)}...`,
       tenantId,
       clientIdLength: config.SLACK_CLIENT_ID?.length,
       hasClientSecret: !!config.SLACK_CLIENT_SECRET,

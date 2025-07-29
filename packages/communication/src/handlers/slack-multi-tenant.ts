@@ -29,8 +29,9 @@ export async function handleSlackMultiTenantWebhook(
     }
 
     // Parse webhook payload
-    const parseResult = SlackMessageHandler.parseWebhookPayloadWithResult(payload);
-    
+    const parseResult =
+      SlackMessageHandler.parseWebhookPayloadWithResult(payload);
+
     // Handle skipped messages (like bot messages)
     if (parseResult.skipped) {
       logger.info("Slack message skipped", {
@@ -45,7 +46,7 @@ export async function handleSlackMultiTenantWebhook(
         },
       };
     }
-    
+
     const messagePayload = parseResult.payload;
     if (!messagePayload) {
       return {
@@ -54,7 +55,7 @@ export async function handleSlackMultiTenantWebhook(
       };
     }
 
-    // Note: Duplicate detection is now handled atomically in storeMessage() 
+    // Note: Duplicate detection is now handled atomically in storeMessage()
     // via database upsert, eliminating race conditions
 
     workspaceId = messagePayload.metadata?.workspaceId as string;
@@ -100,6 +101,11 @@ export async function handleSlackMultiTenantWebhook(
       slackUserId,
       workspaceId,
     );
+
+    // Declare authentication variables at outer scope
+    let authenticated: boolean;
+    let tenantId: string | undefined;
+    let userId: string | undefined;
 
     // If no tenants, try auto-linking by email first
     if (availableTenants.length === 0) {
@@ -160,9 +166,9 @@ export async function handleSlackMultiTenantWebhook(
         }
 
         // Set authenticated and tenantId for the rest of the flow
-        var authenticated = authResult.authenticated;
-        var tenantId = authResult.tenantId;
-        var userId = authResult.userId;
+        authenticated = authResult.authenticated;
+        tenantId = authResult.tenantId;
+        userId = authResult.userId;
       } else {
         // Auto-linking failed, return setup message
         return setupResult;
@@ -194,9 +200,9 @@ export async function handleSlackMultiTenantWebhook(
         };
       }
 
-      var authenticated = authResult.authenticated;
-      var tenantId = authResult.tenantId;
-      var userId = authResult.userId;
+      authenticated = authResult.authenticated;
+      tenantId = authResult.tenantId;
+      userId = authResult.userId;
     }
 
     // Variables should be defined from either branch above

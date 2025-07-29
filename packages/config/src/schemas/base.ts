@@ -39,6 +39,52 @@ export const baseSchema = z.object({
    * @example "http://localhost:5001" or "https://api.yourdomain.com"
    */
   BASE_URL: z.string().url().min(1, "BASE_URL is required"),
+  
+  /**
+   * JWT secret key (also used for encryption)
+   * @required
+   * @minimum 32 characters
+   */
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 characters for security"),
+  
+  /**
+   * Google OAuth Client ID for Gmail integration
+   * @optional
+   */
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  
+  /**
+   * Google OAuth Client Secret for Gmail integration
+   * @optional
+   */
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  
+  /**
+   * Google Pub/Sub topic for Gmail push notifications
+   * @optional
+   * @example "projects/your-project/topics/gmail-push"
+   */
+  GOOGLE_PUBSUB_TOPIC: z.string().optional(),
+  
+  /**
+   * Microsoft Azure AD Client ID for Outlook integration
+   * @optional
+   */
+  MICROSOFT_CLIENT_ID: z.string().optional(),
+  
+  /**
+   * Microsoft Azure AD Client Secret for Outlook integration
+   * @optional
+   */
+  MICROSOFT_CLIENT_SECRET: z.string().optional(),
+  
+  /**
+   * Microsoft Azure AD Tenant ID for Outlook integration
+   * @optional
+   */
+  MICROSOFT_TENANT_ID: z.string().optional(),
 });
 
 export type BaseConfig = z.infer<typeof baseSchema>;

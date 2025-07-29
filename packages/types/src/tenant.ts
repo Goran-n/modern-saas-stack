@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Tenant schemas
 export const TenantSchema = z.object({
@@ -14,7 +14,7 @@ export const UserTenantSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   tenantId: z.string().uuid(),
-  role: z.enum(['owner', 'admin', 'member']),
+  role: z.enum(["owner", "admin", "member"]),
   lastAccessAt: z.date(),
   createdAt: z.date(),
   tenant: TenantSchema,
@@ -23,4 +23,4 @@ export const UserTenantSchema = z.object({
 // Type exports
 export type Tenant = z.infer<typeof TenantSchema>;
 export type UserTenant = z.infer<typeof UserTenantSchema>;
-export type TenantRole = UserTenant['role'];
+export type TenantRole = UserTenant["role"];

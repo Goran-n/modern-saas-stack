@@ -87,7 +87,7 @@ export async function processNaturalQuery(
       intent: parsedQuery.intent,
       confidence: parsedQuery.confidence,
       entities: Object.keys(parsedQuery.entities),
-      query: query.length > 100 ? query.substring(0, 100) + "..." : query,
+      query: query.length > 100 ? `${query.substring(0, 100)}...` : query,
     });
 
     // Handle conversational intents without database queries
@@ -99,7 +99,7 @@ export async function processNaturalQuery(
       logger.info("STEP 5: Detected conversational intent - handling locally", {
         intent: parsedQuery.intent,
         confidence: parsedQuery.confidence,
-        query: query.length > 50 ? query.substring(0, 50) + "..." : query,
+        query: query.length > 50 ? `${query.substring(0, 50)}...` : query,
       });
 
       const response = handleConversationalIntent(
@@ -208,7 +208,7 @@ export async function processNaturalQuery(
     logError(logger, "Failed to process natural language query", error, {
       nlqErrorCode: nlqError.code,
       nlqUserMessage: nlqError.userFriendlyMessage,
-      query: query.length > 200 ? query.substring(0, 200) + "..." : query,
+      query: query.length > 200 ? `${query.substring(0, 200)}...` : query,
       tenantId,
       userId,
       platform,
@@ -582,8 +582,6 @@ function handleConversationalIntent(
           "I can help you find financial documents like invoices and receipts. Try asking for specific vendors or date ranges, like 'Show me invoices from this month'.";
       }
       break;
-
-    case "unknown":
     default:
       responseText =
         "I'm not sure I understand. I can help you find files, check document status, or search for invoices and receipts. What would you like to look for?";

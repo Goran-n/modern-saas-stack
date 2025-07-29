@@ -17,7 +17,7 @@ export default defineConfig({
   },
   dirs: ["./src/tasks"],
   build: {
-    external: [],
+    external: ["sharp"],
     // Ensure proper ESM handling
     conditions: ["import", "node"],
   },

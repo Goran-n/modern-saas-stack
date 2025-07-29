@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full max-w-2xl">
+  <div class="relative w-full max-w-xl">
     <FigInput
       v-model="internalValue"
       :size="size"
@@ -10,8 +10,8 @@
       @input="handleInput"
     >
       <template #leading>
-        <FigIcon 
-          name="i-heroicons-magnifying-glass" 
+        <Icon 
+          name="heroicons:magnifying-glass" 
           class="h-5 w-5 text-neutral-400" 
         />
       </template>
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { FigInput, FigIcon } from '@figgy/ui'
+import { FigInput } from '@figgy/ui'
 import { useDebounceFn } from '@vueuse/core'
 
 interface Props {

@@ -2,7 +2,6 @@
  * Domain extraction and normalisation utilities
  */
 
-
 /**
  * Extract domain from email address
  */
@@ -138,12 +137,14 @@ export function extractDomainsFromSupplier(data: {
 
   // Remove duplicates and sort by reliability (websites first, then email domains)
   const uniqueDomains = [...new Set(domains)];
-  
+
   // Sort to prioritize website domains over email domains
   return uniqueDomains.sort((a, b) => {
-    const aFromWebsite = data.website && extractDomainFromUrl(data.website) === a;
-    const bFromWebsite = data.website && extractDomainFromUrl(data.website) === b;
-    
+    const aFromWebsite =
+      data.website && extractDomainFromUrl(data.website) === a;
+    const bFromWebsite =
+      data.website && extractDomainFromUrl(data.website) === b;
+
     if (aFromWebsite && !bFromWebsite) return -1;
     if (!aFromWebsite && bFromWebsite) return 1;
     return 0;

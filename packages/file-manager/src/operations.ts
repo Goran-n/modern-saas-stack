@@ -1,6 +1,7 @@
 import { getConfig } from "@figgy/config";
 import { DeduplicationService, HashUtils } from "@figgy/deduplication";
-import type { CategorizeFilePayload } from "@figgy/jobs";
+import type { CategorizeFilePayload } from "@figgy/types";
+import * as searchOps from "@figgy/search";
 import {
   and,
   desc,
@@ -10,6 +11,7 @@ import {
   globalSuppliers,
   gte,
   inArray,
+  ne,
   sql,
   suppliers,
 } from "@figgy/shared-db";
@@ -103,20 +105,55 @@ export async function uploadFile(
     tenantId: input.tenantId,
   });
 
+  // Index file in search
+  try {
+    const indexData: Parameters<typeof searchOps.indexFile>[0] = {
+      id: record.id,
+      tenantId: record.tenantId,
+      fileName: record.fileName,
+      mimeType: record.mimeType,
+      createdAt: record.createdAt,
+    };
+
+    if (input.metadata?.supplierName) {
+      indexData.supplierName = input.metadata.supplierName as string;
+    }
+
+    if (input.metadata?.category) {
+      indexData.category = input.metadata.category as string;
+    }
+
+    if (record.fileSize) {
+      indexData.size = record.fileSize;
+    }
+
+    await searchOps.indexFile(indexData);
+  } catch (error) {
+    logger.error("Failed to index file in search", {
+      fileId: record.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Don't throw - file is already uploaded successfully
+  }
+
   // Trigger categorization job with tenant-based concurrency control
   try {
-    await tasks.trigger("categorize-file", {
-      fileId: record.id,
-      tenantId: record.tenantId,
-      mimeType: record.mimeType,
-      size: record.size,
-      pathTokens: record.pathTokens,
-      source: record.source,
-    } satisfies CategorizeFilePayload, {
-      queue: {
-        name: `tenant-${record.tenantId}`,
+    await tasks.trigger(
+      "categorize-file",
+      {
+        fileId: record.id,
+        tenantId: record.tenantId,
+        mimeType: record.mimeType,
+        size: record.size,
+        pathTokens: record.pathTokens,
+        source: record.source,
+      } satisfies CategorizeFilePayload,
+      {
+        queue: {
+          name: `tenant-${record.tenantId}`,
+        },
       },
-    });
+    );
 
     logger.info("File categorization job triggered with concurrency control", {
       fileId: record.id,
@@ -131,6 +168,36 @@ export async function uploadFile(
       stack: error instanceof Error ? error.stack : undefined,
     });
     // Don't throw - file is already uploaded successfully
+  }
+
+  // Trigger thumbnail generation for PDFs
+  if (record.mimeType === "application/pdf") {
+    try {
+      await tasks.trigger(
+        "generate-thumbnail",
+        {
+          fileId: record.id,
+          tenantId: record.tenantId,
+          mimeType: record.mimeType,
+        },
+        {
+          queue: {
+            name: `thumbnail-${record.tenantId}`,
+          },
+        },
+      );
+
+      logger.info("Thumbnail generation job triggered", {
+        fileId: record.id,
+        tenantId: record.tenantId,
+      });
+    } catch (error) {
+      logger.error("Failed to trigger thumbnail generation", {
+        fileId: record.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Don't throw - thumbnail is non-critical
+    }
   }
 
   return record.id;
@@ -157,7 +224,7 @@ export async function uploadFileFromBase64(input: {
   mimeType: string;
   createdAt: Date;
 }> {
-  const sanitisedFileName = input.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const sanitisedFileName = stripSpecialCharacters(input.fileName);
   const timestamp = Date.now();
   const fileName = `${timestamp}_${sanitisedFileName}`;
   const pathTokens = [input.tenantId, input.uploadedBy, fileName];
@@ -319,18 +386,22 @@ export async function uploadFileFromBase64(input: {
 
   // Trigger categorization job with tenant-based concurrency control
   try {
-    await tasks.trigger("categorize-file", {
-      fileId: fileRecord.id,
-      tenantId: fileRecord.tenantId,
-      mimeType: fileRecord.mimeType,
-      size: fileRecord.size,
-      pathTokens: fileRecord.pathTokens,
-      source: fileRecord.source,
-    } satisfies CategorizeFilePayload, {
-      queue: {
-        name: `tenant-${fileRecord.tenantId}`,
+    await tasks.trigger(
+      "categorize-file",
+      {
+        fileId: fileRecord.id,
+        tenantId: fileRecord.tenantId,
+        mimeType: fileRecord.mimeType,
+        size: fileRecord.size,
+        pathTokens: fileRecord.pathTokens,
+        source: fileRecord.source,
+      } satisfies CategorizeFilePayload,
+      {
+        queue: {
+          name: `tenant-${fileRecord.tenantId}`,
+        },
       },
-    });
+    );
 
     logger.info("File categorization job triggered with concurrency control", {
       fileId: fileRecord.id,
@@ -342,6 +413,36 @@ export async function uploadFileFromBase64(input: {
       error: error instanceof Error ? error.message : String(error),
     });
     // Don't throw - file is already uploaded successfully
+  }
+
+  // Trigger thumbnail generation for PDFs
+  if (fileRecord.mimeType === "application/pdf") {
+    try {
+      await tasks.trigger(
+        "generate-thumbnail",
+        {
+          fileId: fileRecord.id,
+          tenantId: fileRecord.tenantId,
+          mimeType: fileRecord.mimeType,
+        },
+        {
+          queue: {
+            name: `thumbnail-${fileRecord.tenantId}`,
+          },
+        },
+      );
+
+      logger.info("Thumbnail generation job triggered", {
+        fileId: fileRecord.id,
+        tenantId: fileRecord.tenantId,
+      });
+    } catch (error) {
+      logger.error("Failed to trigger thumbnail generation", {
+        fileId: fileRecord.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Don't throw - thumbnail is non-critical
+    }
   }
 
   return {
@@ -924,13 +1025,55 @@ export async function reprocessFile(
 
   // Check if file is already being processed
   if (file.processingStatus === "processing") {
-    logger.warn("File is already being processed", { fileId, tenantId });
-    throw new Error("File is already being processed");
+    // Check if the file has been stuck in processing for more than 5 minutes
+    const processingTimeout = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const timeSinceLastUpdate = Date.now() - file.updatedAt.getTime();
+    
+    if (timeSinceLastUpdate < processingTimeout) {
+      logger.warn("File is already being processed", { 
+        fileId, 
+        tenantId,
+        timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000) + "s"
+      });
+      throw new Error("File is already being processed");
+    }
+    
+    // File has been stuck for too long, allow reprocessing
+    logger.warn("File stuck in processing state, allowing reprocess", { 
+      fileId, 
+      tenantId,
+      timeSinceLastUpdate: Math.round(timeSinceLastUpdate / 1000) + "s",
+      lastUpdated: file.updatedAt.toISOString()
+    });
   }
 
   // Clean up existing data and reset status in a transaction
   await db.transaction(async (tx) => {
-    // Delete existing document extractions
+    // First, clear any references to extractions that will be deleted
+    await tx
+      .update(documentExtractions)
+      .set({ duplicateCandidateId: null })
+      .where(
+        and(
+          eq(documentExtractions.fileId, fileId),
+          ne(documentExtractions.duplicateCandidateId, sql`NULL`),
+        ),
+      );
+
+    // Also clear references FROM other extractions TO this file's extractions
+    const fileExtractions = await tx
+      .select({ id: documentExtractions.id })
+      .from(documentExtractions)
+      .where(eq(documentExtractions.fileId, fileId));
+
+    for (const extraction of fileExtractions) {
+      await tx
+        .update(documentExtractions)
+        .set({ duplicateCandidateId: null })
+        .where(eq(documentExtractions.duplicateCandidateId, extraction.id));
+    }
+
+    // Now safe to delete existing document extractions
     await tx
       .delete(documentExtractions)
       .where(eq(documentExtractions.fileId, fileId));
@@ -962,18 +1105,22 @@ export async function reprocessFile(
   });
 
   // Trigger new categorization job with tenant-based concurrency control
-  const jobHandle = await tasks.trigger("categorize-file", {
-    fileId: file.id,
-    tenantId: file.tenantId,
-    mimeType: file.mimeType,
-    size: file.size,
-    pathTokens: file.pathTokens,
-    source: file.source,
-  } satisfies CategorizeFilePayload, {
-    queue: {
-      name: `tenant-${file.tenantId}`,
+  const jobHandle = await tasks.trigger(
+    "categorize-file",
+    {
+      fileId: file.id,
+      tenantId: file.tenantId,
+      mimeType: file.mimeType,
+      size: file.size,
+      pathTokens: file.pathTokens,
+      source: file.source,
+    } satisfies CategorizeFilePayload,
+    {
+      queue: {
+        name: `tenant-${file.tenantId}`,
+      },
     },
-  });
+  );
 
   logger.info("Triggered file reprocessing job with concurrency control", {
     fileId,
@@ -988,7 +1135,89 @@ export async function reprocessFile(
 }
 
 /**
+ * Check and fix orphaned files stuck in processing state
+ * @param tenantId - Tenant ID
+ * @param timeoutMinutes - Minutes after which a file is considered orphaned (default: 5)
+ * @returns Promise resolving to list of fixed file IDs
+ */
+export async function fixOrphanedProcessingFiles(
+  tenantId: string,
+  timeoutMinutes: number = 5,
+): Promise<{
+  fixedFiles: string[];
+  errorFiles: string[];
+}> {
+  logger.info("Checking for orphaned processing files", { tenantId, timeoutMinutes });
+
+  const db = getDb();
+  const timeoutMs = timeoutMinutes * 60 * 1000;
+  const cutoffTime = new Date(Date.now() - timeoutMs);
+
+  // Find files stuck in processing state
+  const orphanedFiles = await db
+    .select({
+      id: files.id,
+      fileName: files.fileName,
+      updatedAt: files.updatedAt,
+    })
+    .from(files)
+    .where(
+      and(
+        eq(files.tenantId, tenantId),
+        eq(files.processingStatus, "processing"),
+        sql`${files.updatedAt} < ${cutoffTime}`,
+      ),
+    );
+
+  logger.info("Found orphaned files", {
+    count: orphanedFiles.length,
+    fileIds: orphanedFiles.map((f) => f.id),
+  });
+
+  const fixedFiles: string[] = [];
+  const errorFiles: string[] = [];
+
+  // Fix each orphaned file
+  for (const file of orphanedFiles) {
+    try {
+      // Reset status to failed with explanation
+      await db
+        .update(files)
+        .set({
+          processingStatus: "failed" as ProcessingStatus,
+          metadata: sql`jsonb_set(
+            COALESCE(${files.metadata}, '{}'::jsonb),
+            '{error}',
+            '"processing_timeout"'::jsonb
+          )`,
+          updatedAt: new Date(),
+        })
+        .where(eq(files.id, file.id));
+
+      fixedFiles.push(file.id);
+      logger.info("Fixed orphaned file", {
+        fileId: file.id,
+        fileName: file.fileName,
+        lastUpdate: file.updatedAt,
+      });
+    } catch (error) {
+      errorFiles.push(file.id);
+      logger.error("Failed to fix orphaned file", {
+        fileId: file.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return {
+    fixedFiles,
+    errorFiles,
+  };
+}
+
+/**
  * Get files grouped by year and supplier
+ * Suppliers are sorted alphabetically within each year for consistent ordering
  * @param tenantId - Tenant ID
  * @returns Promise resolving to grouped file data
  */
@@ -1022,6 +1251,8 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       mimeType: files.mimeType,
       size: files.size,
       processingStatus: files.processingStatus,
+      bucket: files.bucket,
+      thumbnailPath: files.thumbnailPath,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
       extraction: {
@@ -1088,6 +1319,8 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       mimeType: file.mimeType,
       size: file.size,
       processingStatus: file.processingStatus,
+      bucket: file.bucket,
+      thumbnailPath: file.thumbnailPath,
       createdAt: file.createdAt,
       updatedAt: file.updatedAt,
       extraction: file.extraction?.id ? file.extraction : null,
@@ -1096,6 +1329,22 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
     groupedData[year].suppliers[supplierName].files.push(fileData);
     groupedData[year].suppliers[supplierName].fileCount++;
     groupedData[year].totalFiles++;
+  });
+
+  // Sort suppliers alphabetically within each year
+  Object.keys(groupedData).forEach((year) => {
+    const suppliers = groupedData[year].suppliers;
+    const sortedSupplierNames = Object.keys(suppliers).sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase()),
+    );
+
+    // Create new suppliers object with sorted keys
+    const sortedSuppliers: Record<string, any> = {};
+    sortedSupplierNames.forEach((supplierName) => {
+      sortedSuppliers[supplierName] = suppliers[supplierName];
+    });
+
+    groupedData[year].suppliers = sortedSuppliers;
   });
 
   return {
@@ -1191,6 +1440,8 @@ export async function getFilesBySupplierAndYear(
     mimeType: string;
     size: number;
     processingStatus: ProcessingStatus | null;
+    bucket: string;
+    thumbnailPath: string | null;
     createdAt: Date;
     updatedAt: Date;
     extraction: any | null;
@@ -1224,6 +1475,8 @@ export async function getFilesBySupplierAndYear(
       mimeType: files.mimeType,
       size: files.size,
       processingStatus: files.processingStatus,
+      bucket: files.bucket,
+      thumbnailPath: files.thumbnailPath,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
       extraction: {
@@ -1255,6 +1508,8 @@ export async function getFilesBySupplierAndYear(
     mimeType: file.mimeType,
     size: file.size,
     processingStatus: file.processingStatus,
+    bucket: file.bucket,
+    thumbnailPath: file.thumbnailPath,
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
     extraction: file.extraction?.id ? file.extraction : null,

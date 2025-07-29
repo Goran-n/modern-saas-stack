@@ -28,14 +28,14 @@
 
   <!-- Reprocess Confirmation Modal -->
   <molecules-reprocess-modal
-    v-model="fileState.reprocessModal.value.isOpen"
+    v-model="reprocessModalOpen"
     :loading="fileState.reprocessModal.value.isProcessing"
     @confirm="handleReprocess"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import type { FileItem } from '@figgy/types';
 
 interface Props {
@@ -55,6 +55,16 @@ const fileState = useFileState()
 
 // State for keyboard navigation
 const focusedIndex = ref(0)
+
+// Computed property for modal state
+const reprocessModalOpen = computed({
+  get: () => fileState.reprocessModal.value.isOpen,
+  set: (value) => {
+    if (!value) {
+      fileState.closeReprocessModal()
+    }
+  }
+})
 
 // Drag handling
 const handleDragStart = (event: DragEvent, file: FileItem) => {

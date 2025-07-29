@@ -1,0 +1,31 @@
+{
+  "name": "@figgy/website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix ."
+  },
+  "dependencies": {
+    "@figgy/ui": "workspace:*",
+    "@vueuse/nuxt": "^13.6.0",
+    "nuxt": "^4.0.1",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxt/icon": "^1.15.0",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@tailwindcss/vite": "^4.1.11",
+    "jiti": "latest",
+    "tailwindcss": "^4.1.11",
+    "vue-tsc": "^3.0.4"
+  }
+}

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { emailSchema } from "../schemas/email";
+import { externalServicesSchema } from "../schemas/external-services";
 import { portkeySchema } from "../schemas/portkey";
 import { triggerSchema } from "../schemas/trigger";
 import { twilioSchema } from "../schemas/twilio";
@@ -55,6 +57,8 @@ export const testConfigSchema = z
   })
   .merge(triggerSchema.partial()) // Optional for tests
   .merge(portkeySchema.partial()) // Optional for tests
-  .merge(twilioSchema.partial()); // Optional for tests
+  .merge(emailSchema.partial()) // Optional for tests
+  .merge(twilioSchema.partial()) // Optional for tests
+  .merge(externalServicesSchema.partial()); // Optional for tests
 
 export type TestConfig = z.infer<typeof testConfigSchema>;

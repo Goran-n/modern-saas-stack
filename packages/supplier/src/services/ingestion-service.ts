@@ -1,3 +1,4 @@
+import * as searchOps from "@figgy/search";
 import {
   and,
   eq,
@@ -12,7 +13,7 @@ import { getDb } from "../db";
 import { SupplierError } from "../errors";
 import { AttributeNormalizer } from "../ingestion/normalizer";
 import { IngestionValidator } from "../ingestion/validator";
-import { SupplierMatcher, type SupplierMatchData } from "../matching/matcher";
+import { type SupplierMatchData, SupplierMatcher } from "../matching/matcher";
 import {
   AttributeType,
   type SupplierIngestionRequest,
@@ -290,7 +291,7 @@ export class SupplierIngestionService {
           const globalSupplierService = new GlobalSupplierService();
           const globalSupplierId =
             await globalSupplierService.findOrCreateGlobalSupplier(supplier);
-          
+
           if (globalSupplierId) {
             await globalSupplierService.linkToGlobalSupplier(
               supplier.id,
@@ -305,6 +306,33 @@ export class SupplierIngestionService {
             globalSupplierId,
           });
 
+          // Index supplier in search
+          try {
+            const indexData: Parameters<typeof searchOps.indexSupplier>[0] = {
+              id: supplier.id,
+              tenantId: supplier.tenantId,
+              displayName: supplier.displayName,
+              legalName: supplier.legalName,
+              createdAt: supplier.createdAt,
+            };
+
+            if (supplier.companyNumber) {
+              indexData.companyNumber = supplier.companyNumber;
+            }
+
+            if (supplier.vatNumber) {
+              indexData.vatNumber = supplier.vatNumber;
+            }
+
+            await searchOps.indexSupplier(indexData);
+          } catch (error) {
+            logger.error("Failed to index supplier in search", {
+              supplierId: supplier.id,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            // Don't throw - search indexing failure shouldn't fail supplier creation
+          }
+
           return {
             success: true,
             action: "created" as const,
@@ -316,7 +344,9 @@ export class SupplierIngestionService {
         // Trigger logo fetch for newly created global supplier
         if (result.globalSupplierId) {
           const operations = new SupplierOperations();
-          await operations.triggerLogoFetchForGlobalSupplier(result.globalSupplierId);
+          await operations.triggerLogoFetchForGlobalSupplier(
+            result.globalSupplierId,
+          );
         }
 
         return result;

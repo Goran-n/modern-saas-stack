@@ -33,7 +33,7 @@ import { transitions } from '../../../utils/transitions';
 import type { CardProps } from './types';
 
 const props = withDefaults(defineProps<CardProps>(), {
-  variant: 'elevated',
+  variant: 'flat',
   padding: 'md',
   rounded: true,
   headerTag: 'h3',
@@ -47,7 +47,7 @@ const cardClasses = computed(() => {
   // Variant styles
   const variantClasses = {
     flat: 'bg-white',
-    elevated: 'bg-white shadow-sm hover:shadow-md',
+    elevated: 'bg-white shadow-sm',
     outlined: 'bg-white border border-neutral-200',
   };
   

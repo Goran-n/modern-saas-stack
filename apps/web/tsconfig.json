@@ -9,5 +9,9 @@
       "~/*": ["./*"],
       "@/*": ["./*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "../../packages/email/**"
+  ]
 }

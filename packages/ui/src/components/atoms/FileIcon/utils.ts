@@ -20,7 +20,7 @@ const fileIconMap: Record<string, FileIconConfig> = {
     label: "PDF Document",
   },
 
-  // Images  
+  // Images
   jpg: {
     icon: "i-heroicons-photo",
     colorClass: "text-primary-600",
@@ -96,7 +96,13 @@ export const getFileIconConfig = (
  */
 export const isImageFile = (fileName: string, mimeType?: string): boolean => {
   if (mimeType?.startsWith("image/")) {
-    return ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/webp"].includes(mimeType);
+    return [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/svg+xml",
+      "image/webp",
+    ].includes(mimeType);
   }
 
   const extension = getFileExtension(fileName);
@@ -108,7 +114,7 @@ export const isImageFile = (fileName: string, mimeType?: string): boolean => {
  */
 export const isPDFFile = (fileName: string, mimeType?: string): boolean => {
   if (mimeType === "application/pdf") return true;
-  
+
   const extension = getFileExtension(fileName);
   return extension === "pdf";
 };
@@ -116,7 +122,10 @@ export const isPDFFile = (fileName: string, mimeType?: string): boolean => {
 /**
  * Check if file type is supported (images and PDFs only)
  */
-export const isSupportedFile = (fileName: string, mimeType?: string): boolean => {
+export const isSupportedFile = (
+  fileName: string,
+  mimeType?: string,
+): boolean => {
   return isImageFile(fileName, mimeType) || isPDFFile(fileName, mimeType);
 };
 

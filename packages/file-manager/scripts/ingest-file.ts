@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+import { parseArgs } from "node:util";
 import { getConfig } from "@figgy/config";
 import { uploadFile } from "@figgy/file-manager";
 import { createLogger } from "@figgy/utils";
-import { readFile } from "fs/promises";
-import { basename } from "path";
-import { parseArgs } from "util";
 
 const logger = createLogger("ingest-file");
 

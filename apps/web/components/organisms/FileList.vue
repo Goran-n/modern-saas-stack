@@ -18,13 +18,14 @@
 
   <!-- Reprocess Confirmation Modal -->
   <ReprocessModal
-    v-model="fileState.reprocessModal.value.isOpen"
+    v-model="reprocessModalOpen"
     :loading="fileState.reprocessModal.value.isProcessing"
     @confirm="handleReprocess"
   />
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { FileItem } from '@figgy/types';
 
 interface Props {
@@ -37,6 +38,16 @@ defineProps<Props>()
 const fileOperations = useFileOperations()
 const fileState = useFileState()
 const { formatCurrency } = useFileFormatters()
+
+// Computed property for modal state
+const reprocessModalOpen = computed({
+  get: () => fileState.reprocessModal.value.isOpen,
+  set: (value) => {
+    if (!value) {
+      fileState.closeReprocessModal()
+    }
+  }
+})
 
 // Helpers
 const formatAmount = (file: FileItem): string | null => {

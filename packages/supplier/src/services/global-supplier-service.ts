@@ -1,10 +1,4 @@
-import {
-  and,
-  eq,
-  globalSuppliers,
-  isNull,
-  suppliers,
-} from "@figgy/shared-db";
+import { and, eq, globalSuppliers, isNull, suppliers } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { getDb } from "../db";
 import type { Supplier } from "../types";

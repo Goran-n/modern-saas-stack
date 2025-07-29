@@ -1,4 +1,3 @@
-import { trpcServer } from "@hono/trpc-server";
 import {
   completeSlackOAuth,
   generateSlackOAuthUrl,
@@ -14,6 +13,7 @@ import { and, eq, files, getDatabaseConnection } from "@figgy/shared-db";
 import { appRouter, createContext } from "@figgy/trpc";
 import type { SlackWebhookBody } from "@figgy/types";
 import { logError, logger } from "@figgy/utils";
+import { trpcServer } from "@hono/trpc-server";
 import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -116,6 +116,7 @@ export function createHonoApp() {
   app.get("/api/files/proxy/:fileId", async (c) => {
     const fileId = c.req.param("fileId");
     const tenantId = c.req.header("x-tenant-id") || c.req.query("tenantId");
+    const isThumbnail = c.req.query("thumbnail") === "true";
 
     if (!tenantId) {
       return c.json({ error: "Tenant ID required" }, 401);
@@ -136,6 +137,11 @@ export function createHonoApp() {
       }
 
       const file = fileResult[0];
+      
+      // Check if we need to serve thumbnail
+      if (isThumbnail && !file.thumbnailPath) {
+        return c.json({ error: "No thumbnail available" }, 404);
+      }
 
       // Create Supabase client
       const supabase = createClient(
@@ -147,7 +153,10 @@ export function createHonoApp() {
       const storageBucket = config.STORAGE_BUCKET;
 
       // Generate signed URL from Supabase
-      const filePath = file.pathTokens.join("/");
+      const filePath = isThumbnail && file.thumbnailPath 
+        ? file.thumbnailPath 
+        : file.pathTokens.join("/");
+        
       const { data: signedData, error: signedError } = await supabase.storage
         .from(storageBucket)
         .createSignedUrl(filePath, 3600);
@@ -173,9 +182,13 @@ export function createHonoApp() {
       }
 
       // Return file with proper headers for inline display
+      const contentType = isThumbnail 
+        ? "image/webp" 
+        : (file.mimeType || "application/octet-stream");
+        
       return new Response(response.body, {
         headers: {
-          "Content-Type": file.mimeType || "application/octet-stream",
+          "Content-Type": contentType,
           "Content-Disposition": "inline",
           "Cache-Control": "private, max-age=3600",
         },
@@ -190,18 +203,18 @@ export function createHonoApp() {
   app.get("/test/trigger", async (c) => {
     try {
       const { tasks } = await import("@trigger.dev/sdk/v3");
-      
+
       logger.info("Testing Trigger.dev", {
-        tasksAvailable: typeof tasks !== 'undefined',
-        triggerMethodExists: typeof tasks?.trigger === 'function',
+        tasksAvailable: typeof tasks !== "undefined",
+        triggerMethodExists: typeof tasks?.trigger === "function",
       });
-      
+
       // Try to trigger a test job
       const testIds = ["test-global-supplier-1", "test-global-supplier-2"];
       const result = await tasks.trigger("fetch-logo", {
         globalSupplierIds: testIds,
       });
-      
+
       return c.json({
         success: true,
         jobId: result.id,
@@ -210,17 +223,23 @@ export function createHonoApp() {
       });
     } catch (error) {
       logger.error("Test trigger failed", {
-        error: error instanceof Error ? {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        } : error,
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+              }
+            : error,
       });
-      
-      return c.json({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }, 500);
+
+      return c.json(
+        {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        500,
+      );
     }
   });
 
@@ -236,7 +255,9 @@ export function createHonoApp() {
         // Check if we have a response to send back
         if (result.metadata?.responseText) {
           // Extract sender from the webhook payload
-          const from = (body as Record<string, unknown>).From || (body as Record<string, unknown>).from;
+          const from =
+            (body as Record<string, unknown>).From ||
+            (body as Record<string, unknown>).from;
           try {
             if (from) {
               const responseService = new WhatsAppResponseService();
@@ -359,7 +380,7 @@ export function createHonoApp() {
 
     // Initialize body variable for error handling context
     let parsedBody: SlackWebhookBody | undefined;
-    
+
     try {
       // Get raw body for signature verification
       const rawBody = await c.req.text();
@@ -382,13 +403,13 @@ export function createHonoApp() {
         });
         return c.json({ error: "Invalid JSON body" }, 400);
       }
-      
+
       // Now we can safely use parsedBody as it's defined
       const body = parsedBody;
 
-    // Verify Slack signature
-    const signature = c.req.header("x-slack-signature");
-    const timestamp = c.req.header("x-slack-request-timestamp");
+      // Verify Slack signature
+      const signature = c.req.header("x-slack-signature");
+      const timestamp = c.req.header("x-slack-request-timestamp");
 
       if (signature && timestamp) {
         const { getSlackService } = await import("@figgy/communication");
@@ -558,7 +579,7 @@ export function createHonoApp() {
           ),
         },
         bodyType: parsedBody?.type,
-        eventType: parsedBody?.event?.type,  
+        eventType: parsedBody?.event?.type,
         teamId: parsedBody?.team_id,
         userId: parsedBody?.event?.user,
         messagePreview: parsedBody?.event?.text?.substring(0, 100),
@@ -590,7 +611,10 @@ export function createHonoApp() {
         }
       }
 
-      return c.json({ ok: false, error: errorMessage }, statusCode as 400 | 401 | 500);
+      return c.json(
+        { ok: false, error: errorMessage },
+        statusCode as 400 | 401 | 500,
+      );
     }
   });
 
@@ -673,7 +697,7 @@ export function createHonoApp() {
             stateError instanceof Error
               ? stateError.message
               : String(stateError),
-          state: state.substring(0, 100) + "...",
+          state: `${state.substring(0, 100)}...`,
         });
       }
 
@@ -686,9 +710,9 @@ export function createHonoApp() {
       }
 
       logger.info("Processing Slack OAuth callback", {
-        code: code.substring(0, 10) + "...",
+        code: `${code.substring(0, 10)}...`,
         tenantId,
-        stateParam: state.substring(0, 50) + "...",
+        stateParam: `${state.substring(0, 50)}...`,
         tenantIdSource:
           tenantId === "default-tenant" ? "default" : "extracted from state",
       });
@@ -912,6 +936,10 @@ export function createHonoApp() {
       `);
     }
   });
+
+  // Email webhook routes
+  const { emailWebhookRoutes } = await import("./routes/email-webhooks");
+  app.route("/email", emailWebhookRoutes);
 
   app.use(
     "/trpc/*",

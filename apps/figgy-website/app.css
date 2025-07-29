@@ -1,0 +1,220 @@
+/* Import Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Configure content paths for Tailwind to scan */
+@source "./**/*.{vue,ts,tsx,js,jsx}";
+
+/* Configure Tailwind theme using CSS */
+@theme {
+  /* Brand Colors - Figgy Official Palette */
+  
+  /* Primary - Fig Purple */
+  --color-primary-50: #f3ebf9;
+  --color-primary-100: #e7d7f3;
+  --color-primary-200: #cfb0e7;
+  --color-primary-300: #b888db;
+  --color-primary-400: #a061cf;
+  --color-primary-500: #5e2b94; /* figPurple - Primary brand color */
+  --color-primary-600: #4b2276;
+  --color-primary-700: #391a59;
+  --color-primary-800: #26113b;
+  --color-primary-900: #13091e;
+  
+  /* Secondary - Sunburst Orange (CTA/Accent) */
+  --color-secondary-50: #fef6ed;
+  --color-secondary-100: #fdeddb;
+  --color-secondary-200: #fbdbb7;
+  --color-secondary-300: #f9c993;
+  --color-secondary-400: #f7a558;
+  --color-secondary-500: #f76b1c; /* sunburstOrange - CTA/Accent color */
+  --color-secondary-600: #de5616;
+  --color-secondary-700: #b84512;
+  --color-secondary-800: #93370e;
+  --color-secondary-900: #4a1b07;
+  
+  /* Success - Leaf Green */
+  --color-success-50: #f2fbe9;
+  --color-success-100: #e5f7d3;
+  --color-success-200: #cbefa7;
+  --color-success-300: #b1e77b;
+  --color-success-400: #96df4f;
+  --color-success-500: #7ac943; /* leafGreen - Success states */
+  --color-success-600: #62a136;
+  --color-success-700: #4a7929;
+  --color-success-800: #31511b;
+  --color-success-900: #19280e;
+  
+  /* Warning - Seed Gold */
+  --color-warning-50: #fefaec;
+  --color-warning-100: #fdf5d9;
+  --color-warning-200: #fbedb3;
+  --color-warning-300: #f9e48d;
+  --color-warning-400: #f7db67;
+  --color-warning-500: #f4c542; /* seedGold - Icon detail/warnings */
+  --color-warning-600: #dbb03a;
+  --color-warning-700: #b6922f;
+  --color-warning-800: #917425;
+  --color-warning-900: #493a13;
+  
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-800: #991b1b;
+  --color-error-900: #7f1d1d;
+  
+  /* Accent - Fig Flesh (Warm accents) */
+  --color-accent-50: #fef7ed;
+  --color-accent-100: #fdefdb;
+  --color-accent-200: #fbdfb7;
+  --color-accent-300: #f9cf93;
+  --color-accent-400: #f7b86f;
+  --color-accent-500: #fca03d; /* figFlesh - Warm accents */
+  --color-accent-600: #e38831;
+  --color-accent-700: #bd7028;
+  --color-accent-800: #975920;
+  --color-accent-900: #4b2d10;
+  
+  /* Gray/Neutral - Based on Slate Ink */
+  --color-gray-50: #faf9f8;
+  --color-gray-100: #f5f4f3;
+  --color-gray-200: #e6e5e4;
+  --color-gray-300: #cccbca;
+  --color-gray-400: #999897;
+  --color-gray-500: #666564;
+  --color-gray-600: #4d4c4b;
+  --color-gray-700: #333333; /* slateInk - Primary text */
+  --color-gray-800: #1a1a1a;
+  --color-gray-900: #0d0d0d;
+  
+  /* Neutral alias for gray */
+  --color-neutral-50: var(--color-gray-50);
+  --color-neutral-100: var(--color-gray-100);
+  --color-neutral-200: var(--color-gray-200);
+  --color-neutral-300: var(--color-gray-300);
+  --color-neutral-400: var(--color-gray-400);
+  --color-neutral-500: var(--color-gray-500);
+  --color-neutral-600: var(--color-gray-600);
+  --color-neutral-700: var(--color-gray-700);
+  --color-neutral-800: var(--color-gray-800);
+  --color-neutral-900: var(--color-gray-900);
+  
+  /* Background - Neutral Canvas */
+  --color-canvas: #f8fafc; /* neutralCanvas - Backgrounds */
+  --color-canvas-light: #ffffff;
+  --color-canvas-dark: #f1f5f9;
+  
+  /* Blue colors for info elements */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+
+  /* Brand Color Aliases */
+  --fig-purple: var(--color-primary-500);
+  --sunburst-orange: var(--color-secondary-500);
+  --fig-flesh: var(--color-accent-500);
+  --seed-gold: var(--color-warning-500);
+  --leaf-green: var(--color-success-500);
+  --cream-canvas: var(--color-canvas);
+  --slate-ink: var(--color-gray-700);
+  
+  /* Font */
+  --font-family-sans: 'Gilroy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Overlay */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  
+  /* Animations */
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-fade-out: fadeOut 0.2s ease-in;
+  --animate-slide-up: slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animate-slide-down: slideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animate-scale-in: scaleIn 0.2s ease-out;
+  --animate-scale-out: scaleOut 0.2s ease-in;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleOut {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+
+/* Shadow Design Tokens for Minimalistic Design */
+@theme {
+  /* Shadow tokens - functional only, no decorative shadows */
+  --shadow-none: 0 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-floating: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Import fonts */
+@font-face {
+  font-family: 'Gilroy';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/GilroyRegular/font.woff2') format('woff2'),
+       url('/fonts/GilroyRegular/font.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  font-weight: 500;
+  font-style: normal;
+  src: url('/fonts/GilroyMedium/font.woff2') format('woff2'),
+       url('/fonts/GilroyMedium/font.woff') format('woff');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  font-weight: 700;
+  font-style: normal;
+  src: url('/fonts/GilroyBold/font.woff2') format('woff2'),
+       url('/fonts/GilroyBold/font.woff') format('woff');
+  font-display: swap;
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-family-sans);
+  color: var(--slate-ink);
+  background-color: var(--cream-canvas);
+}

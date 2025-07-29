@@ -1,0 +1,10 @@
+{
+  "name": "@figgy/assets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./fonts/*": "./fonts/*",
+    "./icons/*": "./icons/*"
+  }
+}

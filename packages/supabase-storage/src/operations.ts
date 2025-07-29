@@ -123,7 +123,10 @@ export async function signedUrl(
 ): Promise<{ data: { signedUrl: string } }> {
   const { bucket, path, expireIn, download = false } = options;
 
-  logger.info(`Generating signed URL for ${bucket}/${path}`, { expireIn, download });
+  logger.info(`Generating signed URL for ${bucket}/${path}`, {
+    expireIn,
+    download,
+  });
 
   const { data, error } = await client.storage
     .from(bucket)

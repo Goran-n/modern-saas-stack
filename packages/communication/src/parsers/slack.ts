@@ -4,12 +4,14 @@ import { CommunicationError, ERROR_CODES } from "../types/errors";
 
 const logger = createLogger("slack-parser");
 
-export type SlackParseResult = 
-  | { type: 'success'; message: ParsedSlackMessage }
-  | { type: 'skipped'; reason: string }
-  | { type: 'error'; error: CommunicationError };
+export type SlackParseResult =
+  | { type: "success"; message: ParsedSlackMessage }
+  | { type: "skipped"; reason: string }
+  | { type: "error"; error: CommunicationError };
 
-export function parseSlackPayloadWithResult(payload: unknown): SlackParseResult {
+export function parseSlackPayloadWithResult(
+  payload: unknown,
+): SlackParseResult {
   try {
     const validated = SlackEventPayloadSchema.parse(payload);
     const event = validated.event;
@@ -30,7 +32,7 @@ export function parseSlackPayloadWithResult(payload: unknown): SlackParseResult 
         botId: event.bot_id,
         eventType: event.type,
       });
-      return { type: 'skipped', reason: 'bot_message' };
+      return { type: "skipped", reason: "bot_message" };
     }
 
     // Process message events (can contain both text and files)
@@ -65,7 +67,7 @@ export function parseSlackPayloadWithResult(payload: unknown): SlackParseResult 
         textContent: event.text,
       });
 
-      return { type: 'success', message: parsed };
+      return { type: "success", message: parsed };
     } else if (event.type === "file_shared") {
       // Skip file_shared events to prevent duplicate processing
       // Files are already processed in message events
@@ -73,10 +75,10 @@ export function parseSlackPayloadWithResult(payload: unknown): SlackParseResult 
         eventId: validated.event_id,
         eventType: event.type,
       });
-      return { type: 'skipped', reason: 'file_shared_duplicate_prevention' };
+      return { type: "skipped", reason: "file_shared_duplicate_prevention" };
     }
 
-    return { type: 'skipped', reason: 'unsupported_event_type' };
+    return { type: "skipped", reason: "unsupported_event_type" };
   } catch (error) {
     logger.error("Failed to parse Slack payload", error);
     const communicationError = new CommunicationError(
@@ -84,17 +86,17 @@ export function parseSlackPayloadWithResult(payload: unknown): SlackParseResult 
       ERROR_CODES.INVALID_PAYLOAD,
       error,
     );
-    return { type: 'error', error: communicationError };
+    return { type: "error", error: communicationError };
   }
 }
 
 // Keep the old function for backward compatibility
 export function parseSlackPayload(payload: unknown): ParsedSlackMessage | null {
   const result = parseSlackPayloadWithResult(payload);
-  if (result.type === 'success') {
+  if (result.type === "success") {
     return result.message;
   }
-  if (result.type === 'error') {
+  if (result.type === "error") {
     throw result.error;
   }
   return null;

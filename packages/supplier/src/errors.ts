@@ -72,7 +72,7 @@ export const createError = {
       400,
       "name",
       {
-        provided: name.substring(0, 50) + "...",
+        provided: `${name.substring(0, 50)}...`,
         maxLength: 200,
         actualLength: name.length,
       },

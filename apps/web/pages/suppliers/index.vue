@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-canvas">
+  <div class="min-h-screen bg-neutral-50">
     <!-- Search Header -->
     <SearchHeader 
       v-model:search="searchQuery"
@@ -77,10 +77,14 @@ const tenantStore = useTenantStore()
 // Use computed to make it reactive
 const selectedTenantId = computed(() => tenantStore.selectedTenantId)
 
-// Fetch suppliers
+// Fetch suppliers with tenant validation
 const { data: suppliersData, isLoading, error } = useQuery({
   queryKey: ['suppliers', selectedTenantId],
   queryFn: async () => {
+    if (!selectedTenantId.value) {
+      throw new Error('No tenant selected')
+    }
+    // The API should validate tenantId server-side based on the authenticated user's context
     const response = await api.get<any>('/trpc/suppliers.list')
     return response.result.data.json
   },

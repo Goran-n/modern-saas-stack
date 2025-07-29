@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Slack webhook types
 export const SlackEventTypeSchema = z.enum([
-  'message',
-  'app_mention',
-  'file_shared',
-  'url_verification',
+  "message",
+  "app_mention",
+  "file_shared",
+  "url_verification",
 ]);
 
 export const SlackEventSchema = z.object({
@@ -15,12 +15,16 @@ export const SlackEventSchema = z.object({
   ts: z.string(),
   channel: z.string(),
   thread_ts: z.string().optional(),
-  files: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    mimetype: z.string(),
-    size: z.number(),
-  })).optional(),
+  files: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        mimetype: z.string(),
+        size: z.number(),
+      }),
+    )
+    .optional(),
 });
 
 export const SlackWebhookBodySchema = z.object({

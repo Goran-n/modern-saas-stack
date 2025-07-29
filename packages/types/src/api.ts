@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // API Response schemas
 export const ApiErrorSchema = z.object({

@@ -1,7 +1,15 @@
 <template>
   <div class="flex flex-col items-center justify-center p-8 text-center">
-    <!-- Icon -->
+    <!-- Image or Icon -->
+    <div v-if="props.image" class="mb-6">
+      <img 
+        :src="props.image" 
+        :alt="computedTitle"
+        class="w-64 h-64 object-contain"
+      />
+    </div>
     <div 
+      v-else
       class="mb-4 rounded-full p-3"
       :class="iconBackgroundClass"
     >

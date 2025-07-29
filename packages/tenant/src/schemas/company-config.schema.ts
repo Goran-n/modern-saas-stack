@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-
 // Address schema
 const addressSchema = z.object({
   id: z.string().uuid(),
@@ -34,7 +33,12 @@ const vatRegistrationSchema = z.object({
     return pattern ? pattern.test(val) : true;
   }, "Invalid VAT number format"),
   country: z.string().min(2).max(2),
-  scheme: z.enum(["standard", "flat_rate", "cash_accounting", "annual_accounting"]),
+  scheme: z.enum([
+    "standard",
+    "flat_rate",
+    "cash_accounting",
+    "annual_accounting",
+  ]),
   flatRatePercentage: z.number().min(0).max(100).optional(),
   isActive: z.boolean().default(true),
   validFrom: z.date().nullable(),
@@ -46,7 +50,12 @@ const companyRegistrationSchema = z.object({
   id: z.string().uuid(),
   number: z.string().min(1, "Registration number is required"),
   jurisdiction: z.string().min(1, "Jurisdiction is required"),
-  type: z.enum(["company_number", "charity_number", "partnership_number", "other"]),
+  type: z.enum([
+    "company_number",
+    "charity_number",
+    "partnership_number",
+    "other",
+  ]),
   validFrom: z.date().nullable(),
   validTo: z.date().nullable(),
 });
@@ -71,7 +80,12 @@ const nameHistorySchema = z.object({
 // VAT scheme history schema
 const vatSchemeHistorySchema = z.object({
   id: z.string().uuid(),
-  scheme: z.enum(["standard", "flat_rate", "cash_accounting", "annual_accounting"]),
+  scheme: z.enum([
+    "standard",
+    "flat_rate",
+    "cash_accounting",
+    "annual_accounting",
+  ]),
   flatRatePercentage: z.number().min(0).max(100).optional(),
   annualLimit: z.number().positive().optional(),
   validFrom: z.date().nullable(),
@@ -94,16 +108,17 @@ const companyTypeSchema = z.enum([
 const companySizeSchema = z.enum(["micro", "small", "medium", "large"]);
 
 // Email validation
-const emailDomainSchema = z.string().regex(
-  /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/,
-  "Invalid domain format"
-);
+const emailDomainSchema = z
+  .string()
+  .regex(
+    /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/,
+    "Invalid domain format",
+  );
 
 // Phone number validation (basic)
-const phoneNumberSchema = z.string().regex(
-  /^\+?[0-9\s\-\(\)]+$/,
-  "Invalid phone number format"
-);
+const phoneNumberSchema = z
+  .string()
+  .regex(/^\+?[0-9\s\-()]+$/, "Invalid phone number format");
 
 // Website URL validation
 const websiteSchema = z.string().url("Invalid URL format");
@@ -167,11 +182,17 @@ export const companyConfigUpdateSchema = companyConfigSchema.partial();
 
 // Schema for creating new entries
 export const createAddressSchema = addressSchema.omit({ id: true });
-export const createVatRegistrationSchema = vatRegistrationSchema.omit({ id: true });
-export const createCompanyRegistrationSchema = companyRegistrationSchema.omit({ id: true });
+export const createVatRegistrationSchema = vatRegistrationSchema.omit({
+  id: true,
+});
+export const createCompanyRegistrationSchema = companyRegistrationSchema.omit({
+  id: true,
+});
 export const createTaxReferenceSchema = taxReferenceSchema.omit({ id: true });
 export const createNameHistorySchema = nameHistorySchema.omit({ id: true });
-export const createVatSchemeHistorySchema = vatSchemeHistorySchema.omit({ id: true });
+export const createVatSchemeHistorySchema = vatSchemeHistorySchema.omit({
+  id: true,
+});
 
 // Helper to validate VAT number format
 export function validateVATNumber(vatNumber: string, country: string): boolean {
@@ -183,13 +204,16 @@ export function validateVATNumber(vatNumber: string, country: string): boolean {
   return pattern.test(vatNumber);
 }
 
-
 // Export types (with different names to avoid conflicts)
 export type CompanyConfigSchema = z.infer<typeof companyConfigSchema>;
-export type CompanyConfigUpdateSchema = z.infer<typeof companyConfigUpdateSchema>;
+export type CompanyConfigUpdateSchema = z.infer<
+  typeof companyConfigUpdateSchema
+>;
 export type AddressSchema = z.infer<typeof addressSchema>;
 export type VATRegistrationSchema = z.infer<typeof vatRegistrationSchema>;
-export type CompanyRegistrationSchema = z.infer<typeof companyRegistrationSchema>;
+export type CompanyRegistrationSchema = z.infer<
+  typeof companyRegistrationSchema
+>;
 export type TaxReferenceSchema = z.infer<typeof taxReferenceSchema>;
 export type NameHistorySchema = z.infer<typeof nameHistorySchema>;
 export type VATSchemeHistorySchema = z.infer<typeof vatSchemeHistorySchema>;

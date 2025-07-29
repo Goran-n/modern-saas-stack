@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<SkeletonProps>(), {
 });
 
 const skeletonClasses = computed(() => {
-  const baseClasses = ['bg-primary-200'];
+  const baseClasses = ['bg-neutral-200'];
   
   // Height classes
   const heightMap: Record<string, string> = {

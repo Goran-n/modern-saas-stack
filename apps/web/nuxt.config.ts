@@ -1,17 +1,21 @@
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
 
   modules: [
-    "@nuxt/eslint",
-    "@nuxt/fonts",
     "@nuxt/icon",
     "@nuxtjs/color-mode",
     "@nuxtjs/supabase",
     "@pinia/nuxt",
     "@vueuse/nuxt",
   ],
+
+  icon: {
+    serverBundle: {
+      collections: ["heroicons", "simple-icons"], // Only include needed icon packs
+    },
+  },
 
   ssr: false,
 
@@ -24,6 +28,21 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true,
+    includeWorkspace: false,
+    tsConfig: {
+      exclude: [
+        "../../packages/email/**",
+        "../../../packages/email/**",
+        "**/node_modules/@figgy/email/**"
+      ],
+      include: [
+        "./nuxt.d.ts",
+        "./**/*",
+        "./modules/*/runtime/**/*",
+        "./layers/*/app/**/*",
+        "./shared/**/*"
+      ]
+    }
   },
 
   runtimeConfig: {
@@ -54,7 +73,6 @@ export default defineNuxtConfig({
 
   css: ["~/app.css"],
 
-
   colorMode: {
     classSuffix: "",
     preference: "light",
@@ -67,7 +85,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Figgy",
+      title: "Kibly",
       link: [
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {
@@ -94,7 +112,7 @@ export default defineNuxtConfig({
         ws: true,
       },
       "/trpc/**": {
-        target: "http://localhost:8011", 
+        target: "http://localhost:8011",
         changeOrigin: true,
         ws: true,
       },
@@ -110,14 +128,11 @@ export default defineNuxtConfig({
     dirs: [
       "~/components",
       "~/components/atoms",
-      "~/components/molecules", 
-      "~/components/organisms"
+      "~/components/molecules",
+      "~/components/organisms",
     ],
   },
 
-  fonts: {
-    families: [{ name: "Inter", provider: "google" }],
-  },
 
   vite: {
     plugins: [tailwindcss()],

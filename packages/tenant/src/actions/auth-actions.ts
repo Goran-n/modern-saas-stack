@@ -56,7 +56,7 @@ export async function verifyToken(token: string): Promise<AuthToken> {
   try {
     const payload = jwt.verify(token, config.JWT_SECRET) as AuthToken;
     return authTokenSchema.parse(payload);
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Invalid token");
   }
 }

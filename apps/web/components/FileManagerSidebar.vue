@@ -23,7 +23,7 @@
           @click="$emit('status-selected', 'processing')"
           @keydown.enter.prevent="$emit('status-selected', 'processing')"
           @keydown.space.prevent="$emit('status-selected', 'processing')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'processing'
               ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'
@@ -31,7 +31,7 @@
           ]"
         >
           <div class="flex items-center gap-2">
-            <FigIcon name="i-heroicons-clock" class="text-sm" />
+            <Icon name="heroicons:clock" class="w-4 h-4" />
             <span class="text-sm">Processing</span>
           </div>
           <FigBadge
@@ -50,7 +50,7 @@
           @click="$emit('status-selected', 'failed')"
           @keydown.enter.prevent="$emit('status-selected', 'failed')"
           @keydown.space.prevent="$emit('status-selected', 'failed')"
-          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
           :class="[
             selectedYear === null && selectedSupplier === null && selectedStatus === 'failed'
               ? 'bg-error-100 text-error-800 border border-error-300 shadow-sm'
@@ -58,7 +58,7 @@
           ]"
         >
           <div class="flex items-center gap-2">
-            <FigIcon name="i-heroicons-exclamation-triangle" class="text-sm" />
+            <Icon name="heroicons:exclamation-triangle" class="w-4 h-4" />
             <span class="text-sm">Failed</span>
           </div>
           <FigBadge
@@ -95,7 +95,7 @@
             @click="selectYear(year)"
             @keydown.enter.prevent="selectYear(year)"
             @keydown.space.prevent="selectYear(year)"
-            class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            class="w-full flex items-center justify-between p-2 text-left rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
             :class="[
               selectedYear === year
                 ? 'bg-primary-100 text-primary-800 border border-primary-300 shadow-sm'
@@ -105,6 +105,15 @@
             <div class="flex items-center gap-2">
               <FigIcon name="i-heroicons-calendar-days" class="text-sm text-neutral-600" />
               <span class="text-sm font-medium">{{ year }}</span>
+              <FigBadge
+                v-if="isCurrentYear(year)"
+                color="primary"
+                variant="soft"
+                size="xs"
+                class="ml-1"
+              >
+                Current
+              </FigBadge>
             </div>
             <FigBadge
               v-if="getYearFileCount(year) > 0"
@@ -128,8 +137,8 @@
 </template>
 
 <script setup lang="ts">
-import { FigBadge, FigIcon, FigSkeleton } from '@figgy/ui';
-import { nextTick, onMounted } from 'vue';
+import { FigBadge, FigSkeleton } from '@figgy/ui';
+import { nextTick, onMounted, computed } from 'vue';
 
 interface YearData {
   year: string
@@ -190,6 +199,11 @@ const selectYear = (year: string) => {
 const getYearFileCount = (year: string): number => {
   if (!props.fileData?.byYear[year]) return 0
   return props.fileData.byYear[year].totalFiles
+}
+
+const isCurrentYear = (year: string): boolean => {
+  const currentYear = new Date().getFullYear().toString()
+  return year === currentYear
 }
 
 

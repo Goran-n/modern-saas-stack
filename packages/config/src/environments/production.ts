@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailSchema } from "../schemas/email";
 import { externalServicesSchema } from "../schemas/external-services";
 import { portkeySchema } from "../schemas/portkey";
 import { triggerSchema } from "../schemas/trigger";
@@ -59,15 +60,12 @@ export const productionConfigSchema = z
     DEV_MODE: z.coerce.boolean().default(false),
 
     // Base URL for OAuth callbacks and webhooks
-    BASE_URL: z
-      .string()
-      .url()
-      .optional(), // Optional in production to allow backwards compatibility
-
+    BASE_URL: z.string().url().optional(), // Optional in production to allow backwards compatibility
   })
   .merge(triggerSchema)
   .merge(portkeySchema)
   .merge(externalServicesSchema)
+  .merge(emailSchema) // Email is required in production
   .merge(twilioSchema.partial()); // Twilio is optional but recommended in production
 
 export type ProductionConfig = z.infer<typeof productionConfigSchema>;

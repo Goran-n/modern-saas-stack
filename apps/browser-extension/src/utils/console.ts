@@ -19,7 +19,7 @@ function getTimestamp(): string {
  * Simple console wrapper that prefixes messages with timestamp and context
  */
 export function createConsole(context?: string): ConsoleWrapper {
-  const prefix = context ? `[${context}]` : '[Extension]';
+  const prefix = context ? `[${context}]` : "[Extension]";
 
   return {
     log: (...args: any[]) => {

@@ -105,10 +105,10 @@
   --color-neutral-800: var(--color-gray-800);
   --color-neutral-900: var(--color-gray-900);
   
-  /* Background - Cream Canvas */
-  --color-canvas: #faf2e8; /* creamCanvas - Backgrounds */
-  --color-canvas-light: #fdf8f1;
-  --color-canvas-dark: #f7ebdd;
+  /* Background - Neutral Canvas */
+  --color-canvas: #f8fafc; /* neutralCanvas - Backgrounds */
+  --color-canvas-light: #ffffff;
+  --color-canvas-dark: #f1f5f9;
   
   /* Blue colors for info elements */
   --color-blue-50: #eff6ff;
@@ -132,7 +132,7 @@
   --slate-ink: var(--color-gray-700);
   
   /* Font */
-  --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-sans: 'Gilroy', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* Overlay */
   --overlay-bg: rgba(0, 0, 0, 0.5);
@@ -175,4 +175,13 @@
 @keyframes scaleOut {
   0% { transform: scale(1); opacity: 1; }
   100% { transform: scale(0.95); opacity: 0; }
+}
+
+/* Shadow Design Tokens for Minimalistic Design */
+@theme {
+  /* Shadow tokens - functional only, no decorative shadows */
+  --shadow-none: 0 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-floating: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }

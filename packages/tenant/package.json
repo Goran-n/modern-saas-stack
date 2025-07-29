@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@figgy/config": "workspace:*",
+    "@figgy/email": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
     "nanoid": "^5.1.5",

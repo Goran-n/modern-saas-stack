@@ -5,9 +5,9 @@ export * from "./auth";
 export * from "./base";
 export * from "./communication";
 export * from "./database";
+export * from "./email";
 export * from "./external-services";
 export * from "./portkey";
-export * from "./redis";
 export * from "./slack";
 export * from "./supabase";
 export * from "./trigger";
@@ -18,8 +18,9 @@ import { authSchema } from "./auth";
 import { baseSchema } from "./base";
 import { communicationServiceSchema } from "./communication";
 import { databaseSchema } from "./database";
+import { emailSchema } from "./email";
+import { externalServicesSchema } from "./external-services";
 import { portkeySchema } from "./portkey";
-import { redisSchema } from "./redis";
 import { slackSchema } from "./slack";
 import { supabaseSchema } from "./supabase";
 import { triggerSchema } from "./trigger";
@@ -34,11 +35,12 @@ export const fullConfigSchema = baseSchema
   .merge(databaseSchema)
   .merge(supabaseSchema)
   .merge(authSchema)
-  .merge(redisSchema)
+  .merge(emailSchema)
   .merge(webSchema)
   .merge(triggerSchema)
   .merge(portkeySchema)
-  .merge(twilioSchema);
+  .merge(twilioSchema)
+  .merge(externalServicesSchema);
 
 /**
  * Core required configuration schema
@@ -49,7 +51,8 @@ export const coreConfigSchema = baseSchema
   .merge(supabaseSchema)
   .merge(authSchema)
   .merge(triggerSchema)
-  .merge(portkeySchema);
+  .merge(portkeySchema)
+  .merge(externalServicesSchema.partial()); // External services are optional
 
 /**
  * File manager specific configuration schema
@@ -70,7 +73,8 @@ export const webAppConfigSchema = baseSchema
  */
 export const tenantConfigSchema = baseSchema
   .merge(databaseSchema)
-  .merge(authSchema);
+  .merge(authSchema)
+  .merge(emailSchema.partial());
 
 /**
  * Communication service specific configuration schema

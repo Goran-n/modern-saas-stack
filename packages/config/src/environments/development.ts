@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailSchema } from "../schemas/email";
 import { externalServicesSchema } from "../schemas/external-services";
 import { portkeySchema } from "../schemas/portkey";
 import { slackSchema } from "../schemas/slack";
@@ -58,6 +59,7 @@ export const developmentConfigSchema = z
   .merge(triggerSchema)
   .merge(portkeySchema)
   .merge(externalServicesSchema)
+  .merge(emailSchema.partial()) // Email is optional in development
   .merge(twilioSchema.partial()) // Twilio is optional in development
   .merge(slackSchema.partial()); // Slack is optional in development
 

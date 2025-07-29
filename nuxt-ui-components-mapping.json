@@ -263,10 +263,6 @@
       "purpose": "Dropdown menu",
       "usage": "<UDropdownMenu :items='[...]' />"
     },
-    "UModal": {
-      "purpose": "Modal dialog",
-      "usage": "<UModal v-model='open' />"
-    },
     "UPopover": {
       "purpose": "Popover tooltip",
       "usage": "<UPopover><template #content>...</template></UPopover>"

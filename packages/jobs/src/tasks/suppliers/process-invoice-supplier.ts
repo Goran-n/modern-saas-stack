@@ -1,5 +1,6 @@
 import { getConfig } from "@figgy/config";
 import { generateDisplayName } from "@figgy/file-manager";
+import * as searchOps from "@figgy/search";
 import {
   type CompanyProfile,
   documentExtractions,
@@ -89,7 +90,9 @@ export const processInvoiceSupplier = task({
 
         // Transform extraction data to supplier format
         // Extract vendor data from JSONB fields using helper with confidence scores
-        const vendorData = extractVendorDataWithConfidence(extraction.extractedFields);
+        const vendorData = extractVendorDataWithConfidence(
+          extraction.extractedFields,
+        );
         const supplierRequest = transformInvoiceToSupplier(
           {
             id: extraction.id,
@@ -186,6 +189,20 @@ export const processInvoiceSupplier = task({
                   updatedAt: new Date(),
                 })
                 .where(eq(filesTable.id, extraction.fileId));
+
+              // Update search index with supplier information
+              try {
+                await searchOps.updateFile(extraction.fileId, tenantId, {
+                  supplierName: supplier.displayName,
+                  supplierId: result.supplierId,
+                });
+              } catch (error) {
+                logger.error("Failed to update search index with supplier", {
+                  fileId: extraction.fileId,
+                  supplierId: result.supplierId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
             }
           }
 
@@ -207,7 +224,8 @@ export const processInvoiceSupplier = task({
             .set({
               matchedSupplierId: null,
               matchConfidence: CONFIDENCE_SCORES.LOW_MATCH,
-              processingNotes: "Skipped for manual review - low confidence match",
+              processingNotes:
+                "Skipped for manual review - low confidence match",
             })
             .where(eq(documentExtractions.id, documentExtractionId));
 

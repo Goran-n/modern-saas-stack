@@ -20,8 +20,6 @@ export interface MessageRouterOptions {
 }
 
 export class MessageRouter {
-  constructor() {}
-
   async route(
     payload: MessagePayload,
     options: MessageRouterOptions,
@@ -245,7 +243,7 @@ export class MessageRouter {
     let responseText = "";
     if (successCount === 1 && results.length === 1) {
       const file = results[0];
-      responseText = `✅ File received successfully!\n\n📄 *${file?.fileName || 'Unknown'}*\nFile ID: ${file?.fileId || 'Unknown'}`;
+      responseText = `✅ File received successfully!\n\n📄 *${file?.fileName || "Unknown"}*\nFile ID: ${file?.fileId || "Unknown"}`;
     } else if (successCount > 1) {
       responseText = `✅ Received ${successCount} file${successCount > 1 ? "s" : ""}:\n`;
       results
@@ -293,7 +291,7 @@ export class MessageRouter {
     }
 
     // Check if it's a natural language query
-    if (payload.content && await isNaturalQuery(payload.content)) {
+    if (payload.content && (await isNaturalQuery(payload.content))) {
       logger.info("Processing as natural language query", {
         messageId,
         platform: payload.platform,
@@ -427,7 +425,7 @@ export class MessageRouter {
     }
 
     // Check if it's a natural language query
-    if (payload.content && await isNaturalQuery(payload.content)) {
+    if (payload.content && (await isNaturalQuery(payload.content))) {
       logger.info(
         "Text in mixed message is a query, processing with file context",
         {

@@ -3,6 +3,7 @@ import { TenantService } from "@figgy/tenant";
 import { logger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { middleware } from "../trpc";
+import type { AuthenticatedContext, TenantContext } from "../trpc/context";
 
 export const isAuthenticated = middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
@@ -14,8 +15,9 @@ export const isAuthenticated = middleware(async ({ ctx, next }) => {
 
   return next({
     ctx: {
+      ...ctx,
       user: ctx.user,
-    },
+    } as AuthenticatedContext,
   });
 });
 
@@ -62,10 +64,11 @@ export const hasTenantAccess = middleware(async ({ ctx, next }) => {
 
     return next({
       ctx: {
+        ...ctx,
         user: ctx.user,
         tenantId: ctx.tenantId,
         tenant,
-      },
+      } as TenantContext,
     });
   } catch (error) {
     if (error instanceof Error) {

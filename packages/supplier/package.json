@@ -13,6 +13,7 @@
     "lint:fix": "biome check --fix src"
   },
   "dependencies": {
+    "@figgy/search": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
     "@trigger.dev/sdk": "^3.3.7"

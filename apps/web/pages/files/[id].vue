@@ -293,7 +293,7 @@
     </div>
 
     <!-- Reprocess Confirmation Modal -->
-    <UModal v-model:open="showReprocessModal" title="Confirm Reprocess">
+    <FigModal v-model:open="showReprocessModal" title="Confirm Reprocess">
       <template #body>
         <div class="space-y-4">
           <p class="text-sm text-gray-600">
@@ -338,13 +338,13 @@
           </UButton>
         </div>
       </template>
-    </UModal>
+    </FigModal>
   </UContainer>
 </template>
 
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query';
-import { FigBadge, FigStatusBadge } from '@figgy/ui';
+import { FigBadge, FigStatusBadge, FigModal } from '@figgy/ui';
 
 const route = useRoute();
 const router = useRouter();
@@ -371,11 +371,14 @@ const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
 });
 
 // Get proxy URL for file display (inline viewing)
+// SECURITY: Tenant validation must happen server-side based on authenticated user context
+// Never pass tenantId in URL parameters
 const proxyUrl = computed(() => {
   if (!fileId || !selectedTenantId.value) return null;
   const config = useRuntimeConfig();
   const apiUrl = config.public.apiUrl;
-  return `${apiUrl}/api/files/proxy/${fileId}?tenantId=${selectedTenantId.value}#toolbar=0`;
+  // The server should validate tenant access based on the authenticated user's session
+  return `${apiUrl}/api/files/proxy/${fileId}#toolbar=0`;
 });
 
 // Get signed URL for download
@@ -497,7 +500,7 @@ const reprocessFile = async () => {
       router.push('/files');
     }, 1500);
   } catch (error) {
-    console.error('Reprocess failed:', error);
+    // Reprocess failed
     toast.add({
       title: 'Reprocess failed',
       description: error instanceof Error ? error.message : 'Failed to reprocess file',

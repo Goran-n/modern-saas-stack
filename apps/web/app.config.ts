@@ -48,7 +48,8 @@ export default defineAppConfig({
       },
       color: {
         gray: {
-          outline: "bg-white text-ink ring-1 ring-gray-300 focus:ring-2 focus:ring-primary",
+          outline:
+            "bg-white text-ink ring-1 ring-gray-300 focus:ring-2 focus:ring-primary",
         },
       },
       rounded: "rounded-lg",
@@ -59,7 +60,8 @@ export default defineAppConfig({
       },
       color: {
         gray: {
-          outline: "bg-white text-ink ring-1 ring-gray-300 focus:ring-2 focus:ring-primary",
+          outline:
+            "bg-white text-ink ring-1 ring-gray-300 focus:ring-2 focus:ring-primary",
         },
       },
       rounded: "rounded-lg",

@@ -27,5 +27,6 @@ export {
   closeDatabaseConnection,
   getConnectionStats,
   getDatabaseConnection,
+  getDb,
 } from "./singleton";
 export * from "./types";

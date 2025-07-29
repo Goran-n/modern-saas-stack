@@ -1,7 +1,7 @@
 <template>
   <article 
     class="group relative bg-white rounded-lg border border-neutral-200 p-6 
-           transition-all duration-200 hover:border-primary-300 hover:shadow-md
+           transition-all duration-200 hover:border-primary-300
            cursor-pointer"
     @click="handleClick"
     @keydown.enter="handleClick"
@@ -43,11 +43,11 @@
         <!-- Additional Info -->
         <div class="mt-3 space-y-1">
           <div v-if="supplier.email" class="flex items-center gap-2 text-sm text-neutral-500">
-            <FigIcon name="i-heroicons-envelope" class="h-4 w-4 flex-shrink-0" />
+            <Icon name="heroicons:envelope" class="h-4 w-4 flex-shrink-0" />
             <span class="truncate">{{ supplier.email }}</span>
           </div>
           <div v-if="supplier.phone" class="flex items-center gap-2 text-sm text-neutral-500">
-            <FigIcon name="i-heroicons-phone" class="h-4 w-4 flex-shrink-0" />
+            <Icon name="heroicons:phone" class="h-4 w-4 flex-shrink-0" />
             <span>{{ supplier.phone }}</span>
           </div>
           <div v-if="supplier.address" class="flex items-center gap-2 text-sm text-neutral-500">
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { FigIcon, FigStatusBadge } from '@figgy/ui'
+import { FigStatusBadge, FigIcon } from '@figgy/ui'
 import SupplierLogo from '../atoms/SupplierLogo.vue'
 
 interface Address {

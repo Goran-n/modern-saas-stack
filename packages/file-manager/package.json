@@ -14,7 +14,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "thumbnails:generate": "doppler run -p figgy-be -c dev -- bun run ./scripts/generate-missing-thumbnails.ts",
+    "thumbnails:check": "doppler run -p figgy-be -c dev -- bun run ./scripts/generate-missing-thumbnails.ts --dry-run"
   },
   "dependencies": {
     "@figgy/supabase-storage": "workspace:*",
@@ -22,8 +24,9 @@
     "@figgy/shared-db": "workspace:*",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",
-    "@trigger.dev/sdk": "^3.3.17",
-    "@figgy/jobs": "workspace:*"
+    "@figgy/search": "workspace:*",
+    "@figgy/types": "workspace:*",
+    "@trigger.dev/sdk": "^3.3.17"
   },
   "devDependencies": {}
 }

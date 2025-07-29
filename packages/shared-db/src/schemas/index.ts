@@ -50,3 +50,4 @@ export {
   suppliersRelations,
 } from "./suppliers";
 export * from "./tenants";
+export * from "./email-connections";

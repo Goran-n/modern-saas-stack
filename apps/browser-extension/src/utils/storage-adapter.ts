@@ -27,12 +27,12 @@ export function createChromeStorageAdapter(): StorageAdapter {
         const result = await chrome.storage.local.get(key);
         const value = result[key];
 
-        logger.debug("Storage result", { 
-          key, 
+        logger.debug("Storage result", {
+          key,
           hasValue: value !== undefined && value !== null,
           valueType: typeof value,
-          valueLength: typeof value === 'string' ? value.length : 'N/A',
-          value: key === 'supabase.auth.token' ? value : '[hidden]'
+          valueLength: typeof value === "string" ? value.length : "N/A",
+          value: key === "supabase.auth.token" ? value : "[hidden]",
         });
 
         if (value === undefined || value === null) {
@@ -41,8 +41,12 @@ export function createChromeStorageAdapter(): StorageAdapter {
         }
 
         // Ensure we return a string
-        const finalValue = typeof value === "string" ? value : JSON.stringify(value);
-        logger.debug("Returning value from storage", { key, length: finalValue.length });
+        const finalValue =
+          typeof value === "string" ? value : JSON.stringify(value);
+        logger.debug("Returning value from storage", {
+          key,
+          length: finalValue.length,
+        });
         return finalValue;
       } catch (error) {
         logger.error("Failed to get item from storage", { key, error });

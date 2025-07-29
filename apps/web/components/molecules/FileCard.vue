@@ -1,13 +1,13 @@
 <template>
   <FigCard
-    variant="elevated"
+    variant="outlined"
     padding="none"
     role="button"
     tabindex="0"
     :aria-label="`File: ${displayNameFinal}. ${file.processingStatus === 'failed' ? 'Processing failed. ' : ''}${file.extraction?.extractedFields?.totalAmount?.value ? `Amount: ${file.extraction.extractedFields.totalAmount.value}. ` : ''}Click to view details.`"
     :aria-pressed="false"
     :class="[
-      'hover:shadow-md transition-shadow duration-200 group relative cursor-pointer',
+      'hover:border-primary-300 transition-colors duration-200 group relative cursor-pointer',
       'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
       { 'opacity-50': isDragging }
     ]"
@@ -21,27 +21,39 @@
       <button
         v-if="showReprocess"
         @click.stop="$emit('reprocess')"
-        class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500 hover:bg-primary-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+        class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-primary-500 hover:bg-primary-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
         :class="{ 'animate-spin': isReprocessing }"
         :aria-label="`Reprocess ${displayNameFinal}`"
         :disabled="isReprocessing"
       >
-        <FigIcon name="i-heroicons-arrow-path" class="text-primary-500" />
+        <Icon name="heroicons:arrow-path" class="text-primary-500" />
       </button>
       
       <!-- Drag Indicator -->
       <div 
         v-if="draggable"
-        class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500"
+        class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-primary-500"
       >
         <DragIndicator size="md" color="primary" />
       </div>
     </div>
     
     <div class="aspect-square flex flex-col items-center justify-center p-4">
-      <!-- File Icon or Thumbnail -->
-      <div class="w-12 h-12 mb-3 flex items-center justify-center">
-        <FileIcon :file-name="file.fileName" size="xl" />
+      <!-- File Thumbnail or Icon -->
+      <div class="w-full max-w-[120px] h-[169px] mb-3 flex items-center justify-center">
+        <img
+          v-if="thumbnailUrl"
+          :src="thumbnailUrl"
+          :alt="`Preview of ${displayNameFinal}`"
+          class="w-full h-full object-contain rounded"
+          loading="lazy"
+          @error="handleThumbnailError"
+        />
+        <FileIcon 
+          v-else
+          :file-name="file.fileName" 
+          size="xl" 
+        />
       </div>
 
       <!-- File Name -->
@@ -107,8 +119,8 @@
 </template>
 
 <script setup lang="ts">
-import { FigCard, FigIcon } from '@figgy/ui'
-import { computed } from 'vue'
+import { FigCard } from '@figgy/ui'
+import { computed, ref } from 'vue'
 import type { FileItem } from '@figgy/types'
 import { getFileDisplayName } from '~/utils/fileUtils'
 import FileIcon from '../atoms/FileIcon.vue'
@@ -145,8 +157,34 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<Emits>()
 
+// State
+const thumbnailError = ref(false)
+
 // Get cleaned file name
 const displayNameFinal = computed(() => 
   getFileDisplayName(props.file)
 )
+
+// Generate thumbnail URL using proxy endpoint
+const thumbnailUrl = computed(() => {
+  if (!props.file.thumbnailPath || thumbnailError.value) {
+    return null
+  }
+  
+  // Only load thumbnails for PDFs
+  if (props.file.mimeType !== 'application/pdf') {
+    return null
+  }
+  
+  const config = useRuntimeConfig()
+  const tenantStore = useTenantStore()
+  
+  // Use the file proxy endpoint with thumbnail flag
+  return `${config.public.apiUrl}/api/files/proxy/${props.file.id}?tenantId=${tenantStore.selectedTenantId}&thumbnail=true`
+})
+
+// Handle thumbnail loading error
+const handleThumbnailError = () => {
+  thumbnailError.value = true
+}
 </script>

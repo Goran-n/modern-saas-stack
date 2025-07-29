@@ -103,7 +103,7 @@ export class WhatsAppResponseService {
     // Ensure it starts with +
     if (!cleaned.startsWith("+")) {
       // Assume US number if no country code
-      cleaned = "+1" + cleaned;
+      cleaned = `+1${cleaned}`;
     }
 
     return cleaned;

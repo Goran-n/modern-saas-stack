@@ -1,4 +1,3 @@
-
 // Date range for historical data
 export interface DateRange {
   validFrom: Date | null;
@@ -109,7 +108,7 @@ export interface CompanyConfig {
 }
 
 // Supporting types
-export type CompanyType = 
+export type CompanyType =
   | "limited_company"
   | "plc"
   | "llp"

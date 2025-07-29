@@ -35,7 +35,7 @@ export class ScoringUtils {
     const d1 = date1 instanceof Date ? date1 : new Date(date1);
     const d2 = date2 instanceof Date ? date2 : new Date(date2);
 
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
+    if (Number.isNaN(d1.getTime()) || Number.isNaN(d2.getTime())) return 0;
 
     const diffMs = Math.abs(d1.getTime() - d2.getTime());
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -67,7 +67,7 @@ export class ScoringUtils {
     const num1 = typeof amount1 === "string" ? parseFloat(amount1) : amount1;
     const num2 = typeof amount2 === "string" ? parseFloat(amount2) : amount2;
 
-    if (isNaN(num1) || isNaN(num2)) return 0;
+    if (Number.isNaN(num1) || Number.isNaN(num2)) return 0;
 
     const diff = Math.abs(num1 - num2);
 

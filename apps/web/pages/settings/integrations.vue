@@ -1,6 +1,6 @@
 <template>
-  <UContainer class="py-6">
-    <div class="max-w-4xl mx-auto">
+  <div class="min-h-screen bg-neutral-50">
+    <FigContainer max-width="6xl" class="py-8">
       <!-- Page Header -->
       <div class="mb-6">
         <UButton 
@@ -27,11 +27,13 @@
           </p>
         </div>
       </UCard>
-    </div>
-  </UContainer>
+    </FigContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { FigContainer } from '@figgy/ui'
+
 // Page metadata
 definePageMeta({
   middleware: ['auth']

@@ -67,7 +67,6 @@ export class SupplierValidator {
       enhancedData,
     );
 
-
     // Contact validation
     if (data.email) {
       const emailValid = SupplierValidator.validateEmail(data.email);

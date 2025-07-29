@@ -43,9 +43,9 @@ export async function initAuth() {
 
     // Debug: Check raw Chrome storage for the session data
     const rawStorage = await chrome.storage.local.get("supabase.auth.token");
-    logger.info("Raw storage check for session", { 
+    logger.info("Raw storage check for session", {
       hasKey: !!rawStorage["supabase.auth.token"],
-      rawData: rawStorage["supabase.auth.token"] ? "Present" : "Missing"
+      rawData: rawStorage["supabase.auth.token"] ? "Present" : "Missing",
     });
 
     // Get current session and user
@@ -57,7 +57,7 @@ export async function initAuth() {
       hasUser: !!user,
       sessionAccessToken: session?.access_token ? "Present" : "Missing",
       userEmail: user?.email || "No email",
-      userId: user?.id || "No ID"
+      userId: user?.id || "No ID",
     });
 
     currentSession.value = session;
@@ -67,7 +67,7 @@ export async function initAuth() {
       authenticated: isAuthenticated.value,
       userId: userId.value,
       userEmail: userEmail.value,
-      tenantId: tenantId.value
+      tenantId: tenantId.value,
     });
   } catch (err) {
     logger.error("Failed to initialize auth", { error: err });

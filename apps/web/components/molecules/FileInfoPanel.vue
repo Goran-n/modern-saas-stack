@@ -149,7 +149,7 @@
       </template>
       
       <div class="text-center py-6 text-neutral-500">
-        <FigIcon name="i-heroicons-document-magnifying-glass" class="text-3xl mb-2" />
+        <Icon name="heroicons:document-magnifying-glass" class="h-8 w-8 mb-2" />
         <p class="text-sm">No extraction data available</p>
         <p class="text-xs">File may still be processing</p>
       </div>
@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 import type { FileItem } from '@figgy/types'
-import { FigCard, FigIcon } from '@figgy/ui'
+import { FigCard } from '@figgy/ui'
 import FileDate from '../atoms/FileDate.vue'
 import FileSize from '../atoms/FileSize.vue'
 import FileBadge from '../atoms/FileBadge.vue'

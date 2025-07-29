@@ -94,15 +94,11 @@ const isLoading = ref(false)
 const callbackUrl = route.query.callback as string
 
 // Debug the callback URL
-console.log('Extension consent page loaded with callback:', {
-  callbackUrl,
-  allQuery: route.query,
-  isValidExtensionUrl: callbackUrl?.startsWith('chrome-extension://')
-})
+// Extension consent page loaded with callback
 
 // Validate that we have the required callback URL
 if (!callbackUrl || !callbackUrl.startsWith('chrome-extension://')) {
-  console.error('Invalid callback URL received:', callbackUrl)
+  // Invalid callback URL received
   throw createError({
     statusCode: 400,
     statusMessage: `Invalid extension callback URL: ${callbackUrl}`
@@ -145,13 +141,13 @@ async function handleApprove() {
       }
       
       window.sessionStorage.setItem('figgy_extension_auth_result', JSON.stringify(authResult))
-      console.log('Auth result stored for extension pickup')
+      // Auth result stored for extension pickup
       
       // Also store in localStorage as backup (extension can access this)
       window.localStorage.setItem('figgy_extension_auth_result', JSON.stringify(authResult))
       
     } catch (error) {
-      console.warn('Could not store auth result:', error)
+      // Could not store auth result
     }
     
     // Instead of redirecting, show success message and instruct user to close tab
@@ -162,12 +158,12 @@ async function handleApprove() {
       try {
         window.close()
       } catch (error) {
-        console.log('Could not auto-close tab (normal if not opened by script)')
+        // Could not auto-close tab (normal if not opened by script)
       }
     }, 3000)
     
   } catch (error) {
-    console.error('Approval error:', error)
+    // Approval error
     general.error('Error', error instanceof Error ? error.message : 'Failed to approve access')
   } finally {
     isLoading.value = false

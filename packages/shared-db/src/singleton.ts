@@ -101,6 +101,19 @@ export function getDatabaseConnection(
 }
 
 /**
+ * Get database connection using environment configuration
+ * Useful for CLI tools and scripts that need a simple DB connection
+ */
+export function getDb(): DrizzleClient {
+  // This will use the DATABASE_URL from environment
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+  return getDatabaseConnection(databaseUrl);
+}
+
+/**
  * Closes the global database connection
  * Useful for graceful shutdown
  */
@@ -126,7 +139,6 @@ export async function checkDatabaseHealth(): Promise<boolean> {
     const result = await globalConnection`SELECT 1 as health_check`;
     return result.length > 0 && result[0]?.health_check === 1;
   } catch (error) {
-    console.error("Database health check error:", error);
     logger.error("Database health check failed", {
       error:
         error instanceof Error

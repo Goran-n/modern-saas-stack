@@ -3,13 +3,13 @@
     <!-- Registered Address -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h4 class="text-base font-medium text-gray-900">Registered Address</h4>
+        <h4 class="text-base font-medium text-neutral-900">Registered Address</h4>
         <FigBadge v-if="addresses.registered" color="success" variant="soft">
           Active
         </FigBadge>
       </div>
       
-      <div v-if="addresses.registered" class="bg-gray-50 rounded-lg p-4">
+      <div v-if="addresses.registered" class="bg-neutral-50 rounded-lg p-4">
         <AddressForm
           :address="addresses.registered"
           @update="updateRegisteredAddress"
@@ -23,9 +23,7 @@
         @click="addRegisteredAddress"
       >
         <span class="flex items-center gap-2">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Icon name="heroicons:plus" class="h-4 w-4" />
           Add Registered Address
         </span>
       </FigButton>
@@ -34,7 +32,7 @@
     <!-- Trading Addresses -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h4 class="text-base font-medium text-gray-900">Trading Addresses</h4>
+        <h4 class="text-base font-medium text-neutral-900">Trading Addresses</h4>
         <FigBadge v-if="addresses.trading.length" color="primary" variant="soft">
           {{ addresses.trading.length }}
         </FigBadge>
@@ -44,7 +42,7 @@
         <div 
           v-for="(address, index) in addresses.trading"
           :key="index"
-          class="bg-gray-50 rounded-lg p-4"
+          class="bg-neutral-50 rounded-lg p-4"
         >
           <AddressForm
             :address="address"
@@ -59,9 +57,7 @@
           @click="() => addAddress('trading')"
         >
           <span class="flex items-center gap-2">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Icon name="heroicons:plus" class="h-4 w-4" />
             Add Trading Address
           </span>
         </FigButton>
@@ -71,7 +67,7 @@
     <!-- Billing Addresses -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h4 class="text-base font-medium text-gray-900">Billing Addresses</h4>
+        <h4 class="text-base font-medium text-neutral-900">Billing Addresses</h4>
         <FigBadge v-if="addresses.billing.length" color="primary" variant="soft">
           {{ addresses.billing.length }}
         </FigBadge>
@@ -81,7 +77,7 @@
         <div 
           v-for="(address, index) in addresses.billing"
           :key="index"
-          class="bg-gray-50 rounded-lg p-4"
+          class="bg-neutral-50 rounded-lg p-4"
         >
           <AddressForm
             :address="address"
@@ -96,9 +92,7 @@
           @click="() => addAddress('billing')"
         >
           <span class="flex items-center gap-2">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Icon name="heroicons:plus" class="h-4 w-4" />
             Add Billing Address
           </span>
         </FigButton>

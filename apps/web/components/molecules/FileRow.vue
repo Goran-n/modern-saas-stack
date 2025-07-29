@@ -1,5 +1,11 @@
 <template>
-  <tr class="hover:bg-gray-50 transition-colors">
+  <tr 
+    class="hover:bg-gray-50 transition-colors cursor-pointer"
+    @click="$emit('view')"
+    tabindex="0"
+    @keydown.enter.prevent="$emit('view')"
+    @keydown.space.prevent="$emit('view')"
+  >
     <!-- File Name & Info Column -->
     <td class="px-4 py-3">
       <div class="flex items-center gap-3">
@@ -67,7 +73,7 @@
           icon="i-heroicons-eye"
           size="sm"
           variant="ghost"
-          @click="$emit('view')"
+          @click.stop="$emit('view')"
         >
           View
         </FigButton>
@@ -75,7 +81,7 @@
           icon="i-heroicons-arrow-down-tray"
           size="sm"
           variant="ghost"
-          @click="$emit('download')"
+          @click.stop="$emit('download')"
         >
           Download
         </FigButton>
@@ -84,7 +90,7 @@
           icon="i-heroicons-arrow-path"
           size="sm"
           variant="ghost"
-          @click="$emit('reprocess')"
+          @click.stop="$emit('reprocess')"
           :loading="isReprocessing"
         >
           Reprocess
