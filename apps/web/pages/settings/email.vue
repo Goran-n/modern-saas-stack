@@ -263,14 +263,28 @@
 import { formatDate } from "~/utils/date";
 
 // Auth composables
-const { user } = useAuthStore();
-const { currentTenant } = useTenantStore();
-const hasAdminAccess = computed(() => 
-  currentTenant.value?.role === 'admin' || currentTenant.value?.role === 'owner'
-);
+const user = useSupabaseUser();
+const tenantStore = useTenantStore();
+const hasAdminAccess = computed(() => {
+  const userTenants = tenantStore.userTenants;
+  const selectedTenantId = tenantStore.selectedTenantId;
+  const currentUserTenant = userTenants.find(ut => ut.tenantId === selectedTenantId);
+  return currentUserTenant?.role === 'admin' || currentUserTenant?.role === 'owner';
+});
 
 // Data
-const connections = ref([]);
+interface EmailConnection {
+  id: string;
+  provider: 'gmail' | 'outlook' | 'imap';
+  emailAddress: string;
+  status: 'active' | 'inactive' | 'error';
+  lastSyncAt?: string;
+  lastError?: string;
+  folderFilter: string[];
+  senderFilter: string[];
+}
+
+const connections = ref<EmailConnection[]>([]);
 const showAddConnection = ref(false);
 const showIMAPModal = ref(false);
 const creating = ref(false);

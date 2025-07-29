@@ -80,7 +80,7 @@ export interface EmailAttachment {
 }
 
 // Provider interface
-export interface EmailProvider {
+export interface IEmailProvider {
   connect(config: EmailConnectionConfig, tokens?: OAuthTokens, credentials?: IMAPCredentials): Promise<void>;
   disconnect(): Promise<void>;
   

@@ -3,7 +3,7 @@ export { GmailProvider } from "./gmail.provider";
 export { OutlookProvider } from "./outlook.provider";
 export { IMAPProvider } from "./imap.provider";
 
-import type { EmailProvider as IEmailProvider } from "../types";
+import type { IEmailProvider } from "../types";
 import { EmailProvider } from "../types";
 import { GmailProvider } from "./gmail.provider";
 import { OutlookProvider } from "./outlook.provider";

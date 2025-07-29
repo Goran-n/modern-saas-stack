@@ -3,7 +3,7 @@ import type {
   EmailAttachment,
   EmailConnectionConfig,
   EmailMessage,
-  EmailProvider as IEmailProvider,
+  IEmailProvider,
   IMAPCredentials,
   ListMessagesOptions,
   OAuthTokens,

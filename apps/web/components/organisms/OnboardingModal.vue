@@ -67,9 +67,9 @@
     <div class="min-h-[400px]">
       <transition name="fade" mode="out-in">
         <component
-          :is="currentStep.component"
-          v-model:data="formData[currentStep.id]"
-          :errors="validationErrors[currentStep.id]"
+          :is="currentStep?.component"
+          v-model:data="formData[currentStep?.id || '']"
+          :errors="validationErrors[currentStep?.id || '']"
           @validate="validateCurrentStep"
         />
       </transition>
@@ -90,7 +90,7 @@
         
         <div class="flex items-center gap-4">
           <FigButton
-            v-if="currentStep.skippable"
+            v-if="currentStep?.skippable"
             variant="ghost"
             @click="skipStep"
           >
@@ -195,13 +195,15 @@ const isValidating = ref(false)
 const isSubmitting = ref(false)
 
 // Computed
-const currentStep = computed(() => steps[currentStepIndex.value] || steps[0])
+const currentStep = computed(() => steps[currentStepIndex.value] ?? steps[0])
 
 // Methods
 async function validateCurrentStep(): Promise<boolean> {
   isValidating.value = true
   if (currentStep.value) {
-    validationErrors.value[currentStep.value.id] = {}
+    if (currentStep.value) {
+      validationErrors.value[currentStep.value.id] = {}
+    }
   }
   
   try {
