@@ -5,6 +5,7 @@ export const useTenantStore = defineStore("tenant", () => {
   const userTenants = ref<UserTenant[]>([]);
   const selectedTenantId = ref<string | null>(null);
   const isLoading = ref(false);
+  const onboardingCompleted = ref(false);
 
   // Getters
   const selectedTenant = computed<Tenant | undefined>(
@@ -84,10 +85,15 @@ export const useTenantStore = defineStore("tenant", () => {
     }
   }
 
+  function setOnboardingStatus(completed: boolean): void {
+    onboardingCompleted.value = completed;
+  }
+
   function $reset(): void {
     userTenants.value = [];
     selectedTenantId.value = null;
     isLoading.value = false;
+    onboardingCompleted.value = false;
     if (process.client && window.localStorage) {
       try {
         localStorage.removeItem("selectedTenantId");
@@ -102,9 +108,11 @@ export const useTenantStore = defineStore("tenant", () => {
     selectedTenantId,
     selectedTenant,
     isLoading: readonly(isLoading),
+    onboardingCompleted: readonly(onboardingCompleted),
     fetchUserTenants,
     selectTenant,
     loadSelectedTenant,
+    setOnboardingStatus,
     $reset,
   };
 });

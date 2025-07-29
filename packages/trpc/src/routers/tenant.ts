@@ -331,4 +331,68 @@ export const tenantRouter = createTRPCRouter({
         });
       }
     }),
+
+  // Complete onboarding
+  completeOnboarding: tenantProcedure.mutation(async ({ ctx }) => {
+    const { tenantId, user } = ctx;
+
+    logger.info("Completing onboarding", {
+      tenantId,
+      userId: user?.id,
+      requestId: ctx.requestId,
+    });
+
+    try {
+      // Get current tenant
+      const tenant = await getTenant(tenantId);
+
+      if (!tenant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tenant not found",
+        });
+      }
+
+      // Update tenant metadata to mark onboarding as complete
+      const updateData: UpdateTenantInput = {
+        tenantId,
+        name: tenant.name,
+        status: tenant.status,
+        settings: tenant.settings || {},
+        subscription: tenant.subscription || {},
+        metadata: {
+          ...(tenant.metadata || {}),
+          onboardingCompleted: true,
+          onboardingCompletedAt: new Date().toISOString(),
+          onboardingCompletedBy: user?.id,
+        },
+      };
+
+      await updateTenant(updateData);
+
+      logger.info("Onboarding completed successfully", {
+        tenantId,
+        userId: user?.id,
+        requestId: ctx.requestId,
+      });
+
+      return {
+        success: true,
+        completedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error("Failed to complete onboarding", {
+        error,
+        tenantId,
+        requestId: ctx.requestId,
+      });
+
+      if (error instanceof TRPCError) throw error;
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to complete onboarding",
+      });
+    }
+  }),
 });

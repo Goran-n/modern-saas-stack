@@ -10,10 +10,12 @@ import {
   type NewDocumentExtraction,
 } from "@figgy/shared-db";
 import { SupabaseStorageClient } from "@figgy/supabase-storage";
+import { TenantService } from "@figgy/tenant";
 import { logger } from "@figgy/utils";
 import { CategorizeFileSchema } from "@figgy/types";
 import { schemaTask, tasks } from "@trigger.dev/sdk/v3";
 import { DocumentExtractor } from "../../lib/document-extraction/extractor";
+import { validateInvoiceOwnership, type OwnershipValidation } from "../../lib/document-extraction/validators";
 
 export const categorizeFile = schemaTask({
   id: "categorize-file",
@@ -381,6 +383,10 @@ export const categorizeFile = schemaTask({
         processingDurationMs: extraction.processingDuration,
         modelVersion: extraction.processingVersion,
         errors: extraction.errors,
+        ownershipValidation: undefined,
+        requiresReview: false,
+        reviewReason: undefined,
+        reviewStatus: "pending",
       };
 
       const [insertedExtraction] = await db
@@ -419,31 +425,111 @@ export const categorizeFile = schemaTask({
         });
       }
 
-      // Trigger supplier processing for invoice-type documents
+      // Validate ownership and trigger supplier processing for invoice-type documents
       if (
         ["invoice", "receipt", "purchase_order"].includes(
           extraction.documentType || "",
         )
       ) {
-        logger.info("Triggering supplier processing", {
-          documentExtractionId: insertedExtraction.id,
-          documentType: extraction.documentType,
-          tenantId,
-        });
+        // Perform ownership validation
+        let ownershipValidation: OwnershipValidation | undefined;
+        
+        try {
+          // Initialize tenant service
+          const tenantService = new TenantService(db, config.JWT_SECRET || "");
+          
+          // Get company config
+          const companyConfig = await tenantService.getCompanyConfig(tenantId);
+          
+          // Get invoice date from extraction
+          const invoiceDate = extraction.fields?.documentDate?.value 
+            ? new Date(extraction.fields.documentDate.value as string)
+            : new Date();
+          
+          // Validate ownership (without LLM for now)
+          ownershipValidation = await validateInvoiceOwnership(
+            extraction.fields || {},
+            companyConfig,
+            invoiceDate
+          );
+          
+          logger.info("Invoice ownership validation completed", {
+            documentExtractionId: insertedExtraction.id,
+            belongsToTenant: ownershipValidation.belongsToTenant,
+            confidence: ownershipValidation.confidence,
+            matchType: ownershipValidation.matchType,
+          });
+          
+          // Update extraction with validation results
+          await db
+            .update(documentExtractions)
+            .set({
+              ownershipValidation,
+              requiresReview: ownershipValidation.requiresReview,
+              reviewReason: ownershipValidation.requiresReview 
+                ? `Ownership validation: ${ownershipValidation.reasoning}`
+                : null,
+            })
+            .where(eq(documentExtractions.id, insertedExtraction.id));
+            
+        } catch (error) {
+          logger.error("Failed to validate invoice ownership", {
+            documentExtractionId: insertedExtraction.id,
+            error,
+          });
+          
+          // Set as requiring review on validation error
+          ownershipValidation = {
+            belongsToTenant: false,
+            confidence: 0,
+            matchType: 'uncertain',
+            reasoning: 'Validation error occurred',
+            evidence: {
+              directMatches: [],
+              riskFactors: ['Validation system error']
+            },
+            requiresReview: true,
+            suggestedAction: 'review'
+          };
+          
+          await db
+            .update(documentExtractions)
+            .set({
+              ownershipValidation,
+              requiresReview: true,
+              reviewReason: 'Ownership validation error',
+            })
+            .where(eq(documentExtractions.id, insertedExtraction.id));
+        }
+        
+        // Only trigger supplier processing if validation passed or is uncertain
+        if (!ownershipValidation || ownershipValidation.belongsToTenant !== false) {
+          logger.info("Triggering supplier processing", {
+            documentExtractionId: insertedExtraction.id,
+            documentType: extraction.documentType,
+            tenantId,
+          });
 
-        await tasks.trigger(
-          "process-invoice-supplier",
-          {
+          await tasks.trigger(
+            "process-invoice-supplier",
+            {
+              documentExtractionId: insertedExtraction.id,
+              tenantId,
+              userId: undefined, // userId not available in file processing context
+            },
+            {
+              queue: {
+                name: `tenant-${tenantId}`, // Ensure sequential processing per tenant
+              },
+            },
+          );
+        } else {
+          logger.warn("Skipping supplier processing - invoice does not belong to tenant", {
             documentExtractionId: insertedExtraction.id,
             tenantId,
-            userId: undefined, // userId not available in file processing context
-          },
-          {
-            queue: {
-              name: `tenant-${tenantId}`, // Ensure sequential processing per tenant
-            },
-          },
-        );
+            validationResult: ownershipValidation,
+          });
+        }
       }
 
       // Generate display name based on extracted data

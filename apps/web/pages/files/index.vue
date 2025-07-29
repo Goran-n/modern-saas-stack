@@ -194,6 +194,11 @@ import type { File, FileItem } from '@figgy/types';
 import { FigButton, FigSkeleton, FigEmptyState } from '@figgy/ui';
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue';
 
+// Page meta
+definePageMeta({
+  middleware: ['auth', 'onboarding']
+})
+
 // Local interfaces
 interface SupplierWithLogo {
   name: string;

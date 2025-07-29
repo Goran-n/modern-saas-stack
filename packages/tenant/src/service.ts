@@ -13,6 +13,8 @@ import {
 import { setDb } from "./db";
 import {
   checkPermission as checkPermissionQuery,
+  getCompanyConfig as getCompanyConfigQuery,
+  getCompanyConfigAtDate as getCompanyConfigAtDateQuery,
   getTenant as getTenantQuery,
   getUserPermissions as getUserPermissionsQuery,
   getUser as getUserQuery,
@@ -130,5 +132,14 @@ export class TenantService {
     userId: string,
   ): Promise<(TenantMember & { tenant: Tenant })[]> {
     return getUserTenantsQuery(userId);
+  }
+
+  // Company configuration management
+  async getCompanyConfig(tenantId: string) {
+    return getCompanyConfigQuery(tenantId);
+  }
+
+  async getCompanyConfigAtDate(tenantId: string, date: Date) {
+    return getCompanyConfigAtDateQuery(tenantId, date);
   }
 }

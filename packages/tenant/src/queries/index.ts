@@ -12,3 +12,6 @@ export * from "./user-queries";
 
 // Invitation queries
 export * from "./invitation-queries";
+
+// Company config queries
+export * from "./company-config-queries";

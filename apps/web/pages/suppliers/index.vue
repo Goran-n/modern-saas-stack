@@ -71,6 +71,11 @@ import { FigContainer, FigAlert, FigSkeleton, FigSpinner, FigEmptyState } from '
 import SearchHeader from '~/components/organisms/SearchHeader.vue'
 import SuppliersGrid from '~/components/organisms/SuppliersGrid.vue'
 
+// Page meta
+definePageMeta({
+  middleware: ['auth', 'onboarding']
+})
+
 const api = useApi()
 const tenantStore = useTenantStore()
 

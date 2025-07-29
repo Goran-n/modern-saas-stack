@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   jsonb,
   numeric,
@@ -101,6 +102,24 @@ export const documentExtractions = pgTable("document_extractions", {
     .default([])
     .$type<import("../types").ExtractionError[]>(),
   processingNotes: text("processing_notes"),
+
+  // Ownership validation
+  ownershipValidation: jsonb("ownership_validation").$type<{
+    belongsToTenant: boolean;
+    confidence: number;
+    matchType: 'exact' | 'trading_name' | 'subsidiary' | 'historical' | 'no_match' | 'uncertain';
+    reasoning: string;
+    evidence: {
+      directMatches: string[];
+      llmAnalysis?: string;
+      riskFactors: string[];
+    };
+    requiresReview: boolean;
+    suggestedAction: 'process' | 'review' | 'reject';
+  }>(),
+  requiresReview: boolean("requires_review").default(false),
+  reviewReason: text("review_reason"),
+  reviewStatus: text("review_status").default("pending"),
 
   // Timestamps
   createdAt: timestamp("created_at").notNull().defaultNow(),

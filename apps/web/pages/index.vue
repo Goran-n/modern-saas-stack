@@ -44,7 +44,7 @@
 import { FigContainer, FigCard, FigAvatar } from '@figgy/ui'
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'onboarding']
 })
 
 // Use Supabase user composable directly

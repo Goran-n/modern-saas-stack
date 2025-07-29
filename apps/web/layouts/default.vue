@@ -79,14 +79,44 @@
     <FigMain :padding="false">
       <slot />
     </FigMain>
+
+    <!-- Onboarding Modal -->
+    <OnboardingModal 
+      v-model="showOnboardingModal" 
+      @complete="handleOnboardingComplete"
+    />
   </FigApp>
 </template>
 
 <script setup lang="ts">
 import { FigApp, FigMain } from '@figgy/ui';
 import UserDropdown from '~/components/UserDropdown.vue';
+import OnboardingModal from '~/components/organisms/OnboardingModal.vue';
 
 const mobileMenuOpen = ref(false)
+const route = useRoute()
+const router = useRouter()
+const tenantStore = useTenantStore()
+
+// Check for onboarding query parameter
+const showOnboardingModal = ref(false)
+
+// Watch for onboarding query parameter
+watch(() => route.query.showOnboarding, (showOnboarding) => {
+  if (showOnboarding === 'true' && !tenantStore.onboardingCompleted) {
+    showOnboardingModal.value = true
+  }
+}, { immediate: true })
+
+// Handle onboarding completion
+async function handleOnboardingComplete() {
+  showOnboardingModal.value = false
+  
+  // Remove the query parameter
+  await router.replace({
+    query: { ...route.query, showOnboarding: undefined }
+  })
+}
 
 // Handle logo loading error
 const handleLogoError = (event: Event) => {
@@ -117,7 +147,6 @@ const navigationItems = [
 ]
 
 // Close mobile menu on route change
-const route = useRoute()
 watch(() => route.path, () => {
   mobileMenuOpen.value = false
 })
