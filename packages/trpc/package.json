@@ -1,0 +1,22 @@
+{
+  "name": "@my-app/trpc",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@my-app/config": "workspace:*",
+    "@my-app/shared-db": "workspace:*",
+    "@my-app/types": "workspace:*",
+    "@my-app/utils": "workspace:*",
+    "@trpc/server": "^11.4.3",
+    "superjson": "^2.2.2",
+    "zod": "^4.0.10"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0"
+  }
+}

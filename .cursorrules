@@ -1,0 +1,173 @@
+# Cursor Rules for My App
+
+## Project Context
+This is a TypeScript monorepo using Turborepo, Bun, Vue 3, Nuxt 3, tRPC, and PostgreSQL.
+
+## Core Philosophy
+Follow a **pragmatic, startup-friendly approach**. Our goal is to ship features quickly while maintaining code quality and type safety.
+
+### Core Principles
+1. **Direct over Abstract** - Use direct database queries and simple functions
+2. **Ship over Perfect** - Working code today beats perfect architecture tomorrow  
+3. **Type Safety without Ceremony** - TypeScript for safety, not complexity
+4. **Measure then Optimize** - Add abstractions only when you feel the pain
+
+## Code Style Guidelines
+
+### TypeScript Configuration
+- Always use strict mode TypeScript
+- Enable all strict checks including:
+  - `noImplicitAny: true`
+  - `strictNullChecks: true`
+  - `noUnusedLocals: true`
+  - `noUnusedParameters: true`
+  - `exactOptionalPropertyTypes: true`
+
+### Architecture Patterns
+
+#### ❌ What We DON'T Do
+```typescript
+// ❌ Over-engineered enterprise patterns
+interface IRepository {
+  save(entity: Entity): Promise<Entity>
+}
+class Service implements IService {
+  constructor(private readonly repo: IRepository) {}
+}
+```
+
+#### ✅ What We DO Instead
+```typescript
+// ✅ Simple, direct functions
+export async function createUser(input: CreateUserInput) {
+  const validated = createUserSchema.parse(input)
+  const [user] = await db.insert(users).values(validated).returning()
+  return user
+}
+```
+
+### File Naming
+- Use **kebab-case** for all files: `user-actions.ts`
+- Group by feature, not by type: `user.ts` not `actions.ts`
+- Suffix with purpose when needed: `user-utils.ts`
+
+### Database Patterns
+```typescript
+// ✅ Direct Drizzle queries
+export async function getUserById(id: string) {
+  return db.select().from(users).where(eq(users.id, id)).limit(1)
+}
+
+// ❌ Don't wrap in repositories
+class UserRepository {
+  async findById() { ... }
+}
+```
+
+### API Routes (tRPC)
+```typescript
+// ✅ Thin routers that call action functions
+export const userRouter = router({
+  create: procedure
+    .input(createUserSchema)
+    .mutation(async ({ input }) => {
+      return createUser(input)  // Direct function call
+    })
+})
+```
+
+### Error Handling
+```typescript
+// ✅ Simple, explicit error handling
+if (!user) {
+  throw new Error(`User ${id} not found`)
+}
+
+// ❌ Don't create complex error hierarchies
+class UserNotFoundError extends DomainError { ... }
+```
+
+### Type Definitions
+```typescript
+// ✅ Use Zod schemas as source of truth
+export const userSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string()
+})
+
+export type User = z.infer<typeof userSchema>
+```
+
+## Monorepo Structure
+- `/apps` - Applications (api, web)
+- `/packages` - Shared packages
+  - `config` - Environment configuration
+  - `shared-db` - Database schemas and connection
+  - `trpc` - tRPC routers and procedures
+  - `types` - Shared TypeScript types
+  - `ui` - Shared UI components
+  - `utils` - Shared utilities
+
+## Import Aliases
+Use these import aliases:
+- `@my-app/api/*` - API app imports
+- `@my-app/web/*` - Web app imports
+- `@my-app/config/*` - Config package
+- `@my-app/shared-db/*` - Database package
+- `@my-app/trpc/*` - tRPC package
+- `@my-app/types/*` - Types package
+- `@my-app/ui/*` - UI package
+- `@my-app/utils/*` - Utils package
+
+## Vue/Nuxt Specific
+- Use Composition API with `<script setup>`
+- Use Pinia for state management
+- Use composables for shared logic
+- Prefer `defineProps` and `defineEmits` with TypeScript
+
+## Database
+- Use Drizzle ORM for all database operations
+- Define schemas in `packages/shared-db/src/schemas`
+- Use migrations, not `db:push` in production
+- Always use transactions for multi-table operations
+
+## Testing
+- Write integration tests over unit tests
+- Test actual user flows, not implementation details
+- Use real database connections in tests when possible
+
+## Do's and Don'ts
+
+### DO ✅
+- Write functions that do one thing well
+- Use TypeScript for type safety
+- Handle errors explicitly
+- Use database transactions for consistency
+- Write integration tests
+- Ship features quickly
+
+### DON'T ❌
+- Create unnecessary abstractions
+- Use dependency injection containers
+- Implement complex design patterns
+- Write getters/setters
+- Create deep inheritance hierarchies
+- Mock everything in tests
+- Over-optimize prematurely
+
+## Git Commit Messages
+Use conventional commits:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation only
+- `style:` Code style changes
+- `refactor:` Code refactoring
+- `test:` Test changes
+- `chore:` Build process or auxiliary tool changes
+
+## Environment Variables
+- Use environment variables for all configuration
+- Never commit secrets to the repository
+- Use `.env.example` files to document required variables
+- Consider using Doppler for env management in production
