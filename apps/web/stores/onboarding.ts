@@ -52,9 +52,4 @@ export const useOnboardingStore = defineStore("onboarding", {
       this.savedData = {};
     },
   },
-
-  persist: {
-    // Only persist the saved data and current step in case user refreshes
-    pick: ["savedData", "currentStep"],
-  },
 });

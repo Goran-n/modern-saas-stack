@@ -26,6 +26,7 @@
           v-model="localData.legalName"
           placeholder="ABC Limited"
           size="lg"
+          @focus="hasInteracted.legalName = true"
           @blur="validateField('legalName')"
         />
       </FigFormGroup>
@@ -41,6 +42,7 @@
           :options="companyTypeOptions"
           placeholder="Select company type"
           size="lg"
+          @focus="hasInteracted.companyType = true"
           @change="validateField('companyType')"
         />
       </FigFormGroup>
@@ -54,6 +56,7 @@
           v-model="localData.companyNumber"
           placeholder="12345678"
           size="lg"
+          @focus="hasInteracted.companyNumber = true"
           @blur="validateField('companyNumber')"
         />
       </FigFormGroup>
@@ -105,16 +108,19 @@ const emit = defineEmits<{
 // Schema
 const schema = z.object({
   legalName: z.string().min(1, 'Legal company name is required'),
-  companyType: z.enum([
-    'limited_company',
-    'plc',
-    'llp',
-    'partnership',
-    'sole_trader',
-    'charity',
-    'community_interest_company',
-    'other',
-  ]),
+  companyType: z.union([
+    z.enum([
+      'limited_company',
+      'plc',
+      'llp',
+      'partnership',
+      'sole_trader',
+      'charity',
+      'community_interest_company',
+      'other',
+    ]),
+    z.literal('')
+  ]).refine(val => val !== '', { message: 'Please select a company type' }),
   companyNumber: z.string().optional(),
 })
 
@@ -126,6 +132,11 @@ const localData = ref({
 })
 
 const localErrors = ref<Record<string, string>>({})
+const hasInteracted = ref<Record<string, boolean>>({
+  legalName: false,
+  companyType: false,
+  companyNumber: false,
+})
 
 // Company type options
 const companyTypeOptions = companyTypes.map(type => ({
@@ -135,6 +146,12 @@ const companyTypeOptions = companyTypes.map(type => ({
 
 // Methods
 function validateField(field: keyof typeof localData.value) {
+  // Mark field as interacted
+  hasInteracted.value[field] = true
+  
+  // Only show errors for fields that have been interacted with
+  if (!hasInteracted.value[field]) return
+  
   try {
     const fieldSchema = {
       legalName: z.string().min(1, 'Legal company name is required'),
@@ -147,7 +164,7 @@ function validateField(field: keyof typeof localData.value) {
         'charity',
         'community_interest_company',
         'other',
-      ]),
+      ]).or(z.literal('')).refine(val => val !== '', { message: 'Please select a company type' }),
       companyNumber: z.string().optional(),
     }
     
@@ -170,20 +187,27 @@ function validateAll(): boolean {
     if (error instanceof z.ZodError) {
       error.issues.forEach((issue) => {
         if (issue.path[0]) {
-          localErrors.value[issue.path[0].toString()] = issue.message
+          const field = issue.path[0].toString()
+          // Only show errors for fields that have been interacted with
+          if (hasInteracted.value[field as keyof typeof hasInteracted.value]) {
+            localErrors.value[field] = issue.message
+          }
         }
       })
     }
-    return false
+    // Return false if there are validation errors, but true if fields haven't been touched
+    return Object.keys(localErrors.value).length === 0
   }
 }
 
 // Watch for changes and emit
 watch(localData, (newData) => {
   emit('update:data', newData)
-  emit('validate', validateAll())
+  // Only validate if at least one field has been interacted with
+  if (Object.values(hasInteracted.value).some(v => v)) {
+    emit('validate', validateAll())
+  }
 }, { deep: true })
 
-// Initial validation
-emit('validate', validateAll())
+// Don't validate on initial mount - wait for user interaction
 </script>

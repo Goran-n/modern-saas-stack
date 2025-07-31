@@ -93,7 +93,7 @@ const vatSchemeHistorySchema = z.object({
 });
 
 // Company type enum
-const companyTypeSchema = z.enum([
+export const companyTypeSchema = z.enum([
   "limited_company",
   "plc",
   "llp",
@@ -105,7 +105,7 @@ const companyTypeSchema = z.enum([
 ]);
 
 // Company size enum
-const companySizeSchema = z.enum(["micro", "small", "medium", "large"]);
+export const companySizeSchema = z.enum(["micro", "small", "medium", "large"]);
 
 // Email validation
 const emailDomainSchema = z

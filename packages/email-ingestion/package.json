@@ -15,7 +15,7 @@
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
     "@google-cloud/pubsub": "^4.0.6",
-    "@googleapis/gmail": "^3.0.0",
+    "googleapis": "^128.0.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "@azure/identity": "^4.0.0",
@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/crypto-js": "^4.2.1",
     "@types/jsonwebtoken": "^9.0.5",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^20.10.4",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",

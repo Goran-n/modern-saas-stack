@@ -4,21 +4,26 @@ import {
   EmailProvider,
   ConnectionStatus,
 } from "@figgy/email-ingestion";
+import type { IEmailProvider } from "@figgy/email-ingestion";
 import {
   and,
+  count,
   desc,
   eq,
   emailConnections,
   emailProcessingLog,
   emailRateLimits,
   type EmailConnection,
-  type NewEmailConnection,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure, router } from "../trpc";
+import { createTRPCRouter } from "../trpc";
+import { tenantProcedure } from "../trpc/procedures";
+
+// Create admin procedure for email operations
+const adminProcedure = tenantProcedure;
 
 const logger = createLogger("email-router");
 
@@ -53,11 +58,11 @@ const oauthCallbackSchema = z.object({
   state: z.string(),
 });
 
-export const emailRouter = router({
+export const emailRouter = createTRPCRouter({
   /**
    * List email connections for the tenant
    */
-  listConnections: protectedProcedure.query(async ({ ctx }) => {
+  listConnections: tenantProcedure.query(async ({ ctx }) => {
     const connections = await ctx.db
       .select({
         id: emailConnections.id,
@@ -82,7 +87,7 @@ export const emailRouter = router({
   /**
    * Get a specific email connection
    */
-  getConnection: protectedProcedure
+  getConnection: tenantProcedure
     .input(z.object({ connectionId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [connection] = await ctx.db
@@ -157,6 +162,13 @@ export const emailRouter = router({
         })
         .onConflictDoNothing();
       
+      if (!connection) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create email connection",
+        });
+      }
+      
       logger.info("Created email connection", {
         connectionId: connection.id,
         provider: input.provider,
@@ -204,7 +216,12 @@ export const emailRouter = router({
         });
       }
       
-      const provider = createEmailProvider(connection.provider as EmailProvider);
+      const providerType = connection.provider === "gmail" ? EmailProvider.GMAIL : 
+                          connection.provider === "outlook" ? EmailProvider.OUTLOOK : 
+                          EmailProvider.IMAP;
+      const provider = createEmailProvider(providerType) as IEmailProvider & {
+        getAuthUrl?: (redirectUri: string, state: string) => string;
+      };
       
       if (!provider.getAuthUrl) {
         throw new TRPCError({
@@ -255,7 +272,13 @@ export const emailRouter = router({
           });
         }
         
-        const provider = createEmailProvider(input.provider as EmailProvider);
+        const providerType = input.provider === "gmail" ? EmailProvider.GMAIL : 
+                            input.provider === "outlook" ? EmailProvider.OUTLOOK : 
+                            EmailProvider.IMAP;
+        const provider = createEmailProvider(providerType) as IEmailProvider & {
+          exchangeCodeForTokens?: (code: string, redirectUri: string) => Promise<any>;
+          subscribeToWebhook?: (webhookUrl: string) => Promise<string>;
+        };
         
         if (!provider.exchangeCodeForTokens) {
           throw new TRPCError({
@@ -361,7 +384,10 @@ export const emailRouter = router({
             folderFilter: connection.folderFilter as string[],
             senderFilter: connection.senderFilter as string[],
             subjectFilter: connection.subjectFilter as string[],
-            status: connection.status as ConnectionStatus,
+            status: connection.status === "active" ? ConnectionStatus.ACTIVE :
+                   connection.status === "inactive" ? ConnectionStatus.INACTIVE :
+                   connection.status === "error" ? ConnectionStatus.ERROR :
+                   ConnectionStatus.EXPIRED,
           },
           undefined,
           {
@@ -483,26 +509,39 @@ export const emailRouter = router({
       // Unsubscribe from webhooks if applicable
       if (connection.webhookSubscriptionId && connection.provider !== "imap") {
         try {
-          const provider = createEmailProvider(connection.provider as EmailProvider);
+          const providerType = connection.provider === "gmail" ? EmailProvider.GMAIL : 
+                              connection.provider === "outlook" ? EmailProvider.OUTLOOK : 
+                              EmailProvider.IMAP;
+          const provider = createEmailProvider(providerType) as IEmailProvider & {
+            unsubscribeFromWebhook?: (subscriptionId: string) => Promise<void>;
+          };
           
           if (connection.accessToken && provider.unsubscribeFromWebhook) {
+            const tokens: any = {
+              accessToken: encryptionService.decrypt(connection.accessToken),
+            };
+            
+            if (connection.refreshToken) {
+              tokens.refreshToken = encryptionService.decrypt(connection.refreshToken);
+            }
+            
             await provider.connect(
               {
                 id: connection.id,
                 tenantId: connection.tenantId,
-                provider: connection.provider as EmailProvider,
+                provider: connection.provider === "gmail" ? EmailProvider.GMAIL : 
+                        connection.provider === "outlook" ? EmailProvider.OUTLOOK : 
+                        EmailProvider.IMAP,
                 emailAddress: connection.emailAddress,
                 folderFilter: connection.folderFilter as string[],
                 senderFilter: connection.senderFilter as string[],
                 subjectFilter: connection.subjectFilter as string[],
-                status: connection.status as ConnectionStatus,
+                status: connection.status === "active" ? ConnectionStatus.ACTIVE :
+                   connection.status === "inactive" ? ConnectionStatus.INACTIVE :
+                   connection.status === "error" ? ConnectionStatus.ERROR :
+                   ConnectionStatus.EXPIRED,
               },
-              {
-                accessToken: encryptionService.decrypt(connection.accessToken),
-                refreshToken: connection.refreshToken 
-                  ? encryptionService.decrypt(connection.refreshToken)
-                  : undefined,
-              }
+              tokens
             );
             
             await provider.unsubscribeFromWebhook(connection.webhookSubscriptionId);
@@ -525,7 +564,7 @@ export const emailRouter = router({
   /**
    * Get processing stats for a connection
    */
-  getConnectionStats: protectedProcedure
+  getConnectionStats: tenantProcedure
     .input(z.object({ connectionId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [connection] = await ctx.db
@@ -547,18 +586,32 @@ export const emailRouter = router({
       }
       
       // Get processing stats
-      const [stats] = await ctx.db
-        .select({
-          totalProcessed: ctx.db.count(),
-          successfulCount: ctx.db
-            .count()
-            .where(eq(emailProcessingLog.processingStatus, "completed")),
-          failedCount: ctx.db
-            .count()
-            .where(eq(emailProcessingLog.processingStatus, "failed")),
-        })
+      const [totalProcessedResult] = await ctx.db
+        .select({ count: count() })
         .from(emailProcessingLog)
         .where(eq(emailProcessingLog.connectionId, input.connectionId));
+      
+      const [successfulCountResult] = await ctx.db
+        .select({ count: count() })
+        .from(emailProcessingLog)
+        .where(and(
+          eq(emailProcessingLog.connectionId, input.connectionId),
+          eq(emailProcessingLog.processingStatus, "completed")
+        ));
+      
+      const [failedCountResult] = await ctx.db
+        .select({ count: count() })
+        .from(emailProcessingLog)
+        .where(and(
+          eq(emailProcessingLog.connectionId, input.connectionId),
+          eq(emailProcessingLog.processingStatus, "failed")
+        ));
+      
+      const stats = {
+        totalProcessed: totalProcessedResult?.count || 0,
+        successfulCount: successfulCountResult?.count || 0,
+        failedCount: failedCountResult?.count || 0,
+      };
       
       // Get recent activity
       const recentActivity = await ctx.db

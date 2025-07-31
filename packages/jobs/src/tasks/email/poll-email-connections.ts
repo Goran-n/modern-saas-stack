@@ -1,9 +1,6 @@
 import { 
-  and,
   eq,
-  lt,
   emailConnections,
-  EmailProvider,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
 import { schedules, tasks } from "@trigger.dev/sdk/v3";

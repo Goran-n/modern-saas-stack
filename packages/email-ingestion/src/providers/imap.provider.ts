@@ -1,5 +1,6 @@
 import { ImapFlow } from "imapflow";
-import { simpleParser, ParsedMail } from "mailparser";
+import { simpleParser } from "mailparser";
+import type { ParsedMail } from "mailparser";
 import type {
   EmailAttachment,
   EmailMessage,
@@ -49,7 +50,7 @@ export class IMAPProvider extends BaseEmailProvider {
   protected async doDisconnect(): Promise<void> {
     if (this.imapClient) {
       await this.imapClient.logout();
-      this.imapClient = undefined;
+      delete this.imapClient;
     }
   }
   
@@ -87,17 +88,18 @@ export class IMAPProvider extends BaseEmailProvider {
     await this.imapClient!.mailboxOpen(folder, { readOnly: true });
     
     // Build search criteria
-    const searchCriteria: any[] = [];
-    
-    // Has attachments - IMAP doesn't have direct support, we'll filter later
-    searchCriteria.push("ALL");
+    // Build search criteria object for imapflow
+    let searchCriteria: any = { all: true };
     
     if (options.unreadOnly) {
-      searchCriteria.push("UNSEEN");
+      searchCriteria = { unseen: true };
     }
     
     if (options.since) {
-      searchCriteria.push(["SINCE", options.since]);
+      searchCriteria.since = options.since;
+      if (searchCriteria.all) {
+        delete searchCriteria.all;
+      }
     }
     
     // Search for messages
@@ -107,6 +109,11 @@ export class IMAPProvider extends BaseEmailProvider {
     try {
       // Get message sequence numbers
       const searchResults = await this.imapClient!.search(searchCriteria);
+      
+      // Handle case where search returns false (no results)
+      if (!searchResults || typeof searchResults === 'boolean' || !Array.isArray(searchResults)) {
+        return [];
+      }
       
       if (searchResults.length === 0) {
         return [];
@@ -119,13 +126,10 @@ export class IMAPProvider extends BaseEmailProvider {
       
       for (const seq of sequences) {
         try {
-          const { source } = await this.imapClient!.download(seq.toString(), {
-            uid: true,
-          });
+          const downloadResult = await this.imapClient!.download(seq.toString());
           
-          const parsed = await simpleParser(source, {
-            streamAttachments: false,
-          });
+          // Extract the content stream/buffer from download result
+          const parsed = await simpleParser(downloadResult.content || downloadResult);
           
           // Only include if it has attachments
           if (parsed.attachments && parsed.attachments.length > 0) {
@@ -151,13 +155,9 @@ export class IMAPProvider extends BaseEmailProvider {
     this.ensureConnected();
     
     // For IMAP, messageId is the UID
-    const { source } = await this.imapClient!.download(messageId, {
-      uid: true,
-    });
+    const downloadResult = await this.imapClient!.download(messageId);
     
-    const parsed = await simpleParser(source, {
-      streamAttachments: false,
-    });
+    const parsed = await simpleParser(downloadResult.content || downloadResult);
     
     return this.parsedMailToEmailMessage(parsed, messageId);
   }
@@ -169,16 +169,12 @@ export class IMAPProvider extends BaseEmailProvider {
     this.ensureConnected();
     
     // For IMAP, we need to download the entire message and extract the attachment
-    const { source } = await this.imapClient!.download(messageId, {
-      uid: true,
-    });
+    const downloadResult = await this.imapClient!.download(messageId);
     
-    const parsed = await simpleParser(source, {
-      streamAttachments: false,
-    });
+    const parsed = await simpleParser(downloadResult.content || downloadResult);
     
     const attachment = parsed.attachments.find(
-      att => this.generateAttachmentId(att) === attachmentId
+      (att: any) => this.generateAttachmentId(att) === attachmentId
     );
     
     if (!attachment) {
@@ -212,7 +208,7 @@ export class IMAPProvider extends BaseEmailProvider {
         mimeType: att.contentType,
         size: att.size,
         inline: att.contentDisposition === "inline",
-        contentId: att.contentId,
+        ...(att.contentId && { contentId: att.contentId }),
       };
       
       if (this.shouldProcessAttachment(attachment)) {
@@ -220,8 +216,10 @@ export class IMAPProvider extends BaseEmailProvider {
       }
     }
     
-    const from = parsed.from?.value[0]?.address || "";
-    const to = parsed.to?.value.map(addr => addr.address || "") || [];
+    const from = parsed.from?.text || "";
+    const to = Array.isArray(parsed.to) 
+      ? parsed.to.map(addr => addr.text || "").filter(Boolean)
+      : parsed.to?.text ? [parsed.to.text] : [];
     
     return {
       messageId: uid,

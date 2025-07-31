@@ -1,6 +1,5 @@
 import { getConfig } from "@figgy/config";
-import { gmail_v1, google } from "@googleapis/gmail";
-import { PubSub } from "@google-cloud/pubsub";
+import { google, gmail_v1 } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 import type {
   EmailAttachment,
@@ -13,7 +12,6 @@ import { BaseEmailProvider } from "./base.provider";
 export class GmailProvider extends BaseEmailProvider {
   private oauth2Client?: OAuth2Client;
   private gmailClient?: gmail_v1.Gmail;
-  private pubsubClient?: PubSub;
   
   constructor() {
     super("gmail");
@@ -22,7 +20,7 @@ export class GmailProvider extends BaseEmailProvider {
   /**
    * Get OAuth2 authorization URL
    */
-  getAuthUrl(redirectUri: string, state: string): string {
+  override getAuthUrl(redirectUri: string, state: string): string {
     const config = getConfig().getCore();
     
     if (!config.GOOGLE_CLIENT_ID || !config.GOOGLE_CLIENT_SECRET) {
@@ -51,7 +49,7 @@ export class GmailProvider extends BaseEmailProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
+  override async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!this.oauth2Client) {
@@ -68,18 +66,29 @@ export class GmailProvider extends BaseEmailProvider {
       throw new Error("No access token received");
     }
     
-    return {
+    const result: OAuthTokens = {
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
-      scope: tokens.scope,
     };
+    
+    if (tokens.refresh_token) {
+      result.refreshToken = tokens.refresh_token;
+    }
+    
+    if (tokens.expiry_date) {
+      result.expiresAt = new Date(tokens.expiry_date);
+    }
+    
+    if (tokens.scope) {
+      result.scope = tokens.scope;
+    }
+    
+    return result;
   }
   
   /**
    * Refresh access token
    */
-  async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
+  override async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!this.oauth2Client) {
@@ -97,12 +106,20 @@ export class GmailProvider extends BaseEmailProvider {
       throw new Error("Failed to refresh access token");
     }
     
-    return {
+    const result: OAuthTokens = {
       accessToken: credentials.access_token,
       refreshToken: credentials.refresh_token || refreshToken,
-      expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : undefined,
-      scope: credentials.scope,
     };
+    
+    if (credentials.expiry_date) {
+      result.expiresAt = new Date(credentials.expiry_date);
+    }
+    
+    if (credentials.scope) {
+      result.scope = credentials.scope;
+    }
+    
+    return result;
   }
   
   /**
@@ -122,11 +139,11 @@ export class GmailProvider extends BaseEmailProvider {
     
     this.oauth2Client.setCredentials({
       access_token: this.tokens.accessToken,
-      refresh_token: this.tokens.refreshToken,
+      refresh_token: this.tokens.refreshToken || null,
     });
     
     this.gmailClient = google.gmail({
-      version: "v1",
+      version: 'v1',
       auth: this.oauth2Client,
     });
     
@@ -138,8 +155,8 @@ export class GmailProvider extends BaseEmailProvider {
    * Disconnect from Gmail API
    */
   protected async doDisconnect(): Promise<void> {
-    this.oauth2Client = undefined;
-    this.gmailClient = undefined;
+    delete this.oauth2Client;
+    delete this.gmailClient;
   }
   
   /**
@@ -187,12 +204,17 @@ export class GmailProvider extends BaseEmailProvider {
     // Add attachment filter
     query.push("has:attachment");
     
-    const response = await this.gmailClient!.users.messages.list({
+    const listParams: any = {
       userId: "me",
       q: query.join(" "),
       maxResults: options.limit || 50,
-      pageToken: options.pageToken,
-    });
+    };
+    
+    if (options.pageToken) {
+      listParams.pageToken = options.pageToken;
+    }
+    
+    const response = await this.gmailClient!.users.messages.list(listParams);
     
     const messages: EmailMessage[] = [];
     
@@ -238,17 +260,25 @@ export class GmailProvider extends BaseEmailProvider {
     const attachments: EmailAttachment[] = [];
     this.parseAttachments(payload, attachments);
     
-    return {
+    const result: EmailMessage = {
       messageId: msg.id!,
-      threadId: msg.threadId,
       from: getHeader("from"),
       to: getHeader("to").split(",").map(e => e.trim()),
       subject: getHeader("subject"),
       date: new Date(parseInt(msg.internalDate || "0")),
       body: this.extractBody(payload),
       attachments,
-      labels: msg.labelIds,
     };
+    
+    if (msg.threadId) {
+      result.threadId = msg.threadId;
+    }
+    
+    if (msg.labelIds) {
+      result.labels = msg.labelIds;
+    }
+    
+    return result;
   }
   
   /**
@@ -290,7 +320,7 @@ export class GmailProvider extends BaseEmailProvider {
   /**
    * Subscribe to Gmail push notifications via Pub/Sub
    */
-  async subscribeToWebhook(webhookUrl: string): Promise<string> {
+  override async subscribeToWebhook(_webhookUrl: string): Promise<string> {
     this.ensureConnected();
     
     const config = getConfig().getCore();
@@ -313,7 +343,7 @@ export class GmailProvider extends BaseEmailProvider {
   /**
    * Unsubscribe from webhooks
    */
-  async unsubscribeFromWebhook(subscriptionId: string): Promise<void> {
+  override async unsubscribeFromWebhook(_subscriptionId: string): Promise<void> {
     this.ensureConnected();
     
     await this.gmailClient!.users.stop({

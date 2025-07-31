@@ -46,7 +46,6 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { $trpc } = useNuxtApp();
 
 // State
 const loading = ref(true);
@@ -76,10 +75,13 @@ onMounted(async () => {
     statusMessage.value = 'Completing authorization...';
 
     // Handle OAuth callback
-    await $trpc.email.handleOAuthCallback.mutate({
-      provider: provider as 'gmail' | 'outlook',
-      code,
-      state,
+    await $fetch('/api/trpc/email.handleOAuthCallback', {
+      method: 'POST',
+      body: {
+        provider: provider as 'gmail' | 'outlook',
+        code,
+        state,
+      },
     });
 
     success.value = true;

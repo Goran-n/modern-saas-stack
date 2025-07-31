@@ -5,10 +5,19 @@ import CryptoJS from "crypto-js";
 const logger = createLogger("encryption-service");
 
 export class EncryptionService {
-  private encryptionKey: string;
+  private encryptionKey: string | null = null;
   
-  constructor() {
-    const config = getConfig().getCore();
+  private ensureInitialized(): void {
+    if (this.encryptionKey) return;
+    
+    const configManager = getConfig();
+    
+    // Ensure config is validated
+    if (!configManager.isValid()) {
+      configManager.validate();
+    }
+    
+    const config = configManager.getCore();
     
     // Use JWT_SECRET as the base for encryption key
     // In production, consider using a separate ENCRYPTION_KEY
@@ -26,8 +35,9 @@ export class EncryptionService {
    * Encrypt sensitive data using AES-256-GCM
    */
   encrypt(plainText: string): string {
+    this.ensureInitialized();
     try {
-      const encrypted = CryptoJS.AES.encrypt(plainText, this.encryptionKey, {
+      const encrypted = CryptoJS.AES.encrypt(plainText, this.encryptionKey!, {
         mode: CryptoJS.mode.ECB,
         padding: CryptoJS.pad.Pkcs7,
       });
@@ -43,8 +53,9 @@ export class EncryptionService {
    * Decrypt data encrypted with encrypt()
    */
   decrypt(cipherText: string): string {
+    this.ensureInitialized();
     try {
-      const decrypted = CryptoJS.AES.decrypt(cipherText, this.encryptionKey, {
+      const decrypted = CryptoJS.AES.decrypt(cipherText, this.encryptionKey!, {
         mode: CryptoJS.mode.ECB,
         padding: CryptoJS.pad.Pkcs7,
       });
@@ -110,5 +121,42 @@ export class EncryptionService {
   }
 }
 
-// Export singleton instance
-export const encryptionService = new EncryptionService();
+// Export singleton instance lazily
+let _instance: EncryptionService | undefined;
+
+export const encryptionService = {
+  encrypt(plainText: string): string {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.encrypt(plainText);
+  },
+  
+  decrypt(cipherText: string): string {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.decrypt(cipherText);
+  },
+  
+  encryptObject<T>(obj: T): string {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.encryptObject(obj);
+  },
+  
+  decryptObject<T>(cipherText: string): T {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.decryptObject<T>(cipherText);
+  },
+  
+  hash(value: string): string {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.hash(value);
+  },
+  
+  generateToken(length: number = 32): string {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.generateToken(length);
+  },
+  
+  secureCompare(a: string, b: string): boolean {
+    if (!_instance) _instance = new EncryptionService();
+    return _instance.secureCompare(a, b);
+  }
+};

@@ -29,8 +29,12 @@ export abstract class BaseEmailProvider implements IEmailProvider {
     credentials?: IMAPCredentials
   ): Promise<void> {
     this.config = config;
-    this.tokens = tokens;
-    this.credentials = credentials;
+    if (tokens) {
+      this.tokens = tokens;
+    }
+    if (credentials) {
+      this.credentials = credentials;
+    }
     
     this.logger.info("Connecting to email provider", {
       provider: config.provider,
@@ -61,9 +65,9 @@ export abstract class BaseEmailProvider implements IEmailProvider {
     try {
       await this.doDisconnect();
       this.connected = false;
-      this.config = undefined;
-      this.tokens = undefined;
-      this.credentials = undefined;
+      delete this.config;
+      delete this.tokens;
+      delete this.credentials;
       this.logger.info("Successfully disconnected from email provider");
     } catch (error) {
       this.logger.error("Error during disconnect", { error });

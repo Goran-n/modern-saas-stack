@@ -1,0 +1,38 @@
+{
+  "name": "@my-app/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix ."
+  },
+  "dependencies": {
+    "@my-app/trpc": "workspace:*",
+    "@my-app/types": "workspace:*",
+    "@my-app/ui": "workspace:*",
+    "@pinia/nuxt": "^0.11.2",
+    "@tanstack/vue-query": "^5.83.0",
+    "@trpc/client": "^11.4.3",
+    "@vueuse/nuxt": "^13.5.0",
+    "nuxt": "^4.0.1",
+    "pinia": "^3.0.3",
+    "superjson": "^2.2.2",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxt/icon": "^1.15.0",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/supabase": "^1.5.3",
+    "@tailwindcss/vite": "^4.1.11",
+    "tailwindcss": "^4.1.11",
+    "vue-tsc": "^3.0.4"
+  }
+}

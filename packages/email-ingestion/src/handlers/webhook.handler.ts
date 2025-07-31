@@ -4,8 +4,6 @@ import { tasks } from "@trigger.dev/sdk/v3";
 import type {
   EmailConnectionConfig,
   EmailProvider,
-  GmailWebhookPayload,
-  OutlookWebhookPayload,
 } from "../types";
 import { 
   EmailProvider as EmailProviderEnum,
@@ -13,7 +11,6 @@ import {
   OutlookWebhookPayloadSchema,
 } from "../types";
 import { getDb } from "../db";
-import { encryptionService } from "../services/encryption.service";
 
 const logger = createLogger("email-webhook-handler");
 

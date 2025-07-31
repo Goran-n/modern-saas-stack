@@ -5,7 +5,9 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
 
   // Skip check for auth pages and onboarding itself
   const publicRoutes = ["/auth/login", "/auth/signup", "/auth/forgot-password"];
-  if (publicRoutes.includes(to.path)) {
+  const onboardingRoute = "/onboarding";
+  
+  if (publicRoutes.includes(to.path) || to.path === onboardingRoute) {
     return;
   }
 
@@ -29,14 +31,9 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     // Store onboarding status in tenant store for easy access
     tenantStore.setOnboardingStatus(!!onboardingCompleted);
 
-    // If onboarding is not completed and we're not already showing it,
-    // we'll handle it in the layout component
-    if (!onboardingCompleted && !to.query.showOnboarding) {
-      // Add a query param to indicate onboarding should be shown
-      return navigateTo({
-        path: to.path,
-        query: { ...to.query, showOnboarding: "true" },
-      });
+    // If onboarding is not completed, redirect to onboarding page
+    if (!onboardingCompleted) {
+      return navigateTo(onboardingRoute);
     }
   } catch (error) {
     console.error("Error checking onboarding status:", error);

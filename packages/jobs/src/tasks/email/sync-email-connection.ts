@@ -2,13 +2,12 @@ import { AttachmentProcessor, encryptionService } from "@figgy/email-ingestion";
 import { createEmailProvider } from "@figgy/email-ingestion";
 import { uploadFile } from "@figgy/file-manager";
 import { 
-  and,
   eq,
   emailConnections,
-  type EmailConnection,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
+import { ConnectionStatus } from "@figgy/email-ingestion";
 import type { 
   EmailConnectionConfig,
   EmailMessage,
@@ -92,10 +91,10 @@ export const syncEmailConnection = task({
         folderFilter: connection.folderFilter as string[],
         senderFilter: connection.senderFilter as string[],
         subjectFilter: connection.subjectFilter as string[],
-        status: connection.status,
+        status: connection.status as ConnectionStatus,
         lastSyncAt: connection.lastSyncAt || undefined,
         lastError: connection.lastError || undefined,
-        metadata: connection.metadata,
+        metadata: connection.metadata as Record<string, any> | undefined,
       };
       
       // Create provider and processor

@@ -15,3 +15,6 @@ export { AttachmentProcessor } from "./processors/attachment.processor";
 
 // Export database helpers
 export { getDb } from "./db";
+
+// Export webhook handler
+export { webhookHandler } from "./handlers/webhook.handler";

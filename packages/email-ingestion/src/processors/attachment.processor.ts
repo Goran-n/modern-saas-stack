@@ -1,8 +1,9 @@
 import { 
   and, 
   eq, 
-  emailConnections, 
   emailProcessingLog,
+} from "@figgy/shared-db";
+import type {
   EmailProcessingLogEntry,
   NewEmailProcessingLogEntry,
 } from "@figgy/shared-db";
@@ -12,8 +13,8 @@ import type {
   EmailMessage,
   ProcessingOptions,
   ProcessingResult,
-  ProcessingStatus,
 } from "../types";
+import { ProcessingStatus } from "../types";
 import { createEmailProvider } from "../providers";
 import { getDb } from "../db";
 
@@ -52,7 +53,7 @@ export class AttachmentProcessor {
     const startTime = Date.now();
     const fileIds: string[] = [];
     const errors: string[] = [];
-    let status: ProcessingStatus = "completed";
+    let status: ProcessingStatus = ProcessingStatus.COMPLETED;
     
     logger.info("Processing email attachments", {
       connectionId: connection.id,
@@ -65,14 +66,14 @@ export class AttachmentProcessor {
     try {
       // Check if already processed
       const existing = await this.getProcessingLog(connection.id, message.messageId);
-      if (existing && existing.processingStatus === "completed") {
+      if (existing && existing.processingStatus === ProcessingStatus.COMPLETED) {
         logger.info("Email already processed", {
           messageId: message.messageId,
           fileIds: existing.fileIds,
         });
         return {
           messageId: message.messageId,
-          status: "completed",
+          status: ProcessingStatus.COMPLETED,
           attachmentsProcessed: existing.attachmentCount,
           fileIds: existing.fileIds as string[],
           processingTime: 0,
@@ -89,7 +90,7 @@ export class AttachmentProcessor {
         subject: message.subject,
         attachmentCount: message.attachments.length,
         attachmentsTotalSize: message.attachments.reduce((sum, att) => sum + att.size, 0),
-        processingStatus: "processing",
+        processingStatus: ProcessingStatus.PROCESSING,
       });
       
       // Create provider instance
@@ -178,7 +179,7 @@ export class AttachmentProcessor {
               error,
             });
             errors.push(`Failed to process ${attachment.fileName}: ${error}`);
-            status = "failed";
+            status = ProcessingStatus.FAILED;
           }
         }
         
@@ -207,7 +208,7 @@ export class AttachmentProcessor {
         status,
         attachmentsProcessed: fileIds.length,
         fileIds,
-        errors: errors.length > 0 ? errors : undefined,
+        ...(errors.length > 0 && { errors }),
         processingTime: Date.now() - startTime,
       };
     } catch (error) {
@@ -218,7 +219,7 @@ export class AttachmentProcessor {
       
       // Update processing log with error
       await this.updateProcessingLog(connection.id, message.messageId, {
-        processingStatus: "failed",
+        processingStatus: ProcessingStatus.FAILED,
         processedAt: new Date(),
         processingDurationMs: Date.now() - startTime,
         errorMessage: error instanceof Error ? error.message : String(error),

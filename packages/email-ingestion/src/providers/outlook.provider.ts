@@ -1,11 +1,5 @@
 import { getConfig } from "@figgy/config";
 import { Client } from "@microsoft/microsoft-graph-client";
-import type { PageCollection } from "@microsoft/microsoft-graph-types";
-import { 
-  AuthenticationProvider,
-  ClientSecretCredential,
-  TokenCredentialAuthenticationProvider,
-} from "@azure/identity";
 import type {
   EmailAttachment,
   EmailMessage,
@@ -24,7 +18,7 @@ export class OutlookProvider extends BaseEmailProvider {
   /**
    * Get OAuth2 authorization URL
    */
-  getAuthUrl(redirectUri: string, state: string): string {
+  override getAuthUrl(redirectUri: string, state: string): string {
     const config = getConfig().getCore();
     
     if (!config.MICROSOFT_CLIENT_ID || !config.MICROSOFT_TENANT_ID) {
@@ -52,7 +46,7 @@ export class OutlookProvider extends BaseEmailProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
+  override async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!config.MICROSOFT_CLIENT_ID || !config.MICROSOFT_CLIENT_SECRET || !config.MICROSOFT_TENANT_ID) {
@@ -82,7 +76,7 @@ export class OutlookProvider extends BaseEmailProvider {
       throw new Error(`Token exchange failed: ${error}`);
     }
     
-    const data = await response.json();
+    const data = await response.json() as any;
     
     return {
       accessToken: data.access_token,
@@ -95,7 +89,7 @@ export class OutlookProvider extends BaseEmailProvider {
   /**
    * Refresh access token
    */
-  async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
+  override async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!config.MICROSOFT_CLIENT_ID || !config.MICROSOFT_CLIENT_SECRET || !config.MICROSOFT_TENANT_ID) {
@@ -124,7 +118,7 @@ export class OutlookProvider extends BaseEmailProvider {
       throw new Error(`Token refresh failed: ${error}`);
     }
     
-    const data = await response.json();
+    const data = await response.json() as any;
     
     return {
       accessToken: data.access_token,
@@ -169,7 +163,7 @@ export class OutlookProvider extends BaseEmailProvider {
    * Disconnect from Microsoft Graph API
    */
   protected async doDisconnect(): Promise<void> {
-    this.graphClient = undefined;
+    delete this.graphClient;
   }
   
   /**
@@ -317,7 +311,7 @@ export class OutlookProvider extends BaseEmailProvider {
   /**
    * Subscribe to Microsoft Graph webhooks
    */
-  async subscribeToWebhook(webhookUrl: string): Promise<string> {
+  override async subscribeToWebhook(webhookUrl: string): Promise<string> {
     this.ensureConnected();
     
     const expirationDateTime = new Date();
@@ -339,7 +333,7 @@ export class OutlookProvider extends BaseEmailProvider {
   /**
    * Unsubscribe from webhooks
    */
-  async unsubscribeFromWebhook(subscriptionId: string): Promise<void> {
+  override async unsubscribeFromWebhook(subscriptionId: string): Promise<void> {
     this.ensureConnected();
     
     await this.graphClient!

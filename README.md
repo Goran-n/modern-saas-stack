@@ -1,279 +1,269 @@
-# Figgy - Multi-tenant Accounting Integration Platform
+# Modern SaaS Stack
 
-A modern, multi-tenant SaaS platform for integrating with accounting providers, built with TypeScript, Vue.js, and tRPC.
+A modern multi-tenant SaaS platform for document processing and business intelligence, built with TypeScript, Vue.js, and tRPC. This application demonstrates enterprise-grade patterns for building scalable, secure, and maintainable web applications.
 
-## 🏗️ Architecture Overview
+## Purpose and Domain
 
-Figgy is built as a monorepo using Turborepo, featuring:
-- **Backend**: Node.js API with tRPC, PostgreSQL, and Redis
-- **Frontend**: Nuxt 3 with Nuxt UI Pro components and Pinia state management
-- **Clean Architecture**: Domain-driven design with clear separation of concerns
-- **Multi-tenancy**: Built-in workspace isolation and permissions
-- **Type Safety**: End-to-end TypeScript with tRPC
+Modern SaaS Stack is designed as a comprehensive document processing and business intelligence platform that serves multiple tenants through a unified interface. The platform handles document ingestion from various sources (email attachments, direct uploads, communication channels), processes them using AI-powered extraction techniques, and provides intelligent search and analysis capabilities.
 
-## 📦 Project Structure
+The system is built around the concept of multi-tenant workspaces where organizations can securely manage their documents, configure integrations with external services, and collaborate with team members through role-based access controls.
+
+## Technical Architecture
+
+### Monorepo Structure
+
+The application follows a monorepo architecture using Turborepo, providing shared tooling, consistent build processes, and efficient dependency management across multiple applications and packages.
 
 ```
-figgy/
+modern-saas-stack/
 ├── apps/
-│   ├── api/              # Backend tRPC API server
-│   └── web/              # Nuxt 3 frontend application
+│   ├── api/                    # Backend API server
+│   ├── web/                    # Frontend web application
+│   ├── browser-extension/      # Chrome/Firefox extension
+│   └── figgy-website/         # Marketing website
 ├── packages/
-│   ├── shared-config/    # Shared ESLint and Prettier configs
-│   ├── shared-types/     # Common TypeScript types
-│   ├── shared-utils/     # Shared utilities
+│   ├── communication/          # Multi-channel messaging
+│   ├── config/                # Environment configuration
+│   ├── shared-db/             # Database schemas and connections
+│   ├── trpc/                  # API layer and routers
+│   ├── types/                 # Shared TypeScript definitions
+│   ├── ui/                    # Component library
+│   ├── utils/                 # Shared utilities
+│   ├── tenant/                # Multi-tenancy logic
+│   ├── supplier/              # Business entity management
+│   ├── email-ingestion/       # Email processing pipeline
+│   └── jobs/                  # Background job processing
+└── drizzle/                   # Database migrations
 ```
 
-## 🚀 Quick Start
+### Core Technology Stack
 
-### Prerequisites
+**Backend Infrastructure:**
+- Runtime: Bun with Node.js compatibility
+- Web Framework: Hono for lightweight HTTP handling
+- API Layer: tRPC for type-safe client-server communication
+- Database: PostgreSQL with Drizzle ORM
+- Authentication: Supabase Auth with custom JWT handling
+- Background Jobs: Trigger.dev for async processing
+- File Storage: Supabase Storage with signed URL access
 
-- Node.js >= 18.0.0
-- Bun >= 1.0.0
-- PostgreSQL
-- Redis (optional for development)
-- Doppler CLI (for environment management)
+**Frontend Stack:**
+- Framework: Nuxt 3 with Vue.js 3 Composition API
+- State Management: Pinia with reactive stores
+- Styling: TailwindCSS with custom design system
+- Type Safety: End-to-end TypeScript with strict configuration
+- Build Tool: Vite with optimized bundling
 
-### Environment Setup
+**Development Tooling:**
+- Monorepo: Turborepo with intelligent caching
+- Code Quality: Biome for linting and formatting
+- Type Checking: TypeScript with strict mode enabled
+- Testing: Integration-focused testing strategy
+- Environment Management: Doppler for secrets handling
 
-1. **Install Doppler CLI**:
-   ```bash
-   # macOS
-   brew install doppler
+## Business Logic and Domain Models
 
-   # Or use the install script
-   curl -Ls https://cli.doppler.com/install.sh | sh
-   ```
+### Multi-Tenancy Architecture
 
-2. **Login to Doppler**:
-   ```bash
-   doppler login
-   ```
+The application implements a comprehensive multi-tenancy system where each tenant represents an independent workspace. Tenants are isolated at multiple levels:
 
-3. **Setup Doppler projects**:
-   ```bash
-   # In the root directory
-   doppler setup
+**Data Isolation:** All database operations include tenant-scoped queries, ensuring complete data separation between organizations.
 
-   # Select project: figgy-be
-   # Select config: dev
-   ```
+**Authentication Boundary:** Users authenticate once but access resources within specific tenant contexts, enforced through middleware and authorization checks.
 
-### Installation
+**Resource Scoping:** Files, integrations, team members, and all business entities are scoped to specific tenants with cascade deletion policies.
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd figgy
-   ```
+### Document Processing Pipeline
 
-2. **Install dependencies**:
-   ```bash
-   bun install
-   ```
+The document processing system handles multiple ingestion sources and applies consistent processing workflows:
 
-3. **Database setup**:
-   ```bash
-   # Run migrations
-   bun run db:migrate
+**Ingestion Sources:**
+- Email attachments through Gmail/Outlook integration
+- Direct file uploads through web interface
+- WhatsApp media through Twilio webhook integration
+- Slack file shares through bot integration
 
-   # Seed database (optional)
-   bun run db:seed
-   ```
+**Processing Workflow:**
+1. File validation and metadata extraction
+2. Content analysis and classification
+3. AI-powered document extraction
+4. Business entity recognition and linking
+5. Search index population
+6. Thumbnail generation for visual assets
 
-4. **Start development servers**:
-   ```bash
-   # Start all services
-   bun run dev:all
+**Storage Strategy:**
+Files are stored in Supabase Storage with hierarchical path organization. Access is controlled through signed URLs with tenant-scoped permissions. Thumbnails and processed versions are generated asynchronously and cached for performance.
 
-   # Or start individually
-   bun run dev:api    # Backend API
-   bun run dev:web    # Frontend
-   ```
+### Communication Channel Integration
 
-The API will be available at `http://localhost:3000` and the web app at `http://localhost:5173`.
+The platform supports multiple communication channels through a unified messaging interface:
 
-## 🏛️ Backend Architecture
+**Slack Integration:**
+- Multi-workspace OAuth flow with proper scoping
+- Natural language query processing
+- File sharing and collaborative document review
+- Workspace-specific bot configuration
 
-### Technology Stack
-- **Runtime**: Node.js with TypeScript (Bun compatible)
-- **Framework**: Hono (lightweight web server)
-- **API**: tRPC for type-safe APIs
-- **Database**: PostgreSQL with Drizzle ORM
-- **Queue**: BullMQ with Redis
-- **Authentication**: JWT with Supabase integration
-- **Logging**: @figgy/utils
+**WhatsApp Business API:**
+- Twilio integration for message handling
+- Media processing and document extraction
+- Automated response generation
+- Rate limiting and quota management
 
-### Clean Architecture
+**Email Processing:**
+- IMAP and OAuth-based email access
+- Attachment extraction and processing
+- Folder filtering and sender-based rules
+- Webhook integration for real-time processing
 
-The backend follows Clean Architecture principles:
+### Supplier and Business Entity Management
 
+The system includes sophisticated business entity recognition and management:
+
+**Supplier Enrichment:**
+- Automated domain discovery from invoice data
+- Website content analysis for business intelligence
+- Logo fetching and branding consistency
+- Company profile completion through external APIs
+
+**Invoice Processing:**
+- AI-powered data extraction from PDF and image formats
+- Line item recognition and categorization
+- Duplicate detection through content hashing
+- Financial data validation and consistency checks
+
+## Development Patterns and Best Practices
+
+### Direct Function Approach
+
+The codebase follows a pragmatic approach that favors direct functions over abstract patterns:
+
+```typescript
+// Preferred: Direct, explicit functions
+export async function createInvoice(input: CreateInvoiceInput) {
+  const validated = createInvoiceSchema.parse(input)
+  const [invoice] = await db.insert(invoices).values(validated).returning()
+  return invoice
+}
+
+// Avoided: Over-engineered abstractions
+class InvoiceService {
+  constructor(private repo: InvoiceRepository) {}
+  async create(cmd: CreateInvoiceCommand): Promise<Result<Invoice, Error>> {}
+}
 ```
-src/
-├── core/                 # Domain layer (business logic)
-│   ├── domain/          # Entities and value objects
-│   ├── usecases/        # Application business rules
-│   └── ports/           # Repository interfaces
-├── infrastructure/       # External adapters
-│   └── repositories/    # Database implementations
-├── services/            # Application services
-├── routers/             # tRPC routers (API endpoints)
-├── middleware/          # Cross-cutting concerns
-└── jobs/                # Background job processors
+
+### Type-First Development
+
+All data structures are defined through Zod schemas that serve as the single source of truth for both runtime validation and TypeScript type generation:
+
+```typescript
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  tenantId: z.string().uuid(),
+})
+
+export type User = z.infer<typeof userSchema>
 ```
 
-### Key Concepts
+### Database Query Patterns
 
-1. **Domain-Driven Design**: Business logic lives in domain entities
-2. **Dependency Injection**: IoC container for managing dependencies
-3. **Repository Pattern**: Abstract database operations
-4. **Multi-tenancy**: Tenant isolation at all levels
-5. **Background Jobs**: Async processing with BullMQ
+Database operations use Drizzle ORM with direct queries rather than repository abstractions:
 
-## 🎨 Frontend Architecture
-
-### Technology Stack
-- **Framework**: Vue.js 3 (Composition API)
-- **State Management**: Pinia
-- **Routing**: Vue Router
-- **Styling**: Tailwind CSS
-- **Build Tool**: Vite
-- **Type Safety**: TypeScript
-
-### Application Structure
-
+```typescript
+export async function getUserInvoices(userId: string, tenantId: string) {
+  return db
+    .select()
+    .from(invoices)
+    .where(and(
+      eq(invoices.userId, userId),
+      eq(invoices.tenantId, tenantId)
+    ))
+    .orderBy(desc(invoices.createdAt))
+}
 ```
-src/
-├── components/          # Reusable UI components
-├── composables/         # Vue composables
-├── stores/              # Pinia state stores
-├── views/               # Page components
-├── router/              # Route definitions
-└── lib/                 # API clients and utilities
+
+### Error Handling Strategy
+
+Error handling is explicit and contextual rather than using complex error hierarchies:
+
+```typescript
+export async function processDocument(fileId: string) {
+  const file = await getFileById(fileId)
+  if (!file) {
+    throw new Error(`File ${fileId} not found`)
+  }
+  
+  try {
+    return await extractDocumentData(file)
+  } catch (error) {
+    logger.error('Document processing failed', { fileId, error })
+    throw error
+  }
+}
 ```
+
+### Authentication and Authorization
+
+The security model implements layered authentication with tenant-scoped authorization:
+
+**Authentication Flow:**
+1. User authentication through Supabase Auth
+2. JWT token validation in tRPC context
+3. User identity extraction and verification
+4. Tenant context establishment through headers
+
+**Authorization Patterns:**
+- Middleware-based protection for API routes
+- Role-based access control within tenants
+- Resource-level permissions for sensitive operations
+- Audit logging for all authenticated actions
 
 ### State Management
 
-The app uses Pinia stores with a master orchestrator pattern:
-- `app.ts` - Master store coordinating initialization
-- `auth.ts` - Authentication state
-- `workspace.ts` - Tenant/workspace management
-- `integration.ts` - Integration management
+Frontend state management uses Pinia with a clear separation between local component state and global application state:
 
-## 🔧 Development
+**Global State:** User authentication, tenant context, and shared application settings
+**Local State:** Component-specific data, form state, and UI interactions
+**Server State:** Managed through tRPC with automatic caching and synchronization
 
-### Common Commands
+## Configuration and Environment Management
 
-```bash
-# Development
-bun run dev:all          # Start all services
-bun run dev:api          # Start API only
-bun run dev:web          # Start web only
+The application uses a tiered configuration system that supports multiple deployment environments:
 
-# Database
-bun run db:migrate       # Run migrations
-bun run db:seed          # Seed database
-bun run db:studio        # Open Drizzle Studio
+**Configuration Layers:**
+1. Base configuration with sensible defaults
+2. Environment-specific overrides
+3. Runtime configuration through environment variables
+4. Tenant-specific settings stored in database
 
-# Testing
-bun run test             # Run all tests
-bun run test:unit        # Unit tests only
-bun run typecheck        # TypeScript checking
+**Security Considerations:**
+- All secrets managed through environment variables
+- Production configurations use separate key management
+- Development environments use safe default values
+- Configuration validation through Zod schemas
 
-# Code Quality
-bun run lint             # Lint all packages
-bun run format           # Format all code
+## Development Workflow
 
-# Build
-bun run build            # Build all packages
-```
+The development process emphasizes rapid iteration while maintaining code quality:
 
-### Environment Variables
+**Code Quality Gates:**
+- TypeScript strict mode enforcement
+- Biome formatting and linting
+- Integration testing for critical paths
+- Manual testing for user-facing features
 
-Environment variables are managed through Doppler. Key variables:
+**Build Process:**
+- Turborepo for efficient monorepo builds
+- Parallel task execution with intelligent caching
+- Environment-specific build optimization
+- Automated dependency analysis
 
-**Backend** (`figgy-be`):
-- `DATABASE_URL` - PostgreSQL connection string
-- `JWT_KEY` - JWT signing key
-- `REDIS_URL` - Redis connection (optional)
-- `XERO_CLIENT_ID/SECRET` - Xero OAuth credentials
+**Testing Strategy:**
+- Integration tests for business-critical workflows
+- Type safety as primary quality assurance
+- Manual testing for user experience validation
+- Performance monitoring for production systems
 
-**Frontend** (`figgy-web`):
-- `SUPABASE_URL` - Supabase project URL
-- `SUPABASE_ANON_KEY` - Supabase anonymous key
-- `NUXT_PUBLIC_API_URL` - Backend API URL
-
-## 🔐 Authentication & Authorization
-
-1. **Authentication**: Handled by Supabase
-2. **Authorization**: Role-based permissions per workspace
-3. **Multi-tenancy**: Workspace isolation enforced at API level
-4. **Permissions**: Granular permissions for resources and actions
-
-### Roles
-- `owner` - Full access to workspace
-- `admin` - Administrative access
-- `member` - Standard user access
-- `viewer` - Read-only access
-
-## 📚 API Documentation
-
-The API uses tRPC, providing automatic type safety between frontend and backend.
-
-### Main Routers
-- `/health` - Health checks
-- `/tenant` - Workspace management
-- `/user` - User management
-- `/integration` - Provider integrations
-- `/account` - GL accounts
-- `/supplier` - Contacts/suppliers
-- `/transaction` - Financial transactions
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-bun run test
-
-# Unit tests
-bun run test:unit
-
-# Integration tests
-bun run test:integration
-
-# Type checking
-bun run typecheck
-```
-
-## 📦 Deployment
-
-### Build for production
-
-```bash
-# Build all packages
-bun run build
-
-# Build specific app
-cd apps/api && bun run build
-cd apps/web && bun run build
-```
-
-### Environment Configuration
-
-Use Doppler for managing production secrets:
-```bash
-doppler setup --project figgy-be --config prd
-doppler run -- bun run start
-```
-
-## 🤝 Contributing
-
-1. Follow the existing code structure and patterns
-2. Maintain Clean Architecture principles
-3. Write tests for new features
-4. Use conventional commits
-5. Run linting and type checking before commits
-
-## 📄 License
-
-MIT
+This architecture provides a solid foundation for building scalable SaaS applications while maintaining development velocity and code maintainability. The patterns demonstrated here can be applied to similar multi-tenant applications requiring document processing, AI integration, and multi-channel communication.

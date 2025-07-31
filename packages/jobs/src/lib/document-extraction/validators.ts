@@ -1,6 +1,48 @@
 import type { AccountingDocument, FieldWithConfidence } from "./types";
-import type { CompanyConfig, ExtractedFields } from "@figgy/shared-db";
+import type { ExtractedFields } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
+
+// Define CompanyConfig locally until it's exported from shared-db
+interface CompanyConfig {
+  names: {
+    legal: string;
+    trading: string[];
+    previous: Array<{
+      id?: string;
+      name: string;
+      type?: string;
+      validFrom?: Date | string | null;
+      validTo?: Date | string | null;
+    }>;
+    misspellings: string[];
+    groupName?: string;
+  };
+  identifiers: {
+    companyNumbers: Array<{
+      number: string;
+    }>;
+    vatNumbers: Array<{
+      number: string;
+      isActive: boolean;
+    }>;
+  };
+  addresses: {
+    registered?: {
+      id?: string;
+      isActive?: boolean;
+      type?: string;
+      line1: string;
+      city: string;
+      postcode: string;
+      country?: string;
+      validFrom?: Date | null;
+      validTo?: Date | null;
+      line2?: string;
+      county?: string;
+    } | null;
+  };
+  [key: string]: any; // Allow additional properties
+}
 
 const logger = createLogger("document-validators");
 
@@ -213,8 +255,8 @@ function checkDirectMatches(
   // Exact VAT match = definitive
   if (customerVAT && config.identifiers.vatNumbers.length > 0) {
     const activeVATs = config.identifiers.vatNumbers
-      .filter(v => v.isActive)
-      .map(v => v.number);
+      .filter((v: any) => v.isActive)
+      .map((v: any) => v.number);
     
     if (activeVATs.includes(customerVAT)) {
       return {
@@ -254,7 +296,7 @@ function checkDirectMatches(
   
   // Company number match = definitive
   if (customerCompanyNumber && config.identifiers.companyNumbers.length > 0) {
-    const companyNumbers = config.identifiers.companyNumbers.map(c => c.number);
+    const companyNumbers = config.identifiers.companyNumbers.map((c: any) => c.number);
     
     if (companyNumbers.includes(customerCompanyNumber)) {
       return {
@@ -402,16 +444,18 @@ function buildValidationPrompt(
   
   // Get historical names valid at invoice date
   const historicalNames = config.names.previous
-    .filter(n => {
-      const validFrom = n.validFrom ? new Date(n.validFrom) : null;
-      const validTo = n.validTo ? new Date(n.validTo) : null;
+    .filter((n: any) => {
+      const validFrom = n.validFrom ? 
+        (n.validFrom instanceof Date ? n.validFrom : new Date(n.validFrom)) : null;
+      const validTo = n.validTo ? 
+        (n.validTo instanceof Date ? n.validTo : new Date(n.validTo)) : null;
       return (!validFrom || validFrom <= invoiceDate) && 
              (!validTo || validTo >= invoiceDate);
     })
-    .map(n => n.name);
+    .map((n: any) => n.name);
   
   // Format address if available
-  const registeredAddress = config.addresses.registered 
+  const registeredAddress = config.addresses.registered && config.addresses.registered !== null
     ? `${config.addresses.registered.line1}, ${config.addresses.registered.city}, ${config.addresses.registered.postcode}`
     : 'Not provided';
   
@@ -428,8 +472,8 @@ COMPANY CONFIGURATION:
 - Trading Names: ${config.names.trading.join(', ') || 'None'}
 - Previous Names: ${historicalNames.join(', ') || 'None'}
 - Known Misspellings: ${config.names.misspellings.join(', ') || 'None'}
-- Company Numbers: ${config.identifiers.companyNumbers.map(c => c.number).join(', ') || 'None'}
-- VAT Numbers: ${config.identifiers.vatNumbers.filter(v => v.isActive).map(v => v.number).join(', ') || 'None'}
+- Company Numbers: ${config.identifiers.companyNumbers.map((c: any) => c.number).join(', ') || 'None'}
+- VAT Numbers: ${config.identifiers.vatNumbers.filter((v: any) => v.isActive).map((v: any) => v.number).join(', ') || 'None'}
 - Registered Address: ${registeredAddress}
 - Group Company: ${config.names.groupName || 'None'}
 

@@ -65,11 +65,11 @@ export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 
 export const updateTenantSchema = z.object({
   tenantId: z.string().uuid("Invalid tenant ID"),
-  name: z.string().min(1, "Name is required").optional().default(""),
-  status: tenantStatusSchema.optional().default("active"),
-  settings: z.record(z.string(), z.unknown()).optional().default({}),
-  subscription: z.record(z.string(), z.unknown()).optional().default({}),
-  metadata: z.record(z.string(), z.unknown()).optional().default({}),
+  name: z.string().min(1, "Name is required").optional(),
+  status: tenantStatusSchema.optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+  subscription: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;
@@ -215,5 +215,6 @@ export const rolePermissions: Record<MemberRole, Permission[]> = {
 };
 
 export * from "./schemas/company-config.schema";
+export * from "./schemas/onboarding.schema";
 // Export company configuration types
 export * from "./types/company-config";

@@ -263,7 +263,6 @@
 import { formatDate } from "~/utils/date";
 
 // Auth composables
-const user = useSupabaseUser();
 const tenantStore = useTenantStore();
 const hasAdminAccess = computed(() => {
   const userTenants = tenantStore.userTenants;
@@ -314,23 +313,36 @@ const imapCredentials = ref({
 });
 
 // Fetch connections
-const { data, refresh } = await useTrpc().email.listConnections.useQuery();
-watch(data, (newData) => {
-  if (newData) {
-    connections.value = newData;
+async function fetchConnections() {
+  try {
+    const response = await $fetch('/api/trpc/email.listConnections') as any;
+    connections.value = response.result?.data || [];
+  } catch (error) {
+    console.error('Failed to fetch connections:', error);
   }
+}
+
+// Load connections on mount
+onMounted(() => {
+  fetchConnections();
 });
 
 // Create connection
 async function createConnection() {
   creating.value = true;
   try {
-    const result = await $fetch('/api/trpc/email.createConnection', {
+    const response = await $fetch<any>('/api/trpc/email.createConnection', {
       method: 'POST',
       body: {
         ...newConnection.value,
       },
     });
+    
+    const result = response.result?.data;
+    
+    if (!result) {
+      throw new Error('Failed to create connection');
+    }
 
     if (newConnection.value.provider === 'imap') {
       // Show IMAP credentials modal
@@ -340,7 +352,7 @@ async function createConnection() {
       showIMAPModal.value = true;
     } else {
       // Redirect to OAuth
-      const { authUrl } = await $fetch('/api/trpc/email.getOAuthUrl', {
+      const oauthResponse = await $fetch<any>('/api/trpc/email.getOAuthUrl', {
         method: 'POST',
         body: {
           connectionId: result.connectionId,
@@ -348,13 +360,15 @@ async function createConnection() {
         },
       });
       
+      const authUrl = oauthResponse.result?.data?.authUrl;
+      
       window.location.href = authUrl;
     }
   } catch (error) {
     useToast().add({
       title: 'Error',
       description: 'Failed to create email connection',
-      color: 'red',
+      color: 'error',
     });
   } finally {
     creating.value = false;
@@ -371,18 +385,18 @@ async function saveIMAPCredentials() {
     });
     
     showIMAPModal.value = false;
-    await refresh();
+    await fetchConnections();
     
     useToast().add({
       title: 'Success',
       description: 'Email account connected successfully',
-      color: 'green',
+      color: 'success',
     });
   } catch (error) {
     useToast().add({
       title: 'Error',
       description: 'Failed to connect to IMAP server',
-      color: 'red',
+      color: 'error',
     });
   } finally {
     savingIMAP.value = false;
@@ -401,13 +415,13 @@ async function syncConnection(connectionId: string) {
     useToast().add({
       title: 'Success',
       description: 'Email sync started',
-      color: 'green',
+      color: 'success',
     });
   } catch (error) {
     useToast().add({
       title: 'Error',
       description: 'Failed to start sync',
-      color: 'red',
+      color: 'error',
     });
   } finally {
     syncing.value = null;

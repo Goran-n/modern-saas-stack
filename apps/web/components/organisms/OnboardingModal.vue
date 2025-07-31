@@ -12,6 +12,15 @@
         <p class="mt-2 text-sm text-neutral-600">
           Let's set up your company to get the most accurate results
         </p>
+        <div v-if="isSaving || lastSavedAt" class="mt-2 text-xs text-neutral-500">
+          <span v-if="isSaving" class="flex items-center justify-center gap-1">
+            <Icon name="heroicons:arrow-path" class="w-3 h-3 animate-spin" />
+            Saving...
+          </span>
+          <span v-else-if="lastSavedAt">
+            Progress saved {{ useTimeAgo(lastSavedAt).value }}
+          </span>
+        </div>
       </div>
     </template>
 
@@ -121,8 +130,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, shallowRef } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { FigModal, FigButton } from '@figgy/ui'
+import { useDebounceFn, useTimeAgo } from '@vueuse/core'
 import CompanyBasicsStep from './onboarding/CompanyBasicsStep.vue'
 import FinancialConfigStep from './onboarding/FinancialConfigStep.vue'
 import VATSetupStep from './onboarding/VATSetupStep.vue'
@@ -152,31 +162,31 @@ const steps = [
   {
     id: 'basics',
     label: 'Company Basics',
-    component: shallowRef(CompanyBasicsStep),
+    component: CompanyBasicsStep,
     skippable: false,
   },
   {
     id: 'financial',
     label: 'Financial Setup',
-    component: shallowRef(FinancialConfigStep),
+    component: FinancialConfigStep,
     skippable: false,
   },
   {
     id: 'vat',
     label: 'VAT & Tax',
-    component: shallowRef(VATSetupStep),
+    component: VATSetupStep,
     skippable: false,
   },
   {
     id: 'recognition',
     label: 'Recognition',
-    component: shallowRef(DocumentRecognitionStep),
+    component: DocumentRecognitionStep,
     skippable: true,
   },
   {
     id: 'integrations',
     label: 'Integrations',
-    component: shallowRef(IntegrationsStep),
+    component: IntegrationsStep,
     skippable: true,
   },
 ]
@@ -193,22 +203,125 @@ const formData = ref<Record<string, any>>({
 const validationErrors = ref<Record<string, any>>({})
 const isValidating = ref(false)
 const isSubmitting = ref(false)
+const isSaving = ref(false)
+const hasUnsavedChanges = ref(false)
+const lastSavedAt = ref<Date | null>(null)
 
 // Computed
 const currentStep = computed(() => steps[currentStepIndex.value] ?? steps[0])
 
+// Load saved progress on mount
+onMounted(async () => {
+  try {
+    const progress = await $trpc.tenant.getOnboardingProgress.query()
+    
+    if (progress.stepData) {
+      formData.value = progress.stepData
+    }
+    
+    if (progress.currentStep > 0) {
+      currentStepIndex.value = progress.currentStep
+    }
+    
+    if (progress.lastUpdated) {
+      lastSavedAt.value = new Date(progress.lastUpdated)
+    }
+  } catch (error) {
+    console.error('Failed to load onboarding progress:', error)
+  }
+})
+
+// Auto-save functionality
+const saveStepData = useDebounceFn(async () => {
+  if (!currentStep.value || !hasUnsavedChanges.value) return
+  
+  isSaving.value = true
+  try {
+    const stepId = currentStep.value.id as 'basics' | 'financial' | 'vat' | 'recognition' | 'integrations'
+    const stepData = formData.value[stepId]
+    
+    if (!stepData || Object.keys(stepData).length === 0) {
+      return
+    }
+    
+    await $trpc.tenant.saveOnboardingStep.mutate({
+      step: stepId,
+      data: stepData,
+    })
+    
+    hasUnsavedChanges.value = false
+    lastSavedAt.value = new Date()
+    
+    toast.add({
+      title: 'Progress saved',
+      color: 'success' as const,
+      timeout: 2000,
+    })
+  } catch (error: any) {
+    console.error('Failed to save progress:', error)
+    
+    // Handle validation errors
+    if (error.data?.cause) {
+      const errors = error.data.cause as any[]
+      const errorMap: Record<string, string> = {}
+      errors.forEach((err: any) => {
+        errorMap[err.field] = err.message
+      })
+      validationErrors.value[currentStep.value.id] = errorMap
+    }
+  } finally {
+    isSaving.value = false
+  }
+}, 1000)
+
+// Watch for form data changes
+watch(formData, () => {
+  hasUnsavedChanges.value = true
+  saveStepData()
+}, { deep: true })
+
 // Methods
 async function validateCurrentStep(): Promise<boolean> {
   isValidating.value = true
-  if (currentStep.value) {
-    if (currentStep.value) {
-      validationErrors.value[currentStep.value.id] = {}
-    }
-  }
   
   try {
-    // Validation will be handled by individual step components
-    // They will emit validation status
+    const stepId = currentStep.value?.id as 'basics' | 'financial' | 'vat' | 'recognition' | 'integrations'
+    const stepData = formData.value[stepId]
+    
+    if (!stepData || Object.keys(stepData).length === 0) {
+      // No data to validate
+      return currentStep.value?.skippable || false
+    }
+    
+    const validationResult = await $trpc.tenant.validateOnboardingStep.query({
+      step: stepId,
+      data: stepData,
+    })
+    
+    if (!validationResult.valid) {
+      // Transform errors to format expected by step components
+      const errorMap: Record<string, string> = {}
+      validationResult.errors.forEach((err) => {
+        errorMap[err.field] = err.message
+      })
+      validationErrors.value[stepId] = errorMap
+      return false
+    }
+    
+    // Clear errors if validation passed
+    validationErrors.value[stepId] = {}
+    
+    // Show warnings if any
+    if (validationResult.warnings && validationResult.warnings.length > 0) {
+      validationResult.warnings.forEach((warning) => {
+        toast.add({
+          title: warning.message,
+          description: warning.suggestion,
+          color: warning.severity === 'warning' ? 'warning' : 'primary' as const,
+        })
+      })
+    }
+    
     return true
   } finally {
     isValidating.value = false
@@ -218,11 +331,23 @@ async function validateCurrentStep(): Promise<boolean> {
 async function nextStep() {
   const isValid = await validateCurrentStep()
   if (isValid) {
+    // Save current step data before moving forward
+    await saveStepData()
     currentStepIndex.value++
+    
+    // Update current step in backend
+    if (currentStep.value) {
+      await $trpc.tenant.saveOnboardingStep.mutate({
+        step: currentStep.value.id as any,
+        data: { ...formData.value[currentStep.value.id], _currentStep: currentStepIndex.value }
+      }).catch(() => {})
+    }
   }
 }
 
-function previousStep() {
+async function previousStep() {
+  // Save current step data before moving back
+  await saveStepData()
   currentStepIndex.value--
 }
 
