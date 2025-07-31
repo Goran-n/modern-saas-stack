@@ -38,28 +38,123 @@ modern-saas-stack/
 
 ### Core Technology Stack
 
-**Backend Infrastructure:**
-- Runtime: Bun with Node.js compatibility
-- Web Framework: Hono for lightweight HTTP handling
-- API Layer: tRPC for type-safe client-server communication
-- Database: PostgreSQL with Drizzle ORM
-- Authentication: Supabase Auth with custom JWT handling
-- Background Jobs: Trigger.dev for async processing
-- File Storage: Supabase Storage with signed URL access
+#### Runtime and Server Infrastructure
 
-**Frontend Stack:**
-- Framework: Nuxt 3 with Vue.js 3 Composition API
-- State Management: Pinia with reactive stores
-- Styling: TailwindCSS with custom design system
-- Type Safety: End-to-end TypeScript with strict configuration
-- Build Tool: Vite with optimized bundling
+**Bun Runtime**
+- **Why:** Superior performance over Node.js with native TypeScript support and faster package installation
+- **Where:** Primary runtime for both development and production
+- **Benefits:** Built-in bundler, test runner, and package manager; significantly faster than npm/yarn
 
-**Development Tooling:**
-- Monorepo: Turborepo with intelligent caching
-- Code Quality: Biome for linting and formatting
-- Type Checking: TypeScript with strict mode enabled
-- Testing: Integration-focused testing strategy
-- Environment Management: Doppler for secrets handling
+**Hono Web Framework**
+- **Why:** Lightweight alternative to Express with better TypeScript support and edge runtime compatibility
+- **Where:** HTTP server handling, middleware, and routing in the API layer
+- **Benefits:** Faster than Express, smaller bundle size, excellent TypeScript integration, works in multiple runtimes
+
+#### API Architecture
+
+**tRPC (Type-safe RPC)**
+- **Why:** End-to-end type safety eliminates API contract mismatches and reduces runtime errors
+- **Where:** Primary API layer between frontend and backend, replacing traditional REST endpoints
+- **Benefits:** Automatic type inference, excellent developer experience, eliminates need for API documentation, client-side autocompletion
+
+**When REST is Used:**
+- **Webhooks:** External services (Slack, WhatsApp, email providers) require REST endpoints
+- **File proxying:** Direct file serving with proper headers and streaming
+- **Health checks:** Simple HTTP endpoints for monitoring and load balancers
+- **Third-party integrations:** OAuth callbacks and external API interactions
+
+#### Database and Storage
+
+**PostgreSQL with Drizzle ORM**
+- **Why PostgreSQL:** Mature, reliable, excellent JSON support, strong consistency, advanced features like row-level security
+- **Why Drizzle:** Type-safe database queries, SQL-like syntax, better performance than Prisma, migration system
+- **Where:** Primary data storage for all application data
+- **Benefits:** Schema-first approach, compile-time query validation, excellent TypeScript integration
+
+**Supabase Storage**
+- **Why:** Managed file storage with built-in CDN, image transformations, and security policies
+- **Where:** Document storage, thumbnails, user uploads, processed files
+- **Benefits:** Automatic image optimization, signed URLs for security, seamless integration with Supabase Auth
+- **Alternative Consideration:** Could use AWS S3, but Supabase provides simpler setup and better integration
+
+#### Authentication and Authorization
+
+**Supabase Auth**
+- **Why:** Production-ready authentication with social providers, email verification, and JWT handling
+- **Where:** User registration, login, session management, password reset
+- **Benefits:** Handles complex auth flows, social logins, email templates, security best practices
+- **Integration:** JWT tokens validated in tRPC context with custom tenant-scoped authorization
+
+**Custom Authorization Layer**
+- **Why:** Multi-tenant requirements need custom permission logic beyond basic auth
+- **Where:** tRPC middleware, database row-level security, API endpoint protection
+- **Implementation:** Role-based access control with tenant isolation
+
+#### Frontend Architecture
+
+**Nuxt 3 + Vue.js 3**
+- **Why Nuxt:** Full-stack Vue framework with SSR, file-based routing, and excellent developer experience
+- **Why Vue 3:** Composition API provides better TypeScript support and reusability than Options API
+- **Where:** Entire frontend application, admin panels, user interfaces
+- **Benefits:** Server-side rendering, automatic code splitting, built-in optimization, extensive ecosystem
+
+**Pinia State Management**
+- **Why:** Official Vue state management with better TypeScript support than Vuex
+- **Where:** Global application state, user authentication state, tenant context
+- **Benefits:** Type-safe stores, devtools integration, composition API compatible
+
+**TailwindCSS**
+- **Why:** Utility-first CSS framework enables rapid development and consistent design
+- **Where:** All component styling, responsive design, design system implementation
+- **Benefits:** Smaller bundle sizes, design consistency, rapid prototyping, excellent customization
+
+#### Background Processing
+
+**Trigger.dev**
+- **Why:** Modern alternative to traditional job queues with better observability and error handling
+- **Where:** Document processing, email ingestion, AI operations, file transformations
+- **Benefits:** Built-in retry logic, monitoring dashboard, serverless-friendly, excellent TypeScript support
+- **Use Cases:** PDF processing, image thumbnails, email attachment extraction, supplier enrichment
+
+#### Development and Build Tools
+
+**Turborepo**
+- **Why:** Optimized monorepo management with intelligent caching and parallel execution
+- **Where:** Build orchestration, dependency management, development workflows
+- **Benefits:** Faster builds through caching, better developer experience, cleaner dependency graph
+
+**TypeScript Strict Mode**
+- **Why:** Catches errors at compile time, improves code quality, enables better refactoring
+- **Where:** Entire codebase with strict configuration
+- **Configuration:** All strict checks enabled including `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`
+
+**Biome (ESLint + Prettier Replacement)**
+- **Why:** Single tool for linting and formatting, significantly faster than ESLint + Prettier combination
+- **Where:** Code quality enforcement across all packages
+- **Benefits:** 10x faster than ESLint, consistent formatting, TypeScript-first design
+
+#### External Service Integrations
+
+**Communication Channels:**
+- **Slack API:** Multi-workspace bot integration for document queries and file sharing
+- **WhatsApp Business (Twilio):** Document processing through chat interface
+- **Email (Gmail/Outlook):** Automated attachment processing and invoice extraction
+
+**AI and Processing:**
+- **Portkey.ai:** LLM gateway for document extraction and business intelligence
+- **Firecrawl:** Website content extraction for supplier enrichment
+- **PDF.co:** PDF to image conversion for thumbnail generation
+
+#### Why This Stack Over Alternatives
+
+**Instead of Next.js:** Nuxt 3 provides better Vue.js integration and more opinionated structure
+**Instead of Express:** Hono offers better performance and TypeScript experience
+**Instead of Prisma:** Drizzle provides better performance and more SQL-like queries
+**Instead of REST APIs:** tRPC eliminates API contract issues and provides better developer experience
+**Instead of Firebase:** Supabase offers more control and better PostgreSQL integration
+**Instead of traditional job queues:** Trigger.dev provides better observability and modern developer experience
+
+This stack prioritizes developer experience, type safety, and maintainability while providing the performance and scalability needed for a modern SaaS application.
 
 ## Business Logic and Domain Models
 
