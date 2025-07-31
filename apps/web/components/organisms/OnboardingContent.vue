@@ -2,7 +2,7 @@
   <div class="max-w-xl">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-neutral-900">Welcome to Kibly</h1>
+      <h1 class="text-3xl font-bold text-neutral-900">Welcome to Figgy</h1>
       <p class="mt-3 text-lg text-neutral-600">
         Let's set up your company to get the most accurate results
       </p>
@@ -468,7 +468,7 @@ async function completeOnboarding() {
     onboardingStore.completeOnboarding()
     
     toast.add({
-      title: 'Welcome to Kibly!',
+      title: 'Welcome to Figgy!',
       description: 'Your company has been set up successfully',
       color: 'success' as const,
     })

@@ -10,7 +10,7 @@
             <NuxtLink to="/" class="flex items-center focus:outline-none mr-10">
               <img 
                 src="/logo.png" 
-                alt="Kibly logo" 
+                alt="Figgy logo" 
                 class="h-8 w-auto select-none"
                 @error="handleLogoError"
               />

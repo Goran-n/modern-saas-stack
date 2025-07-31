@@ -1,7 +1,7 @@
 # PDF Thumbnail Implementation
 
 ## Overview
-This document describes the implementation of PDF thumbnail generation for the Kibly platform.
+This document describes the implementation of PDF thumbnail generation for the Figgy platform.
 
 ## Implementation Summary
 

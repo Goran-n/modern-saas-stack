@@ -85,7 +85,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Kibly",
+      title: "Figgy",
       link: [
         { rel: "icon", type: "image/png", href: "/favicon.png" },
         {

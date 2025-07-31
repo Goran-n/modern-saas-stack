@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <form @submit.prevent="onSubmit" class="space-y-4">
+    <form @submit="handleSubmit" class="space-y-4">
       <FigFormField 
         label="Email" 
         :error="errors.email"
@@ -93,6 +93,7 @@
 <script setup lang="ts">
 import { FigButton, FigInput, FigFormField, FigCheckbox, FigDivider } from '@figgy/ui';
 import { z } from 'zod'
+import { reactive } from 'vue'
 
 definePageMeta({
   layout: 'auth',
@@ -104,7 +105,10 @@ const { auth, general } = useNotifications()
 const router = useRouter()
 
 const isLoading = ref(false)
-const errors = ref<Record<string, string>>({})
+const errors = reactive<Record<string, string | undefined>>({
+  email: undefined,
+  password: undefined
+})
 
 // Check if coming from extension
 const isFromExtension = ref(false)
@@ -143,16 +147,19 @@ function validateField(field: keyof Schema) {
     }[field];
     
     fieldSchema.parse(state.value[field]);
-    delete errors.value[field];
+    errors[field] = undefined;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      errors.value[field] = error.issues[0]?.message || 'Invalid input';
+      errors[field] = error.issues[0]?.message || 'Invalid input';
     }
   }
 }
 
 function validateForm(): boolean {
-  errors.value = {};
+  // Clear errors
+  Object.keys(errors).forEach(key => {
+    errors[key] = undefined;
+  });
   
   try {
     schema.parse(state.value);
@@ -161,12 +168,17 @@ function validateForm(): boolean {
     if (error instanceof z.ZodError) {
       error.issues.forEach((issue) => {
         if (issue.path[0]) {
-          errors.value[issue.path[0].toString()] = issue.message;
+          errors[issue.path[0].toString()] = issue.message;
         }
       });
     }
     return false;
   }
+}
+
+function handleSubmit(event: Event) {
+  event.preventDefault();
+  onSubmit();
 }
 
 async function onSubmit() {

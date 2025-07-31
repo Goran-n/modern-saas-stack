@@ -5,7 +5,7 @@
         <NuxtLink to="/" class="inline-block">
           <img 
             src="/logo.png" 
-            alt="Kibly" 
+            alt="Figgy" 
             class="h-12 w-auto mx-auto"
           />
         </NuxtLink>

@@ -2,8 +2,8 @@
   "name": "figgy",
   "version": "1.0.0",
   "private": true,
-  "description": "Modern SaaS Stack - Full-stack application with Vue.js, tRPC, TypeScript, and PostgreSQL",
-  "author": "Modern SaaS Stack",
+  "description": "Figgy - Full-stack application with Vue.js, tRPC, TypeScript, and PostgreSQL",
+  "author": "Figgy",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
@@ -27,10 +27,10 @@
     "ci:web": "turbo run build --filter @figgy/web",
     "build:api": "turbo run build --filter @figgy/api",
     "build:web": "turbo run build --filter @figgy/web",
-    "dev:api": "turbo run dev --filter @figgy/api",
+    "dev:api": "cd apps/api && doppler run -p figgy-be -c dev -- bun run dev",
     "dev:web": "turbo run dev --filter @figgy/web",
     "dev:website": "turbo run dev --filter @figgy/website",
-    "dev:all": "concurrently --kill-others --restart-tries 3 --restart-after 1000 --prefix-colors \"auto\" --prefix \"[{index}] {name}:\" --names \"api,web,jobs,website\" \"bun dev:api\" \"bun dev:web\" \"bun dev:jobs\" \"bun dev:website\"",
+    "dev:all": "concurrently --kill-others --restart-tries 3 --restart-after 1000 --prefix-colors \"auto\" --prefix \"[{index}] {name}:\" --names \"api,web,jobs,website\" \"bun run dev:api\" \"bun run dev:web\" \"bun run dev:jobs\" \"bun run dev:website\"",
     "dev:jobs": "turbo run dev --filter @figgy/jobs",
     "lint:api": "turbo run lint --filter @figgy/api",
     "lint:web": "turbo run lint --filter @figgy/web",
@@ -47,7 +47,7 @@
     "thumbnails:generate": "cd packages/file-manager && bun run thumbnails:generate"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.1.2",
+    "@biomejs/biome": "^2.1.3",
     "@turbo/gen": "^2.5.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.1.0",
@@ -61,15 +61,16 @@
     "packages/*"
   ],
   "dependencies": {
-    "@hono/node-server": "^1.17.1",
+    "@hono/node-server": "^1.18.0",
     "@hono/trpc-server": "^0.4.0",
-    "@supabase/supabase-js": "^2.52.1",
+    "@supabase/supabase-js": "^2.53.0",
     "@trpc/server": "^11.4.3",
     "@upstash/search": "^0.1.5",
-    "hono": "^4.8.9",
+    "hono": "^4.8.10",
     "jsonwebtoken": "^9.0.2",
     "superjson": "^2.2.2",
+    "unpdf": "^1.1.0",
     "uuid": "^11.1.0",
-    "zod": "^4.0.10"
+    "zod": "^4.0.14"
   }
 }

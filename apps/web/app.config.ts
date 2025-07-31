@@ -100,7 +100,7 @@ export default defineAppConfig({
     logo: {
       light: "/logo.png",
       dark: "/logo.png",
-      alt: "Kibly",
+      alt: "Figgy",
     },
   },
 });
