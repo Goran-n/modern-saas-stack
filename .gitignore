@@ -144,3 +144,32 @@ dev-debug.log
 # tasks/ 
 
 .claude/
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Storybook
+storybook-static/
+*storybook.log
+
+# Parcel cache
+.parcel-cache/
+
+# Vite
+vite.config.ts.timestamp-*
+vite.config.js.timestamp-*
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-store/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Vitest
+/coverage/
+*.local
