@@ -97,7 +97,7 @@ export function bootstrap(
  * @returns Service-specific configuration
  */
 export function bootstrapForService(
-  service: "file-manager" | "web-app" | "core",
+  service: "backend" | "frontend" | "extension" | "file-manager" | "web-app" | "core",
   options: BootstrapOptions = {},
 ) {
   const fullConfig = bootstrap(options);
@@ -109,12 +109,15 @@ export function bootstrapForService(
 
   try {
     switch (service) {
+      case "backend":
       case "file-manager":
-        return config.getForFileManager();
-      case "web-app":
-        return config.getForWebApp();
       case "core":
-        return config.getCore();
+        return config.getBackend();
+      case "frontend":
+      case "web-app":
+        return config.getFrontend();
+      case "extension":
+        return config.getExtension();
       default:
         throw new Error(`Unknown service: ${service}`);
     }
@@ -181,15 +184,9 @@ export function printConfigSummary(): void {
     logLevel: fullConfig.LOG_LEVEL,
     port: fullConfig.PORT,
     host: fullConfig.HOST,
-    webPort: fullConfig.WEB_PORT,
-    apiUrl: fullConfig.API_URL,
-    redisHost: fullConfig.REDIS_HOST,
-    redisPort: fullConfig.REDIS_PORT,
-    redisTls: fullConfig.REDIS_TLS,
     databaseConfigured: !!fullConfig.DATABASE_URL,
-    supabaseConfigured:
-      !!fullConfig.SUPABASE_URL && !!fullConfig.SUPABASE_ANON_KEY,
-    jwtConfigured: !!fullConfig.JWT_SECRET,
+    supabaseConfigured: !!fullConfig.SUPABASE_URL,
+    authConfigured: !!fullConfig.JWT_SECRET,
   };
 
   logger.info("📋 Configuration Summary", summary);

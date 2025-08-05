@@ -1,4 +1,5 @@
 import { createLogger, type Logger } from "@figgy/utils";
+import type { OAuthTokens } from "@figgy/oauth";
 import type {
   EmailAttachment,
   EmailConnectionConfig,
@@ -6,7 +7,6 @@ import type {
   IEmailProvider,
   IMAPCredentials,
   ListMessagesOptions,
-  OAuthTokens,
 } from "../types";
 
 export abstract class BaseEmailProvider implements IEmailProvider {
@@ -167,13 +167,4 @@ export abstract class BaseEmailProvider implements IEmailProvider {
   abstract getMessage(messageId: string): Promise<EmailMessage>;
   abstract getAttachment(messageId: string, attachmentId: string): Promise<Buffer>;
   abstract markAsRead(messageId: string): Promise<void>;
-  
-  // Optional OAuth methods
-  getAuthUrl?(redirectUri: string, state: string): string;
-  exchangeCodeForTokens?(code: string, redirectUri: string): Promise<OAuthTokens>;
-  refreshTokens?(refreshToken: string): Promise<OAuthTokens>;
-  
-  // Optional webhook methods
-  subscribeToWebhook?(webhookUrl: string): Promise<string>;
-  unsubscribeFromWebhook?(subscriptionId: string): Promise<void>;
 }

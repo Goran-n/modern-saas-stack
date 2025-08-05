@@ -49,7 +49,7 @@
           loading="lazy"
           @error="handleThumbnailError"
         />
-        <FileIcon 
+        <FigFileIcon 
           v-else
           :file-name="file.fileName" 
           size="xl" 
@@ -123,7 +123,7 @@ import { FigCard } from '@figgy/ui'
 import { computed, ref } from 'vue'
 import type { FileItem } from '@figgy/types'
 import { getFileDisplayName } from '~/utils/fileUtils'
-import FileIcon from '../atoms/FileIcon.vue'
+import { FigFileIcon } from '@figgy/ui'
 import FileDate from '../atoms/FileDate.vue'
 import FileSize from '../atoms/FileSize.vue'
 import FileBadge from '../atoms/FileBadge.vue'

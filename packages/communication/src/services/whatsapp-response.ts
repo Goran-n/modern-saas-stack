@@ -20,7 +20,7 @@ export class WhatsAppResponseService {
       config.TWILIO_AUTH_TOKEN,
     );
 
-    this.whatsappNumber = config.TWILIO_WHATSAPP_NUMBER;
+    this.whatsappNumber = config.TWILIO_WHATSAPP_NUMBER || "";
     if (!this.whatsappNumber) {
       throw new Error("WhatsApp number not configured");
     }

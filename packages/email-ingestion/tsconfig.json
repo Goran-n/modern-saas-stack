@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig/base.json",
+  "extends": "@figgy/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
     "module": "esnext",
@@ -9,8 +9,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "incremental": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

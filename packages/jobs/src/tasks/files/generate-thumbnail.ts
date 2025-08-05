@@ -89,9 +89,8 @@ export const generateThumbnail = schemaTask({
         throw new Error(`Failed to generate signed URL: ${urlError}`);
       }
 
-      // Generate thumbnail path
-      const thumbnailFileName = `${file.id}_thumb.webp`;
-      const thumbnailPath = `${file.tenantId}/thumbnails/${thumbnailFileName}`;
+      // Generate standardized thumbnail path: tenantId/thumbnails/fileId
+      const thumbnailPath = `${file.tenantId}/thumbnails/${file.id}`;
       
       // Check if PDF.co API key is configured
       const pdfCoApiKey = config.PDF_CO_API_KEY;

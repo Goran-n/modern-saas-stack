@@ -4,12 +4,12 @@ import {
   EmailProvider,
   ConnectionStatus,
 } from "@figgy/email-ingestion";
-import type { IEmailProvider } from "@figgy/email-ingestion";
 import {
   and,
   count,
   desc,
   eq,
+  inArray,
   emailConnections,
   emailProcessingLog,
   emailRateLimits,
@@ -17,10 +17,11 @@ import {
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { getConfig } from "@figgy/config";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter } from "../trpc";
-import { tenantProcedure } from "../trpc/procedures";
+import { publicProcedure, tenantProcedure } from "../trpc/procedures";
 
 // Create admin procedure for email operations
 const adminProcedure = tenantProcedure;
@@ -52,18 +53,38 @@ const imapCredentialsSchema = z.object({
   password: z.string(),
 });
 
-const oauthCallbackSchema = z.object({
-  provider: z.enum(["gmail", "outlook"]),
-  code: z.string(),
-  state: z.string(),
-});
-
 export const emailRouter = createTRPCRouter({
   /**
-   * List email connections for the tenant
+   * Get available email providers based on configuration
+   */
+  getAvailableProviders: publicProcedure.query(async () => {
+    const config = getConfig().getCore();
+    
+    return {
+      gmail: {
+        available: !!(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET),
+        name: "Gmail",
+        description: "Connect your Gmail account",
+      },
+      outlook: {
+        available: !!(config.MICROSOFT_CLIENT_ID && config.MICROSOFT_CLIENT_SECRET && config.MICROSOFT_TENANT_ID),
+        name: "Outlook",
+        description: "Connect your Outlook or Office 365 account",
+      },
+      imap: {
+        available: true, // IMAP is always available as it doesn't require OAuth
+        name: "IMAP",
+        description: "Connect any email account with IMAP support",
+      },
+    };
+  }),
+
+  /**
+   * List email connections for the tenant (including OAuth connections)
    */
   listConnections: tenantProcedure.query(async ({ ctx }) => {
-    const connections = await ctx.db
+    // Get traditional email connections (IMAP)
+    const emailConnectionsList = await ctx.db
       .select({
         id: emailConnections.id,
         provider: emailConnections.provider,
@@ -78,10 +99,43 @@ export const emailRouter = createTRPCRouter({
         createdAt: emailConnections.createdAt,
       })
       .from(emailConnections)
-      .where(eq(emailConnections.tenantId, ctx.tenant.id))
-      .orderBy(desc(emailConnections.createdAt));
+      .where(eq(emailConnections.tenantId, ctx.tenant.id));
     
-    return connections;
+    // Get OAuth connections for email providers
+    const { oauthConnections } = await import("@figgy/shared-db/schemas");
+    const oauthConnectionsList = await ctx.db
+      .select()
+      .from(oauthConnections)
+      .where(
+        and(
+          eq(oauthConnections.tenantId, ctx.tenant.id),
+          inArray(oauthConnections.provider, ['gmail', 'outlook'])
+        )
+      );
+    
+    // Map OAuth connections to email connection format
+    const mappedOAuthConnections = oauthConnectionsList.map(oauth => {
+      const metadata = (oauth.metadata as any) || {};
+      return {
+        id: oauth.id,
+        provider: oauth.provider as 'gmail' | 'outlook',
+        emailAddress: oauth.accountEmail || '',
+        status: oauth.status === 'active' ? 'active' as const : 'inactive' as const,
+        lastSyncAt: metadata.lastSyncAt ? new Date(metadata.lastSyncAt) : null,
+        lastError: oauth.lastError,
+        folderFilter: metadata.folderFilter || ['INBOX'],
+        senderFilter: metadata.senderFilter || [],
+        subjectFilter: metadata.subjectFilter || [],
+        webhookExpiresAt: oauth.webhookExpiresAt,
+        createdAt: oauth.createdAt,
+      };
+    });
+    
+    // Combine and sort by creation date
+    const allConnections = [...emailConnectionsList, ...mappedOAuthConnections];
+    allConnections.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    return allConnections;
   }),
   
   /**
@@ -180,164 +234,6 @@ export const emailRouter = createTRPCRouter({
         provider: connection.provider,
         needsAuth: true,
       };
-    }),
-  
-  /**
-   * Get OAuth URL for Gmail/Outlook
-   */
-  getOAuthUrl: adminProcedure
-    .input(z.object({
-      connectionId: z.string().uuid(),
-      redirectUri: z.string().url(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const [connection] = await ctx.db
-        .select()
-        .from(emailConnections)
-        .where(
-          and(
-            eq(emailConnections.id, input.connectionId),
-            eq(emailConnections.tenantId, ctx.tenant.id)
-          )
-        )
-        .limit(1);
-      
-      if (!connection) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email connection not found",
-        });
-      }
-      
-      if (connection.provider === "imap") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "IMAP connections do not use OAuth",
-        });
-      }
-      
-      const providerType = connection.provider === "gmail" ? EmailProvider.GMAIL : 
-                          connection.provider === "outlook" ? EmailProvider.OUTLOOK : 
-                          EmailProvider.IMAP;
-      const provider = createEmailProvider(providerType) as IEmailProvider & {
-        getAuthUrl?: (redirectUri: string, state: string) => string;
-      };
-      
-      if (!provider.getAuthUrl) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Provider does not support OAuth",
-        });
-      }
-      
-      // Generate state with connection ID
-      const state = encryptionService.encrypt(JSON.stringify({
-        connectionId: connection.id,
-        tenantId: ctx.tenant.id,
-        userId: ctx.user.id,
-      }));
-      
-      const authUrl = provider.getAuthUrl(input.redirectUri, state);
-      
-      return { authUrl };
-    }),
-  
-  /**
-   * Handle OAuth callback
-   */
-  handleOAuthCallback: adminProcedure
-    .input(oauthCallbackSchema)
-    .mutation(async ({ ctx, input }) => {
-      try {
-        // Decrypt state
-        const stateData = JSON.parse(encryptionService.decrypt(input.state));
-        
-        if (stateData.tenantId !== ctx.tenant.id) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Invalid state",
-          });
-        }
-        
-        const [connection] = await ctx.db
-          .select()
-          .from(emailConnections)
-          .where(eq(emailConnections.id, stateData.connectionId))
-          .limit(1);
-        
-        if (!connection || connection.provider !== input.provider) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Email connection not found",
-          });
-        }
-        
-        const providerType = input.provider === "gmail" ? EmailProvider.GMAIL : 
-                            input.provider === "outlook" ? EmailProvider.OUTLOOK : 
-                            EmailProvider.IMAP;
-        const provider = createEmailProvider(providerType) as IEmailProvider & {
-          exchangeCodeForTokens?: (code: string, redirectUri: string) => Promise<any>;
-          subscribeToWebhook?: (webhookUrl: string) => Promise<string>;
-        };
-        
-        if (!provider.exchangeCodeForTokens) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Provider does not support OAuth",
-          });
-        }
-        
-        // Exchange code for tokens
-        const redirectUri = `${process.env.BASE_URL}/api/email/oauth/callback`;
-        const tokens = await provider.exchangeCodeForTokens(input.code, redirectUri);
-        
-        // Encrypt and store tokens
-        await ctx.db
-          .update(emailConnections)
-          .set({
-            accessToken: encryptionService.encrypt(tokens.accessToken),
-            refreshToken: tokens.refreshToken 
-              ? encryptionService.encrypt(tokens.refreshToken)
-              : null,
-            tokenExpiresAt: tokens.expiresAt,
-            status: "active",
-            updatedAt: new Date(),
-          })
-          .where(eq(emailConnections.id, connection.id));
-        
-        // Set up webhook subscription if supported
-        if (provider.subscribeToWebhook) {
-          try {
-            const webhookUrl = `${process.env.BASE_URL}/api/email/webhook/${input.provider}`;
-            const subscriptionId = await provider.subscribeToWebhook(webhookUrl);
-            
-            await ctx.db
-              .update(emailConnections)
-              .set({
-                webhookSubscriptionId: subscriptionId,
-                webhookExpiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
-              })
-              .where(eq(emailConnections.id, connection.id));
-          } catch (error) {
-            logger.error("Failed to set up webhook", { error });
-            // Don't fail the entire flow if webhook setup fails
-          }
-        }
-        
-        // Trigger initial sync
-        await tasks.trigger("sync-email-connection", {
-          connectionId: connection.id,
-          triggeredBy: "manual",
-        });
-        
-        return { success: true };
-      } catch (error) {
-        logger.error("OAuth callback failed", { error });
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to complete OAuth flow",
-        });
-      }
     }),
   
   /**
@@ -488,7 +384,8 @@ export const emailRouter = createTRPCRouter({
   deleteConnection: adminProcedure
     .input(z.object({ connectionId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [connection] = await ctx.db
+      // First check email_connections table
+      const [emailConnection] = await ctx.db
         .select()
         .from(emailConnections)
         .where(
@@ -499,12 +396,9 @@ export const emailRouter = createTRPCRouter({
         )
         .limit(1);
       
-      if (!connection) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email connection not found",
-        });
-      }
+      if (emailConnection) {
+        // Handle email connection deletion
+        const connection = emailConnection;
       
       // Unsubscribe from webhooks if applicable
       if (connection.webhookSubscriptionId && connection.provider !== "imap") {
@@ -512,9 +406,7 @@ export const emailRouter = createTRPCRouter({
           const providerType = connection.provider === "gmail" ? EmailProvider.GMAIL : 
                               connection.provider === "outlook" ? EmailProvider.OUTLOOK : 
                               EmailProvider.IMAP;
-          const provider = createEmailProvider(providerType) as IEmailProvider & {
-            unsubscribeFromWebhook?: (subscriptionId: string) => Promise<void>;
-          };
+          const provider = createEmailProvider(providerType) as any;
           
           if (connection.accessToken && provider.unsubscribeFromWebhook) {
             const tokens: any = {
@@ -559,6 +451,36 @@ export const emailRouter = createTRPCRouter({
         .where(eq(emailConnections.id, input.connectionId));
       
       return { success: true };
+      }
+      
+      // If not found in email_connections, check oauth_connections
+      const { oauthConnections } = await import("@figgy/shared-db/schemas");
+      const [oauthConnection] = await ctx.db
+        .select()
+        .from(oauthConnections)
+        .where(
+          and(
+            eq(oauthConnections.id, input.connectionId),
+            eq(oauthConnections.tenantId, ctx.tenant.id),
+            inArray(oauthConnections.provider, ['gmail', 'outlook'])
+          )
+        )
+        .limit(1);
+      
+      if (!oauthConnection) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Connection not found",
+        });
+      }
+      
+      // For OAuth connections, we can use the OAuth router to handle deletion
+      const { oauthRouter } = await import("./oauth");
+      await oauthRouter
+        .createCaller(ctx)
+        .revokeConnection({ connectionId: oauthConnection.id });
+      
+      return { success: true };
     }),
   
   /**
@@ -567,7 +489,8 @@ export const emailRouter = createTRPCRouter({
   getConnectionStats: tenantProcedure
     .input(z.object({ connectionId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const [connection] = await ctx.db
+      // Check if connection exists in either table
+      const [emailConnection] = await ctx.db
         .select({ id: emailConnections.id })
         .from(emailConnections)
         .where(
@@ -578,11 +501,27 @@ export const emailRouter = createTRPCRouter({
         )
         .limit(1);
       
-      if (!connection) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email connection not found",
-        });
+      if (!emailConnection) {
+        // Check OAuth connections
+        const { oauthConnections } = await import("@figgy/shared-db/schemas");
+        const [oauthConnection] = await ctx.db
+          .select({ id: oauthConnections.id })
+          .from(oauthConnections)
+          .where(
+            and(
+              eq(oauthConnections.id, input.connectionId),
+              eq(oauthConnections.tenantId, ctx.tenant.id),
+              inArray(oauthConnections.provider, ['gmail', 'outlook'])
+            )
+          )
+          .limit(1);
+        
+        if (!oauthConnection) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Connection not found",
+          });
+        }
       }
       
       // Get processing stats
@@ -640,9 +579,13 @@ export const emailRouter = createTRPCRouter({
    * Trigger manual sync
    */
   syncConnection: adminProcedure
-    .input(z.object({ connectionId: z.string().uuid() }))
+    .input(z.object({ 
+      connectionId: z.string().uuid(),
+      forceFullSync: z.boolean().optional().default(false),
+    }))
     .mutation(async ({ ctx, input }) => {
-      const [connection] = await ctx.db
+      // First check email_connections table
+      const [emailConnection] = await ctx.db
         .select({ 
           id: emailConnections.id,
           status: emailConnections.status,
@@ -656,23 +599,63 @@ export const emailRouter = createTRPCRouter({
         )
         .limit(1);
       
-      if (!connection) {
+      if (emailConnection) {
+        if (emailConnection.status !== "active") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Email connection is not active",
+          });
+        }
+        
+        const job = await tasks.trigger("sync-email-connection", {
+          connectionId: emailConnection.id,
+          triggeredBy: "manual",
+          forceFullSync: input.forceFullSync,
+        });
+        
+        return {
+          success: true,
+          jobId: job.id,
+        };
+      }
+      
+      // If not found in email_connections, check oauth_connections
+      const { oauthConnections } = await import("@figgy/shared-db/schemas");
+      const [oauthConnection] = await ctx.db
+        .select({
+          id: oauthConnections.id,
+          status: oauthConnections.status,
+          provider: oauthConnections.provider,
+          metadata: oauthConnections.metadata,
+        })
+        .from(oauthConnections)
+        .where(
+          and(
+            eq(oauthConnections.id, input.connectionId),
+            eq(oauthConnections.tenantId, ctx.tenant.id),
+            inArray(oauthConnections.provider, ['gmail', 'outlook'])
+          )
+        )
+        .limit(1);
+      
+      if (!oauthConnection) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Email connection not found",
+          message: "Connection not found",
         });
       }
       
-      if (connection.status !== "active") {
+      if (oauthConnection.status !== "active") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Email connection is not active",
+          message: "Connection is not active",
         });
       }
       
       const job = await tasks.trigger("sync-email-connection", {
-        connectionId: connection.id,
+        connectionId: oauthConnection.id,
         triggeredBy: "manual",
+        forceFullSync: input.forceFullSync,
       });
       
       return {

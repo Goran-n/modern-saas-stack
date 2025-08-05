@@ -1,5 +1,5 @@
 import { getConfig } from "@figgy/config";
-import type { EmailService } from "@figgy/email";
+import type { EmailService } from "@figgy/communication";
 import {
   and,
   eq,

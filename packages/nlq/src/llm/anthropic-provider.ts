@@ -1,4 +1,4 @@
-import { getPortkeyClient } from "@figgy/llm-utils";
+import { getPortkeyClient } from "@figgy/config";
 import { createLogger, logAndRethrow, logError } from "@figgy/utils";
 import {
   NLQError,

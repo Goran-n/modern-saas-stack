@@ -21,6 +21,14 @@
         </p>
       </div>
 
+      <!-- No Tenant Selected Warning -->
+      <div v-if="!hasTenantSelected" class="mb-6">
+        <FigAlert type="warning">
+          <template #title>No Organisation Selected</template>
+          Please select an organisation from the dropdown above to manage integrations.
+        </FigAlert>
+      </div>
+
       <!-- Email Integration Section -->
       <div class="space-y-6">
         <FigCard>
@@ -31,11 +39,12 @@
                 <p class="text-sm text-neutral-500 mt-1">Forward invoices and receipts to automatically process them</p>
               </div>
               <FigButton 
-                v-if="hasAdminAccess"
+                v-if="hasAdminAccess && hasTenantSelected"
                 @click="showAddEmailModal = true"
                 size="sm"
                 variant="solid"
                 color="primary"
+                :disabled="!hasTenantSelected"
               >
                 <Icon name="heroicons:plus" class="h-4 w-4 mr-1" />
                 Connect Email
@@ -43,8 +52,17 @@
             </div>
           </template>
 
+          <!-- No Tenant Selected State -->
+          <div v-if="!hasTenantSelected" class="p-12 text-center">
+            <Icon name="heroicons:building-office" class="mx-auto h-12 w-12 text-neutral-400 mb-4" />
+            <h3 class="text-sm font-semibold text-neutral-900 mb-1">Select an organisation</h3>
+            <p class="text-sm text-neutral-500">
+              Choose an organisation to view and manage email integrations
+            </p>
+          </div>
+
           <!-- Loading State -->
-          <div v-if="emailLoading" class="space-y-4 p-6">
+          <div v-else-if="emailLoading" class="space-y-4 p-6">
             <FigSkeleton height="h-20" />
             <FigSkeleton height="h-20" />
           </div>
@@ -69,10 +87,11 @@
               Connect your email accounts to automatically import invoices and receipts
             </p>
             <FigButton
-              v-if="hasAdminAccess"
+              v-if="hasAdminAccess && hasTenantSelected"
               @click="showAddEmailModal = true"
               size="sm"
               color="primary"
+              :disabled="!hasTenantSelected"
             >
               Connect Your First Email
             </FigButton>
@@ -155,8 +174,18 @@ const hasAdminAccess = computed(() => {
   return currentUserTenant?.role === 'admin' || currentUserTenant?.role === 'owner'
 })
 
+const hasTenantSelected = computed(() => {
+  return !!tenantStore.selectedTenantId
+})
+
 // Methods
 async function fetchEmailConnections() {
+  // Don't fetch if no tenant is selected
+  if (!hasTenantSelected.value) {
+    console.log('No tenant selected, skipping email connections fetch')
+    return
+  }
+
   try {
     emailLoading.value = true
     const result = await $trpc.email.listConnections.query()
@@ -225,6 +254,20 @@ function handleConnectionSuccess() {
 
 // Lifecycle
 onMounted(() => {
-  fetchEmailConnections()
+  // Only fetch if tenant is already selected
+  if (hasTenantSelected.value) {
+    fetchEmailConnections()
+  }
+})
+
+// Watch for tenant selection changes
+watch(() => tenantStore.selectedTenantId, (newTenantId) => {
+  if (newTenantId) {
+    // Fetch email connections when a tenant is selected
+    fetchEmailConnections()
+  } else {
+    // Clear connections if no tenant is selected
+    emailConnections.value = []
+  }
 })
 </script>

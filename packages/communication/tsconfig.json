@@ -1,8 +1,23 @@
 {
   "extends": "@figgy/tsconfig/base.json",
   "compilerOptions": {
-    "types": ["node", "bun"]
+    "composite": true,
+    "jsx": "react",
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "bun"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/**/*.tsx"
+  ]
 }

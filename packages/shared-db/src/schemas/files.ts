@@ -10,9 +10,11 @@ import {
 
 export const fileProcessingStatusEnum = pgEnum("file_processing_status", [
   "pending",
+  "pending_upload",
   "processing",
   "completed",
   "failed",
+  "dead_letter",
 ]);
 
 export const files = pgTable("files", {
@@ -23,7 +25,7 @@ export const files = pgTable("files", {
   size: bigint("size", { mode: "number" }).notNull(),
   metadata: jsonb("metadata"), // Flexible metadata storage
   source: text("source", {
-    enum: ["integration", "user_upload", "whatsapp", "slack"],
+    enum: ["integration", "user_upload", "whatsapp", "slack", "email"],
   }).notNull(),
   sourceId: text("source_id"), // Reference to source entity
   tenantId: uuid("tenant_id").notNull(),

@@ -61,7 +61,7 @@ export const documentExtractions = pgTable("document_extractions", {
     .$type<import("../types").ExtractedFields>(), // Field values with confidence scores
   companyProfile:
     jsonb("company_profile").$type<import("../types").CompanyProfile>(), // Standardised company data
-  lineItems: jsonb("line_items").array().$type<import("../types").LineItem[]>(), // Array of line items
+  lineItems: jsonb("line_items").$type<import("../types").LineItem[]>(), // Array of line items
 
   // Quality metrics
   overallConfidence: numeric("overall_confidence", {
@@ -82,7 +82,6 @@ export const documentExtractions = pgTable("document_extractions", {
   matchedSupplierId: uuid("matched_supplier_id").references(() => suppliers.id),
   matchConfidence: numeric("match_confidence", { precision: 5, scale: 2 }),
   suggestedMatches: jsonb("suggested_matches")
-    .array()
     .$type<import("../types").SuggestedMatch[]>(),
 
   // Deduplication fields

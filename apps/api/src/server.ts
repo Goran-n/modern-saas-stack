@@ -18,6 +18,8 @@ import { createClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
+import { emailWebhookRoutes } from "./routes/email-webhooks";
+import { oauthWebhookRoutes } from "./routes/oauth-webhooks";
 
 export function createHonoApp() {
   const app = new Hono();
@@ -57,7 +59,7 @@ export function createHonoApp() {
     cors({
       origin: corsOrigins,
       credentials: true,
-      allowHeaders: ["Content-Type", "Authorization", "x-tenant-id"],
+      allowHeaders: ["Content-Type", "Authorization", "x-tenant-id", "x-csrf-token"],
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       maxAge: 86400, // 24 hours
     }),
@@ -143,6 +145,14 @@ export function createHonoApp() {
         return c.json({ error: "No thumbnail available" }, 404);
       }
 
+      // Validate Supabase configuration
+      if (!config.SUPABASE_URL || !config.SUPABASE_URL.startsWith('http')) {
+        logger.error("Invalid Supabase URL configuration", {
+          supabaseUrl: config.SUPABASE_URL,
+        });
+        return c.json({ error: "Storage service misconfigured" }, 500);
+      }
+      
       // Create Supabase client
       const supabase = createClient(
         config.SUPABASE_URL,
@@ -151,11 +161,117 @@ export function createHonoApp() {
 
       // Get storage bucket from config
       const storageBucket = config.STORAGE_BUCKET;
+      
+      // Check if bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        logger.error("Failed to list storage buckets", {
+          error: bucketsError,
+          errorMessage: bucketsError.message,
+        });
+      } else {
+        const bucketExists = buckets?.some(b => b.name === storageBucket);
+        logger.info("Storage bucket check", {
+          bucketExists,
+          requestedBucket: storageBucket,
+          availableBuckets: buckets?.map(b => b.name),
+        });
+      }
+      
+      // Log configuration for debugging
+      logger.info("File proxy configuration", {
+        fileId,
+        storageBucket,
+        hasSupabaseUrl: !!config.SUPABASE_URL,
+        hasServiceKey: !!config.SUPABASE_SERVICE_KEY,
+        hasAnonKey: !!config.SUPABASE_ANON_KEY,
+        usingServiceKey: !!config.SUPABASE_SERVICE_KEY,
+        supabaseUrlPreview: config.SUPABASE_URL.substring(0, 50),
+      });
 
-      // Generate signed URL from Supabase
-      const filePath = isThumbnail && file.thumbnailPath 
-        ? file.thumbnailPath 
-        : file.pathTokens.join("/");
+      // Generate file path based on new standardized structure
+      let filePath: string;
+      
+      if (isThumbnail) {
+        // Thumbnail path: tenantId/thumbnails/fileId
+        filePath = `${file.tenantId}/thumbnails/${file.id}`;
+      } else {
+        // For backward compatibility, check if pathTokens follows new structure
+        const isNewStructure = file.pathTokens.length === 3 && 
+          file.pathTokens[0] === file.tenantId && 
+          file.pathTokens[1] === "files" && 
+          file.pathTokens[2] === file.id;
+        
+        if (isNewStructure) {
+          // New structure: tenantId/files/fileId
+          filePath = file.pathTokens.join("/");
+        } else {
+          // Legacy structure: use pathTokens as is
+          filePath = file.pathTokens.join("/");
+          logger.warn("File using legacy path structure", {
+            fileId: file.id,
+            legacyPath: filePath,
+            pathTokens: file.pathTokens,
+          });
+        }
+      }
+        
+      logger.info("Attempting to create signed URL", {
+        filePath,
+        bucket: storageBucket,
+        filePathTokens: file.pathTokens,
+        isThumbnail,
+        isStandardPath: file.pathTokens.length === 3 && file.pathTokens[1] === "files",
+        fileMetadata: {
+          fileName: file.fileName,
+          mimeType: file.mimeType,
+          size: file.size,
+          contentHash: file.contentHash,
+          processingStatus: file.processingStatus,
+          createdAt: file.createdAt,
+        },
+      });
+      
+      // First, check if the file exists in storage
+      // Extract directory path based on file structure
+      const directoryPath = filePath.substring(0, filePath.lastIndexOf('/'));
+      const expectedFileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+      
+      const { data: fileList, error: listError } = await supabase.storage
+        .from(storageBucket)
+        .list(directoryPath, {
+          limit: 100,
+          search: expectedFileName,
+        });
+        
+      if (listError) {
+        logger.error("Failed to list files in storage", {
+          error: listError,
+          errorType: listError?.name,
+          errorMessage: listError?.message,
+          bucket: storageBucket,
+          searchPath: file.pathTokens.slice(0, -1).join("/"),
+        });
+      } else {
+        const fileExists = fileList?.some(f => f.name === expectedFileName);
+        logger.info("File existence check", {
+          fileExists,
+          filesFound: fileList?.length || 0,
+          searchedFor: expectedFileName,
+          foundFiles: fileList?.map(f => f.name),
+          directoryPath,
+        });
+        
+        if (!fileExists && fileList) {
+          logger.warn("File not found in storage", {
+            expectedFileName,
+            expectedPath: filePath,
+            bucket: storageBucket,
+            processingStatus: file.processingStatus,
+          });
+        }
+      }
         
       const { data: signedData, error: signedError } = await supabase.storage
         .from(storageBucket)
@@ -164,9 +280,42 @@ export function createHonoApp() {
       if (signedError || !signedData) {
         logger.error("Failed to generate signed URL", {
           error: signedError,
+          errorType: signedError?.name,
+          errorMessage: signedError?.message,
+          errorDetails: JSON.stringify(signedError),
+          errorCause: signedError?.cause,
+          errorStack: signedError?.stack,
           fileId,
+          filePath,
+          bucket: storageBucket,
+          fileRecord: {
+            id: file.id,
+            fileName: file.fileName,
+            pathTokens: file.pathTokens,
+            processingStatus: file.processingStatus,
+            bucket: file.bucket,
+            contentHash: file.contentHash,
+          },
         });
-        return c.json({ error: "Failed to access file" }, 500);
+        
+        // Try to download directly to see if it's a permissions issue
+        const { data: downloadData, error: downloadError } = await supabase.storage
+          .from(storageBucket)
+          .download(filePath);
+          
+        if (downloadError) {
+          logger.error("Direct download also failed", {
+            downloadError,
+            downloadErrorType: downloadError?.name,
+            downloadErrorMessage: downloadError?.message,
+          });
+        } else {
+          logger.info("Direct download succeeded but signed URL failed", {
+            downloadDataSize: downloadData?.size,
+          });
+        }
+        
+        return c.json({ error: "Failed to access file", details: signedError?.message }, 500);
       }
 
       // Fetch file from Supabase and stream with correct headers
@@ -938,9 +1087,8 @@ export function createHonoApp() {
   });
 
   // Email webhook routes
-  import("./routes/email-webhooks").then(({ emailWebhookRoutes }) => {
-    app.route("/email", emailWebhookRoutes);
-  });
+  app.route("/api/email", emailWebhookRoutes);
+  app.route("/api/oauth", oauthWebhookRoutes);
 
   app.use(
     "/trpc/*",

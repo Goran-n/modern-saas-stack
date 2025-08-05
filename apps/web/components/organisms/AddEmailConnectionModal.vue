@@ -16,12 +16,16 @@
             v-for="provider in providers"
             :key="provider.value"
             @click="selectProvider(provider.value as 'gmail' | 'outlook' | 'imap')"
-            class="w-full p-4 border rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-all text-left group"
+            class="w-full p-4 border rounded-lg transition-all text-left group"
             :class="[
               formData.provider === provider.value 
                 ? 'border-primary-300 bg-primary-50' 
-                : 'border-neutral-200'
+                : 'border-neutral-200',
+              availableProviders[provider.value]?.available !== false
+                ? 'hover:border-primary-300 hover:bg-primary-50'
+                : 'opacity-60 cursor-not-allowed'
             ]"
+            :disabled="availableProviders[provider.value]?.available === false"
           >
             <div class="flex items-center gap-4">
               <div 
@@ -35,7 +39,12 @@
                 />
               </div>
               <div class="flex-1">
-                <h4 class="font-medium text-neutral-900">{{ provider.label }}</h4>
+                <h4 class="font-medium text-neutral-900">
+                  {{ provider.label }}
+                  <span v-if="availableProviders[provider.value]?.available === false" class="text-xs text-orange-600 ml-2">
+                    (Not configured)
+                  </span>
+                </h4>
                 <p class="text-sm text-neutral-500 mt-0.5">{{ provider.description }}</p>
               </div>
               <Icon 
@@ -294,6 +303,11 @@ const isLoading = ref(false)
 const connectionId = ref<string | null>(null)
 const errors = ref<Record<string, string>>({})
 const newSenderEmail = ref('')
+const availableProviders = ref<Record<string, { available: boolean; name: string; description: string }>>({
+  gmail: { available: true, name: 'Gmail', description: 'Connect your Gmail account' },
+  outlook: { available: true, name: 'Outlook', description: 'Connect your Outlook or Office 365 account' },
+  imap: { available: true, name: 'IMAP', description: 'Connect any email account with IMAP support' }
+})
 
 const formData = ref({
   provider: '' as 'gmail' | 'outlook' | 'imap' | '',
@@ -398,7 +412,25 @@ const nextButtonLabel = computed(() => {
 })
 
 // Methods
+async function fetchAvailableProviders() {
+  try {
+    const providers = await $trpc.email.getAvailableProviders.query()
+    availableProviders.value = providers
+  } catch (error) {
+    console.error('Failed to fetch available providers:', error)
+  }
+}
+
 function selectProvider(provider: 'gmail' | 'outlook' | 'imap') {
+  const providerInfo = availableProviders.value[provider]
+  if (providerInfo && !providerInfo.available) {
+    toast.add({
+      title: 'Provider Not Available',
+      description: `${providerInfo.name} integration is not configured. Please contact your administrator.`,
+      color: 'warning' as const,
+    })
+    return
+  }
   formData.value.provider = provider as 'gmail' | 'outlook' | 'imap' | ''
 }
 
@@ -412,20 +444,7 @@ async function nextStep() {
   if (currentStep.value === 'provider') {
     currentStep.value = 'configuration'
   } else if (currentStep.value === 'configuration') {
-    if (formData.value.provider === 'imap') {
-      // Pre-fill username with email address
-      imapData.value.username = formData.value.emailAddress
-      // Set common IMAP settings based on email domain
-      const domain = formData.value.emailAddress.split('@')[1]?.toLowerCase()
-      if (domain?.includes('gmail.com')) {
-        imapData.value.host = 'imap.gmail.com'
-      } else if (domain?.includes('outlook.com') || domain?.includes('hotmail.com')) {
-        imapData.value.host = 'outlook.office365.com'
-      }
-      currentStep.value = 'imap'
-    } else {
-      await createConnection()
-    }
+    await createConnection()
   } else if (currentStep.value === 'imap') {
     await saveIMAPCredentials()
   }
@@ -443,32 +462,47 @@ async function createConnection() {
   try {
     isLoading.value = true
     
-    const result = await $trpc.email.createConnection.mutate({
-      provider: formData.value.provider as 'gmail' | 'outlook' | 'imap',
-      emailAddress: formData.value.emailAddress,
-      folderFilter: formData.value.folderFilter,
-      senderFilter: formData.value.senderFilter,
-      subjectFilter: formData.value.subjectFilter
-    })
-    
-    connectionId.value = result.connectionId
-    
     if (formData.value.provider !== 'imap') {
-      // Get OAuth URL and redirect
-      const redirectUri = `${window.location.origin}/settings/integrations/email-callback`
-      const { authUrl } = await $trpc.email.getOAuthUrl.mutate({
-        connectionId: result.connectionId,
-        redirectUri
-      })
+      // For OAuth providers, skip email connection creation and go directly to OAuth
+      const redirectUri = `${window.location.origin}/settings/oauth-callback`
       
-      // Save state to handle callback
-      sessionStorage.setItem('email-connection-setup', JSON.stringify({
-        connectionId: result.connectionId,
-        provider: formData.value.provider
+      // Store email configuration in localStorage for after OAuth
+      localStorage.setItem('pending_email_config', JSON.stringify({
+        emailAddress: formData.value.emailAddress,
+        folderFilter: formData.value.folderFilter,
+        senderFilter: formData.value.senderFilter,
+        subjectFilter: formData.value.subjectFilter
       }))
+      
+      const { authUrl } = await $trpc.oauth.initiateOAuth.mutate({
+        provider: formData.value.provider,
+        redirectUrl: redirectUri,
+        additionalScopes: [] // Email scopes are already included in the provider defaults
+      })
       
       // Redirect to OAuth
       window.location.href = authUrl
+    } else {
+      // For IMAP, create email connection as before
+      const result = await $trpc.email.createConnection.mutate({
+        provider: formData.value.provider as 'gmail' | 'outlook' | 'imap',
+        emailAddress: formData.value.emailAddress,
+        folderFilter: formData.value.folderFilter,
+        senderFilter: formData.value.senderFilter,
+        subjectFilter: formData.value.subjectFilter
+      })
+      
+      connectionId.value = result.connectionId
+      // For IMAP, pre-fill username with email address
+      imapData.value.username = formData.value.emailAddress
+      // Set common IMAP settings based on email domain
+      const domain = formData.value.emailAddress.split('@')[1]?.toLowerCase()
+      if (domain?.includes('gmail.com')) {
+        imapData.value.host = 'imap.gmail.com'
+      } else if (domain?.includes('outlook.com') || domain?.includes('hotmail.com')) {
+        imapData.value.host = 'outlook.office365.com'
+      }
+      currentStep.value = 'imap'
     }
   } catch (error: any) {
     console.error('Failed to create connection:', error)
@@ -550,9 +584,16 @@ function close() {
   }, 300)
 }
 
-// Watch for modal close
+// Lifecycle
+onMounted(() => {
+  fetchAvailableProviders()
+})
+
+// Watch for modal open/close
 watch(isOpen, (newValue) => {
-  if (!newValue) {
+  if (newValue) {
+    fetchAvailableProviders()
+  } else {
     close()
   }
 })

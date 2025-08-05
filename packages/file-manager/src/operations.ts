@@ -18,14 +18,16 @@ import {
 import { download, remove, signedUrl, upload } from "@figgy/supabase-storage";
 import { createLogger, stripSpecialCharacters } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { v4 as uuidv4 } from "uuid";
 import { getClient } from "./client";
 import { getDb } from "./db";
 import type { CreateFileInput, ProcessingStatus } from "./types";
+import { createFileSchema } from "./types";
 
 const logger = createLogger("file-manager");
 
 /**
- * Upload a file and create a database record
+ * Upload a file and create a database record with atomic transaction
  * @param file - File object to upload
  * @param input - File creation input
  * @returns Promise resolving to the created file ID
@@ -34,64 +36,107 @@ export async function uploadFile(
   file: File,
   input: CreateFileInput,
 ): Promise<string> {
-  const sanitisedFileName = stripSpecialCharacters(file.name);
-  const fullPath = [...input.pathTokens, sanitisedFileName];
+  // Validate input against schema
+  const validatedInput = createFileSchema.parse(input);
+  
+  // Generate UUID for the file BEFORE creating DB record
+  const fileId = uuidv4();
+  
+  // Standardized path: tenantId/files/uuid
+  const standardizedPath = [validatedInput.tenantId, "files", fileId];
 
   // Get bucket from input or config
   const config = getConfig().getForFileManager();
-  const bucket = input.bucket || config.STORAGE_BUCKET;
+  const bucket = validatedInput.bucket || config.STORAGE_BUCKET;
 
-  logger.info("Uploading file", {
+  logger.info("Starting atomic file upload", {
+    fileId,
     fileName: file.name,
-    sanitisedFileName,
-    tenantId: input.tenantId,
-    source: input.source,
+    tenantId: validatedInput.tenantId,
+    source: validatedInput.source,
     bucket,
+    uploadedBy: validatedInput.uploadedBy,
+    standardizedPath,
   });
 
-  // Upload to Supabase Storage
-  const client = getClient();
-  const publicUrl = await upload(client, {
-    file,
-    path: fullPath,
-    bucket,
-  });
-
-  // Calculate file hash for deduplication
+  // Calculate file hash for deduplication BEFORE any DB operations
   const fileBuffer = await file.arrayBuffer();
   const db = getDb();
   const deduplicationService = new DeduplicationService(db);
-  // Just calculate hash without storing (we'll store it during insert)
   const contentHash = await HashUtils.calculateFileHash(
     Buffer.from(fileBuffer),
   );
 
-  // Check for duplicates
+  // Check for duplicates from the same source
+  const duplicateFiles = await db
+    .select()
+    .from(files)
+    .where(
+      and(
+        eq(files.tenantId, validatedInput.tenantId),
+        eq(files.contentHash, contentHash),
+        eq(files.fileSize, file.size),
+        eq(files.source, validatedInput.source),
+        // For email source, also check sourceId to ensure it's from the same email
+        validatedInput.source === "email" && validatedInput.sourceId
+          ? eq(files.sourceId, validatedInput.sourceId)
+          : sql`true`
+      )
+    );
+
+  if (duplicateFiles.length > 0) {
+    const existingFile = duplicateFiles[0];
+    if (!existingFile) {
+      throw new Error("Unexpected null duplicate file result");
+    }
+    logger.info("Skipping duplicate file from same source", {
+      fileName: file.name,
+      existingFileId: existingFile.id,
+      source: validatedInput.source,
+      sourceId: validatedInput.sourceId,
+      contentHash,
+    });
+    
+    // Return the existing file ID instead of creating a duplicate
+    return existingFile.id;
+  }
+
+  // Still check for duplicates from other sources (for logging/awareness)
   const duplicateCheck = await deduplicationService.checkFileDuplicate(
     contentHash,
     file.size,
-    input.tenantId,
+    validatedInput.tenantId,
   );
 
   if (duplicateCheck.isDuplicate) {
-    logger.warn("File is a duplicate", {
+    logger.info("File with same content exists from different source", {
       fileName: file.name,
       duplicateFileId: duplicateCheck.duplicateFileId,
       contentHash,
+      currentSource: validatedInput.source,
+      note: "Allowing upload as it's from a different source",
     });
   }
 
-  // Save to database
+  // ATOMIC OPERATION STARTS HERE
+  // Step 1: Create database record with pending_upload status
   const [record] = await db
     .insert(files)
     .values({
-      ...input,
-      sourceId: input.sourceId || null,
-      fileName: sanitisedFileName,
-      pathTokens: fullPath,
+      id: fileId, // Use pre-generated UUID
+      tenantId: validatedInput.tenantId,
+      uploadedBy: validatedInput.uploadedBy,
+      fileName: file.name, // Store original filename
+      pathTokens: standardizedPath, // Use standardized path
+      mimeType: validatedInput.mimeType,
+      size: validatedInput.size,
+      source: validatedInput.source,
+      sourceId: validatedInput.sourceId || null,
+      metadata: validatedInput.metadata,
       bucket,
       contentHash,
       fileSize: file.size,
+      processingStatus: "pending_upload" as ProcessingStatus, // Mark as pending upload
     })
     .returning();
 
@@ -99,10 +144,62 @@ export async function uploadFile(
     throw new Error("Failed to create file record");
   }
 
-  logger.info("File uploaded and record created", {
+  logger.info("File record created with pending_upload status", {
+    fileId: record.id,
+    tenantId: validatedInput.tenantId,
+  });
+
+  // Step 2: Upload to storage using standardized path
+  const client = getClient();
+  let publicUrl: string | undefined;
+  
+  try {
+    publicUrl = await upload(client, {
+      file,
+      path: standardizedPath,
+      bucket,
+    });
+    logger.info("File uploaded to storage successfully", {
+      fileId: record.id,
+      publicUrl,
+    });
+  } catch (uploadError) {
+    logger.error("Failed to upload file to storage", {
+      fileId: record.id,
+      error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+    });
+    
+    // Step 3a: If upload fails, update status to failed
+    await db
+      .update(files)
+      .set({
+        processingStatus: "failed" as ProcessingStatus,
+        metadata: {
+          ...((typeof record.metadata === "object" && record.metadata !== null) ? record.metadata : {}),
+          error: "storage_upload_failed",
+          errorMessage: uploadError instanceof Error ? uploadError.message : String(uploadError),
+          failedAt: new Date().toISOString(),
+        },
+        updatedAt: new Date(),
+      })
+      .where(eq(files.id, record.id));
+    
+    throw new Error(`Storage upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+  }
+
+  // Step 3b: If upload succeeds, update status to pending
+  await db
+    .update(files)
+    .set({
+      processingStatus: "pending" as ProcessingStatus,
+      updatedAt: new Date(),
+    })
+    .where(eq(files.id, record.id));
+
+  logger.info("File upload completed atomically", {
     fileId: record.id,
     publicUrl,
-    tenantId: input.tenantId,
+    tenantId: validatedInput.tenantId,
   });
 
   // Index file in search
@@ -115,12 +212,12 @@ export async function uploadFile(
       createdAt: record.createdAt,
     };
 
-    if (input.metadata?.supplierName) {
-      indexData.supplierName = input.metadata.supplierName as string;
+    if (validatedInput.metadata?.supplierName) {
+      indexData.supplierName = validatedInput.metadata.supplierName as string;
     }
 
-    if (input.metadata?.category) {
-      indexData.category = input.metadata.category as string;
+    if (validatedInput.metadata?.category) {
+      indexData.category = validatedInput.metadata.category as string;
     }
 
     if (record.fileSize) {
@@ -224,16 +321,17 @@ export async function uploadFileFromBase64(input: {
   mimeType: string;
   createdAt: Date;
 }> {
-  const sanitisedFileName = stripSpecialCharacters(input.fileName);
-  const timestamp = Date.now();
-  const fileName = `${timestamp}_${sanitisedFileName}`;
-  const pathTokens = [input.tenantId, input.uploadedBy, fileName];
-  const fullPath = pathTokens.join("/");
+  // Generate UUID for the file
+  const fileId = uuidv4();
+  
+  // Standardized path: tenantId/files/uuid
+  const standardizedPath = [input.tenantId, "files", fileId];
+  const fullPath = standardizedPath.join("/");
 
   logger.info("Uploading file from base64", {
+    fileId,
     fileName: input.fileName,
-    sanitisedFileName,
-    pathTokens,
+    standardizedPath,
     fullPath,
     tenantId: input.tenantId,
     size: input.size,
@@ -260,7 +358,47 @@ export async function uploadFileFromBase64(input: {
     throw hashError;
   }
 
-  // Check for duplicates
+  // Check for duplicates from the same source
+  const duplicateFiles = await db
+    .select()
+    .from(files)
+    .where(
+      and(
+        eq(files.tenantId, input.tenantId),
+        eq(files.contentHash, contentHash),
+        eq(files.fileSize, fileBuffer.length),
+        eq(files.source, (input.source || "user_upload") as any),
+        // For consistent duplicate detection
+        input.metadata?.sourceId
+          ? eq(files.sourceId, input.metadata.sourceId as string)
+          : sql`true`
+      )
+    );
+
+  if (duplicateFiles.length > 0) {
+    const existingFile = duplicateFiles[0];
+    if (!existingFile) {
+      throw new Error("Unexpected null duplicate file result");
+    }
+    logger.info("Skipping duplicate file from same source", {
+      fileName: input.fileName,
+      existingFileId: existingFile.id,
+      source: input.source || "user_upload",
+      sourceId: input.metadata?.sourceId,
+      contentHash,
+    });
+    
+    // Return the existing file instead of creating a duplicate
+    return {
+      id: existingFile.id,
+      fileName: existingFile.fileName,
+      size: existingFile.size,
+      mimeType: existingFile.mimeType,
+      createdAt: existingFile.createdAt,
+    };
+  }
+
+  // Still check for duplicates from other sources (for logging/awareness)
   const duplicateCheck = await deduplicationService.checkFileDuplicate(
     contentHash,
     fileBuffer.length,
@@ -268,10 +406,12 @@ export async function uploadFileFromBase64(input: {
   );
 
   if (duplicateCheck.isDuplicate) {
-    logger.warn("File is a duplicate", {
+    logger.info("File with same content exists from different source", {
       fileName: input.fileName,
       duplicateFileId: duplicateCheck.duplicateFileId,
       contentHash,
+      currentSource: input.source || "user_upload",
+      note: "Allowing upload as it's from a different source",
     });
   }
 
@@ -279,53 +419,32 @@ export async function uploadFileFromBase64(input: {
   const config = getConfig().getForFileManager();
   const bucket = config.STORAGE_BUCKET || "vault";
 
-  logger.info("Uploading to Supabase Storage", {
+  logger.info("Starting atomic file upload from base64", {
     bucket,
     fullPath,
     fileSize: fileBuffer.length,
     mimeType: input.mimeType,
   });
 
-  // Upload to Supabase Storage
-  const client = getClient();
-  const { error: uploadError } = await client.storage
-    .from(bucket)
-    .upload(fullPath, fileBuffer, {
-      contentType: input.mimeType,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    logger.error("Supabase upload failed", {
-      error: uploadError.message,
-      bucket,
-      path: fullPath,
-      statusCode: (uploadError as any).statusCode,
-    });
-    throw uploadError;
-  }
-
-  const {
-    data: { publicUrl },
-  } = client.storage.from(bucket).getPublicUrl(fullPath);
-
-  // Save to database
-  let fileRecord;
+  // ATOMIC OPERATION STARTS HERE
+  // Step 1: Create database record with pending_upload status
   const insertData = {
+    id: fileId, // Use pre-generated UUID
     tenantId: input.tenantId,
     uploadedBy: input.uploadedBy,
-    fileName: fileName, // Use the timestamped filename
-    pathTokens,
+    fileName: input.fileName, // Store original filename
+    pathTokens: standardizedPath, // Use standardized path
     mimeType: input.mimeType,
     size: Number(input.size), // Ensure it's a number for bigint
     source: (input.source || "user_upload") as
       | "user_upload"
       | "integration"
       | "whatsapp"
-      | "slack",
+      | "slack"
+      | "email",
+    sourceId: input.metadata?.sourceId as string || null,
     metadata: {
       originalName: input.fileName,
-      publicUrl,
       isDuplicate: duplicateCheck.isDuplicate,
       duplicateFileId: duplicateCheck.duplicateFileId,
       ...input.metadata,
@@ -333,54 +452,103 @@ export async function uploadFileFromBase64(input: {
     bucket,
     contentHash,
     fileSize: Number(fileBuffer.length), // Ensure it's a number for bigint
+    processingStatus: "pending_upload" as ProcessingStatus, // Mark as pending upload
   };
 
+  let fileRecord;
   try {
-    logger.info("Inserting file record", {
+    logger.info("Creating file record with pending_upload status", {
       fileName: fileName,
       originalFileName: input.fileName,
       tenantId: input.tenantId,
       uploadedBy: input.uploadedBy,
       contentHash,
       fileSize: fileBuffer.length,
-      pathTokens,
-      source: input.source || "user_upload",
-      bucket,
-      mimeType: input.mimeType,
-      hasMetadata: !!insertData.metadata,
-      metadataKeys: insertData.metadata ? Object.keys(insertData.metadata) : [],
-    });
-
-    // Log the exact insert data for debugging
-    logger.debug("Insert data details", {
-      tenantIdType: typeof insertData.tenantId,
-      tenantIdValue: insertData.tenantId,
-      uploadedByType: typeof insertData.uploadedBy,
-      uploadedByValue: insertData.uploadedBy,
-      sizeType: typeof insertData.size,
-      sizeValue: insertData.size,
-      fileSizeType: typeof insertData.fileSize,
-      fileSizeValue: insertData.fileSize,
     });
 
     const result = await db.insert(files).values(insertData).returning();
-
     fileRecord = result[0];
 
     if (!fileRecord) {
       throw new Error("Failed to create file record - no record returned");
     }
   } catch (dbError) {
-    logger.error("Database insert failed", dbError, {
+    logger.error("Database insert failed", {
+      error: dbError instanceof Error ? dbError.message : String(dbError),
       fileName: input.fileName,
       tenantId: input.tenantId,
-      insertData,
     });
     throw dbError;
   }
 
-  logger.info("File uploaded successfully", {
+  // Step 2: Upload to storage
+  const client = getClient();
+  let publicUrl: string | undefined;
+  
+  try {
+    const { error: uploadError } = await client.storage
+      .from(bucket)
+      .upload(fullPath, fileBuffer, {
+        contentType: input.mimeType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const {
+      data: { publicUrl: url },
+    } = client.storage.from(bucket).getPublicUrl(fullPath);
+    
+    publicUrl = url;
+    
+    logger.info("File uploaded to storage successfully", {
+      fileId: fileRecord.id,
+      publicUrl,
+    });
+  } catch (uploadError) {
+    logger.error("Failed to upload file to storage", {
+      fileId: fileRecord.id,
+      error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+      bucket,
+      path: fullPath,
+    });
+    
+    // Step 3a: If upload fails, update status to failed
+    await db
+      .update(files)
+      .set({
+        processingStatus: "failed" as ProcessingStatus,
+        metadata: {
+          ...((typeof fileRecord.metadata === "object" && fileRecord.metadata !== null) ? fileRecord.metadata : {}),
+          error: "storage_upload_failed",
+          errorMessage: uploadError instanceof Error ? uploadError.message : String(uploadError),
+          failedAt: new Date().toISOString(),
+        },
+        updatedAt: new Date(),
+      })
+      .where(eq(files.id, fileRecord.id));
+    
+    throw new Error(`Storage upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+  }
+
+  // Step 3b: If upload succeeds, update status to pending and add publicUrl to metadata
+  await db
+    .update(files)
+    .set({
+      processingStatus: "pending" as ProcessingStatus,
+      metadata: {
+        ...((typeof fileRecord.metadata === "object" && fileRecord.metadata !== null) ? fileRecord.metadata : {}),
+        publicUrl,
+      },
+      updatedAt: new Date(),
+    })
+    .where(eq(files.id, fileRecord.id));
+
+  logger.info("File upload from base64 completed atomically", {
     fileId: fileRecord.id,
+    publicUrl,
     tenantId: input.tenantId,
   });
 
@@ -1419,6 +1587,98 @@ export async function getFilesByProcessingStatus(tenantId: string): Promise<{
   return {
     processing: processingFiles,
     failed: failedFiles,
+  };
+}
+
+/**
+ * Reprocess a file from dead letter queue
+ * @param fileId - File ID to reprocess
+ * @param tenantId - Tenant ID for security
+ * @returns Promise resolving to the job handle
+ */
+export async function reprocessDeadLetterFile(
+  fileId: string,
+  tenantId: string,
+): Promise<{
+  jobHandle: string;
+}> {
+  logger.info("Reprocessing dead letter file", { fileId, tenantId });
+
+  const db = getDb();
+
+  // Get file details and verify it's in dead letter status
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(
+      and(
+        eq(files.id, fileId),
+        eq(files.tenantId, tenantId),
+        eq(files.processingStatus, "dead_letter")
+      )
+    );
+
+  if (!file) {
+    logger.error("Dead letter file not found", { fileId, tenantId });
+    throw new Error("Dead letter file not found");
+  }
+
+  // Reset file status and clear error metadata
+  const updatedMetadata = {
+    ...(typeof file.metadata === "object" && file.metadata !== null
+      ? file.metadata
+      : {}),
+    // Clear error-related fields
+    error: null,
+    errorMessage: null,
+    errorStack: null,
+    finalFailureAt: null,
+    lastError: null,
+    lastFailureAt: null,
+    retryCount: 0,
+    // Add reprocess metadata
+    reprocessedFromDeadLetter: true,
+    reprocessedAt: new Date().toISOString(),
+    deadLetterReprocessCount: ((file.metadata as any)?.deadLetterReprocessCount || 0) + 1,
+  };
+
+  await db
+    .update(files)
+    .set({
+      processingStatus: "pending" as ProcessingStatus,
+      metadata: updatedMetadata,
+      updatedAt: new Date(),
+    })
+    .where(eq(files.id, fileId));
+
+  logger.info("Dead letter file reset to pending", { fileId });
+
+  // Trigger categorization job with tenant-based concurrency control
+  const jobHandle = await tasks.trigger(
+    "categorize-file",
+    {
+      fileId: file.id,
+      tenantId: file.tenantId,
+      mimeType: file.mimeType,
+      size: file.size,
+      pathTokens: file.pathTokens,
+      source: file.source,
+    } satisfies CategorizeFilePayload,
+    {
+      queue: {
+        name: `tenant-${file.tenantId}`,
+      },
+    },
+  );
+
+  logger.info("Dead letter file reprocessing job triggered", {
+    fileId,
+    tenantId,
+    jobHandle: jobHandle.id,
+  });
+
+  return {
+    jobHandle: jobHandle.id,
   };
 }
 

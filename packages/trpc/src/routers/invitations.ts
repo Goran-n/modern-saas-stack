@@ -1,4 +1,4 @@
-import { createEmailService } from "@figgy/email";
+import { createEmailService } from "@figgy/communication";
 import {
   acceptInvitation,
   cancelInvitation,

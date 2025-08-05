@@ -8,8 +8,37 @@ import path from "node:path";
  * This script ensures NO code runs with TypeScript errors
  */
 
-const APPS = ["api", "web"];
-const PACKAGES = ["shared-utils"];
+const APPS = ["api", "web", "figgy-website"];
+const PACKAGES = [
+  // Core packages
+  "types",
+  "config",
+  "utils",
+  "shared-db",
+  "shared-auth",
+  
+  // Feature packages
+  "tenant",
+  "supabase-storage",
+  "file-manager",
+  "communication",
+  "email",
+  "email-ingestion",
+  "supplier",
+  "search",
+  "deduplication",
+  "llm-utils",
+  "nlq",
+  "trpc",
+  "jobs",
+  
+  // UI packages
+  "ui",
+];
+
+// Note: browser-extension excluded as it has its own build system
+// Note: assets excluded as it contains only static files
+// Note: tsconfig excluded as it only provides configs
 
 async function validateTypesStrict(): Promise<void> {
   console.log(
@@ -34,10 +63,19 @@ async function validateTypesStrict(): Promise<void> {
     try {
       console.log(`\n📦 Validating @figgy/${app}...`);
 
-      const command =
-        app === "api"
-          ? "doppler run -- bunx tsc --noEmit"
-          : "bunx vue-tsc -b --noEmit";
+      let command: string;
+      if (app === "api") {
+        // API uses Bun and may need doppler
+        command = existsSync(path.join(appPath, ".env"))
+          ? "bunx tsc --noEmit"
+          : "doppler run -- bunx tsc --noEmit";
+      } else if (app === "web" || app === "figgy-website") {
+        // Nuxt apps use vue-tsc
+        command = "bunx vue-tsc -b --noEmit";
+      } else {
+        // Default TypeScript check
+        command = "bunx tsc --noEmit";
+      }
 
       execSync(command, {
         cwd: appPath,
@@ -112,6 +150,14 @@ async function validateTypesStrict(): Promise<void> {
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
   );
 
+  const passed = results.filter(r => r.status === "PASS").length;
+  const failed = results.filter(r => r.status === "FAIL").length;
+  
+  console.log(`\n✅ Passed: ${passed}`);
+  console.log(`❌ Failed: ${failed}`);
+  console.log(`📦 Total: ${results.length}`);
+  
+  console.log("\nDetailed Results:");
   for (const result of results) {
     const status = result.status === "PASS" ? "✅ PASS" : "❌ FAIL";
     console.log(`${status} ${result.name}`);

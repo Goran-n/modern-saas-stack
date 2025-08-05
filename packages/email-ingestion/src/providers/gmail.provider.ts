@@ -1,11 +1,11 @@
 import { getConfig } from "@figgy/config";
 import { google, gmail_v1 } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
+import type { OAuthTokens } from "@figgy/oauth";
 import type {
   EmailAttachment,
   EmailMessage,
   ListMessagesOptions,
-  OAuthTokens,
 } from "../types";
 import { BaseEmailProvider } from "./base.provider";
 
@@ -19,8 +19,9 @@ export class GmailProvider extends BaseEmailProvider {
   
   /**
    * Get OAuth2 authorization URL
+   * @deprecated Use OAuth package instead
    */
-  override getAuthUrl(redirectUri: string, state: string): string {
+  getAuthUrl(redirectUri: string, state: string): string {
     const config = getConfig().getCore();
     
     if (!config.GOOGLE_CLIENT_ID || !config.GOOGLE_CLIENT_SECRET) {
@@ -48,8 +49,9 @@ export class GmailProvider extends BaseEmailProvider {
   
   /**
    * Exchange authorization code for tokens
+   * @deprecated Use OAuth package instead
    */
-  override async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, redirectUri: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!this.oauth2Client) {
@@ -87,8 +89,9 @@ export class GmailProvider extends BaseEmailProvider {
   
   /**
    * Refresh access token
+   * @deprecated Use OAuth package instead
    */
-  override async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
+  async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
     const config = getConfig().getCore();
     
     if (!this.oauth2Client) {
@@ -214,22 +217,66 @@ export class GmailProvider extends BaseEmailProvider {
       listParams.pageToken = options.pageToken;
     }
     
-    const response = await this.gmailClient!.users.messages.list(listParams);
-    
+    // Process messages with pagination
     const messages: EmailMessage[] = [];
+    let pageToken: string | undefined = options.pageToken;
+    let pageCount = 0;
+    const maxPages = 10; // Limit to 10 pages to prevent runaway queries
+    let totalEmailsChecked = 0;
     
-    if (response.data.messages) {
-      for (const msgRef of response.data.messages) {
-        if (msgRef.id) {
-          try {
-            const message = await this.getMessage(msgRef.id);
-            messages.push(message);
-          } catch (error) {
-            this.logger.error("Failed to fetch message", { messageId: msgRef.id, error });
+    while (pageCount < maxPages) {
+      pageCount++;
+      
+      const currentParams = { ...listParams };
+      if (pageToken) {
+        currentParams.pageToken = pageToken;
+      }
+      
+      const response = await this.gmailClient!.users.messages.list(currentParams);
+      const pageMessageCount = response.data.messages?.length || 0;
+      totalEmailsChecked += pageMessageCount;
+      
+      this.logger.info("Processing page of messages", {
+        page: pageCount,
+        messageCount: pageMessageCount,
+        hasNextPage: !!response.data.nextPageToken,
+        totalCheckedSoFar: totalEmailsChecked,
+      });
+      
+      if (response.data.messages) {
+        for (const msgRef of response.data.messages) {
+          if (msgRef.id) {
+            try {
+              const message = await this.getMessage(msgRef.id);
+              messages.push(message);
+            } catch (error) {
+              this.logger.error("Failed to fetch message", { messageId: msgRef.id, error });
+            }
           }
         }
       }
+      
+      // Check for next page
+      if (response.data.nextPageToken && pageCount < maxPages) {
+        pageToken = response.data.nextPageToken;
+      } else {
+        if (response.data.nextPageToken) {
+          this.logger.warn("Pagination limit reached", {
+            pagesProcessed: pageCount,
+            totalEmailsChecked,
+            messagesWithAttachments: messages.length,
+            moreAvailable: true,
+          });
+        }
+        break;
+      }
     }
+    
+    this.logger.info("Processed all messages from Gmail", {
+      totalPagesProcessed: pageCount,
+      totalEmailsChecked,
+      messagesWithAttachments: messages.length,
+    });
     
     return this.filterMessages(messages);
   }
@@ -314,40 +361,6 @@ export class GmailProvider extends BaseEmailProvider {
       requestBody: {
         removeLabelIds: ["UNREAD"],
       },
-    });
-  }
-  
-  /**
-   * Subscribe to Gmail push notifications via Pub/Sub
-   */
-  override async subscribeToWebhook(_webhookUrl: string): Promise<string> {
-    this.ensureConnected();
-    
-    const config = getConfig().getCore();
-    
-    if (!config.GOOGLE_PUBSUB_TOPIC) {
-      throw new Error("GOOGLE_PUBSUB_TOPIC not configured");
-    }
-    
-    const response = await this.gmailClient!.users.watch({
-      userId: "me",
-      requestBody: {
-        topicName: config.GOOGLE_PUBSUB_TOPIC,
-        labelIds: ["INBOX"],
-      },
-    });
-    
-    return response.data.historyId || "";
-  }
-  
-  /**
-   * Unsubscribe from webhooks
-   */
-  override async unsubscribeFromWebhook(_subscriptionId: string): Promise<void> {
-    this.ensureConnected();
-    
-    await this.gmailClient!.users.stop({
-      userId: "me",
     });
   }
   

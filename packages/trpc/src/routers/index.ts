@@ -1,10 +1,12 @@
 import { createTRPCRouter } from "../trpc";
+import { auditRouter } from "./audit";
 import { authRouter } from "./auth";
 import { debugRouter } from "./debug";
 import { duplicatesRouter } from "./duplicates";
 import { emailRouter } from "./email";
 import { filesRouter } from "./files";
 import { invitationsRouter } from "./invitations";
+import { oauthRouter } from "./oauth";
 import { searchRouter } from "./search";
 import { suppliersRouter } from "./suppliers";
 import { tenantRouter } from "./tenant";
@@ -14,10 +16,12 @@ import { usersRouter } from "./users";
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 export const appRouter = createTRPCRouter({
+  audit: auditRouter,
   auth: authRouter,
   email: emailRouter,
   files: filesRouter,
   invitations: invitationsRouter,
+  oauth: oauthRouter,
   search: searchRouter,
   suppliers: suppliersRouter,
   tenant: tenantRouter,

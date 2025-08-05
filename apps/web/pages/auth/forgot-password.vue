@@ -35,7 +35,7 @@
 
     <div class="mt-8 text-center">
       <NuxtLink to="/auth/login" class="text-sm text-primary-600 hover:text-primary-500 inline-flex items-center">
-        <NuxtIcon name="heroicons:arrow-left" class="w-4 h-4 mr-1" />
+        <Icon name="heroicons:arrow-left" class="w-4 h-4 mr-1" />
         Back to sign in
       </NuxtLink>
     </div>

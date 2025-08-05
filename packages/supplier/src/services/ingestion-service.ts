@@ -260,17 +260,25 @@ export class SupplierIngestionService {
       try {
         const result = await this.db.transaction(async (tx) => {
           // Create supplier
+          const supplierData: any = {
+            legalName: data.name,
+            displayName: data.name,
+            slug: await generateSlug(data.name, tenantId, tx),
+            status: SupplierStatus.ACTIVE,
+            tenantId,
+          };
+          
+          // Only add optional fields if they have values
+          if (data.identifiers.companyNumber !== undefined) {
+            supplierData.companyNumber = data.identifiers.companyNumber;
+          }
+          if (data.identifiers.vatNumber !== undefined) {
+            supplierData.vatNumber = data.identifiers.vatNumber;
+          }
+          
           const [supplier] = await tx
             .insert(suppliers)
-            .values({
-              companyNumber: data.identifiers.companyNumber,
-              vatNumber: data.identifiers.vatNumber,
-              legalName: data.name,
-              displayName: data.name,
-              slug: await generateSlug(data.name, tenantId, tx),
-              status: SupplierStatus.ACTIVE,
-              tenantId,
-            })
+            .values(supplierData)
             .returning();
 
           if (!supplier) {

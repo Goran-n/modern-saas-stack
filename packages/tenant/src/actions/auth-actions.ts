@@ -67,12 +67,20 @@ export async function updateUser(
 ): Promise<User> {
   const db = getDb();
 
+  // Filter out undefined values from updates
+  const updateData: any = {
+    updatedAt: new Date(),
+  };
+  
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value !== undefined) {
+      updateData[key] = value;
+    }
+  });
+  
   const [updated] = await db
     .update(users)
-    .set({
-      ...updates,
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(users.id, userId))
     .returning();
 

@@ -1,9 +1,8 @@
 import { getConfig } from "@figgy/config";
-import { globalSuppliers } from "@figgy/shared-db";
+import { globalSuppliers, eq, inArray } from "@figgy/shared-db";
 import { LogoService } from "@figgy/supplier";
 import { logger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
-import { eq, inArray } from "drizzle-orm";
 import { getDb } from "../../db";
 
 // Rate limiting configuration

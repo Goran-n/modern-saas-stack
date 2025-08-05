@@ -1,0 +1,25 @@
+{
+  "extends": "@figgy/tsconfig/base.json",
+  "compilerOptions": {
+    "composite": false,
+    "jsx": "react",
+    "skipLibCheck": true,
+    "noEmit": false,
+    "isolatedModules": true,
+    "types": [
+      "node",
+      "bun",
+      "react",
+      "react-dom"
+    ]
+  },
+  "include": [
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

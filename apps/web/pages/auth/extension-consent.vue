@@ -1,5 +1,12 @@
 <template>
-  <div class="space-y-6">
+  <div v-if="isLoading" class="flex items-center justify-center py-12">
+    <div class="text-center space-y-4">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="text-sm text-slate-600">Loading authentication...</p>
+    </div>
+  </div>
+  
+  <div v-else class="space-y-6">
     <div class="text-center">
       <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
         <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +28,7 @@
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
             </svg>
           </div>
-          <span class="text-sm font-medium text-slate-700">{{ user?.email }}</span>
+          <span class="text-sm font-medium text-slate-700">{{ userEmail }}</span>
         </div>
       </div>
     </div>
@@ -89,9 +96,48 @@ definePageMeta({
 const user = useSupabaseUser()
 const route = useRoute()
 const { general } = useNotifications()
+const isAuthReady = useState('auth.ready', () => false)
 
-const isLoading = ref(false)
+const isLoading = ref(true)
 const callbackUrl = route.query.callback as string
+const userEmail = computed(() => user.value?.email || 'Unknown user')
+
+// Wait for auth to be ready
+onMounted(async () => {
+  // Wait for auth state to be initialized
+  if (!isAuthReady.value) {
+    await new Promise(resolve => {
+      const checkInterval = setInterval(() => {
+        if (isAuthReady.value) {
+          clearInterval(checkInterval)
+          resolve(true)
+        }
+      }, 50)
+      
+      // Timeout after 3 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        resolve(false)
+      }, 3000)
+    })
+  }
+  
+  // Check if user is authenticated
+  if (!user.value) {
+    general.error('Authentication Required', 'Please log in to authorize the extension')
+    await navigateTo({
+      path: '/auth/login',
+      query: { 
+        source: 'extension',
+        callback: callbackUrl,
+        redirect: route.fullPath 
+      }
+    })
+    return
+  }
+  
+  isLoading.value = false
+})
 
 // Debug the callback URL
 // Extension consent page loaded with callback
@@ -119,48 +165,41 @@ async function handleApprove() {
       return
     }
     
-    const sessionData = {
-      access_token: currentSession.access_token,
-      refresh_token: currentSession.refresh_token,
-      expires_at: currentSession.expires_at,
-      user: currentSession.user
-    }
-    
     general.success('Success!', 'Redirecting to browser extension...')
     
     // Small delay to show success message
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Store session data and approval status for the extension to pick up
+    // Store only approval status (not sensitive session data)
     try {
       const authResult = {
-        sessionData,
-        timestamp: Date.now(),
         approved: true,
-        callbackUrl: callbackUrl
+        timestamp: Date.now(),
+        userId: currentSession.user.id
       }
       
-      window.sessionStorage.setItem('figgy_extension_auth_result', JSON.stringify(authResult))
-      // Auth result stored for extension pickup
-      
-      // Also store in localStorage as backup (extension can access this)
-      window.localStorage.setItem('figgy_extension_auth_result', JSON.stringify(authResult))
+      window.sessionStorage.setItem('figgy_extension_auth_approved', JSON.stringify(authResult))
       
     } catch (error) {
       // Could not store auth result
     }
     
-    // Instead of redirecting, show success message and instruct user to close tab
-    general.success('Success!', 'Authentication approved! You can now close this tab and return to the extension.')
-    
-    // Try to close this tab after a delay (if opened by extension)
-    setTimeout(() => {
-      try {
-        window.close()
-      } catch (error) {
-        // Could not auto-close tab (normal if not opened by script)
-      }
-    }, 3000)
+    // Redirect to extension callback with approval status only
+    if (callbackUrl) {
+      const redirectUrl = `${callbackUrl}?auth_success=true&timestamp=${Date.now()}`
+      window.location.href = redirectUrl
+    } else {
+      // No callback URL, show success and try to close
+      general.success('Success!', 'Authentication approved! You can now close this tab and return to the extension.')
+      
+      setTimeout(() => {
+        try {
+          window.close()
+        } catch (error) {
+          // Could not auto-close tab
+        }
+      }, 3000)
+    }
     
   } catch (error) {
     // Approval error

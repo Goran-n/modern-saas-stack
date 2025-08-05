@@ -17,6 +17,7 @@ export { appRouter } from "./routers";
 export { authRouter } from "./routers/auth";
 export { debugRouter } from "./routers/debug";
 export { filesRouter } from "./routers/files";
+export { oauthRouter } from "./routers/oauth";
 export { suppliersRouter } from "./routers/suppliers";
 export type { ErrorDetails, ErrorMetrics } from "./services/error-tracker";
 // Error tracking

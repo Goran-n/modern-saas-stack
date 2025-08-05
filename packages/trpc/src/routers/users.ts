@@ -1,4 +1,4 @@
-import { formatCurrentUser, getUserById, listUsers } from "@figgy/shared-auth";
+import { formatCurrentUser, getUserById, listUsers } from "@figgy/tenant";
 import { createLogger } from "@figgy/utils";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

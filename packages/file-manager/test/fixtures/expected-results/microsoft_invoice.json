@@ -1,0 +1,53 @@
+{
+  "supplier": {
+    "name": "Microsoft Ireland Operations Ltd",
+    "address": "One Microsoft Place, South County Business Park, Leopardstown, Dublin 18, D18 P521, Ireland",
+    "vat_number": "IE8256796U"
+  },
+  "customer": {
+    "name": "Nikic Company Ltd.",
+    "bill_to_address": "17 Sunny Hill, Kenmare 00000, Ireland",
+    "service_address": "2A Kenmare Innovation Center, Kenmare Kerry N/A, Ireland"
+  },
+  "invoice": {
+    "number": "E0300QOPRU",
+    "date": "18/01/2024",
+    "due_date": "18/01/2024",
+    "currency": "EUR",
+    "order_number": "b5d037ec-9aa0-4849-b2e2-9ed2b82d8883"
+  },
+  "product": {
+    "name": "Microsoft 365 Business Standard",
+    "type": "Online Services",
+    "subscription_type": "Monthly subscription charges"
+  },
+  "billing_period": {
+    "from": "18/12/2023",
+    "to": "17/01/2024"
+  },
+  "service_period": {
+    "from": "11/01/2024",
+    "to": "10/02/2024",
+    "days": 31
+  },
+  "line_items": [
+    {
+      "description": "Microsoft 365 Business Standard",
+      "licenses": 3,
+      "monthly_price_per_license": 11.70,
+      "charges": 35.10,
+      "vat_percentage": "23.00%",
+      "vat_amount": 8.07,
+      "total": 43.17
+    }
+  ],
+  "totals": {
+    "charges": 35.10,
+    "discounts": 0.00,
+    "credits": 0.00,
+    "subtotal": 35.10,
+    "vat": 8.07,
+    "grand_total": 43.17
+  },
+  "document_type": "cloud_services_invoice"
+}

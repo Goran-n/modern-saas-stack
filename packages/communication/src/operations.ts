@@ -1,7 +1,6 @@
-import { getConfig } from "@figgy/config";
 import { FILE_SOURCES, type FileSource, uploadFile } from "@figgy/file-manager";
 import { createLogger } from "@figgy/utils";
-import { ERROR_MESSAGES, FILE_LIMITS, SUPPORTED_MIME_TYPES } from "./constants";
+import { ERROR_MESSAGES, FILE_LIMITS, SUPPORTED_MIME_TYPES, COMMUNICATION_DEFAULT_MIME_TYPE } from "./constants";
 import { getSlackService } from "./services/slack";
 import { getTwilioService } from "./services/twilio";
 import type {
@@ -42,11 +41,10 @@ export async function processWhatsAppDocument(
       const twilioService = getTwilioService();
       const fileBuffer = await twilioService.downloadMedia(message.mediaId);
 
-      const config = getConfig().getForCommunication();
       const file = new File(
         [fileBuffer],
         message.fileName || `whatsapp-document-${Date.now()}.pdf`,
-        { type: message.mimeType || config.COMMUNICATION_DEFAULT_MIME_TYPE },
+        { type: message.mimeType || COMMUNICATION_DEFAULT_MIME_TYPE },
       );
 
       return await _createFileAndTriggerJob(
@@ -158,13 +156,14 @@ async function _createFileAndTriggerJob(
 ): Promise<ProcessingResult> {
   try {
     const fileId = await uploadFile(file, {
-      fileName: file.name,
-      pathTokens: ["communications", source],
       mimeType: file.type,
       size: file.size,
       source: source as FileSource,
       sourceId: "",
-      metadata: {},
+      metadata: {
+        originalFileName: file.name,
+        communicationSource: source,
+      },
       tenantId,
       uploadedBy: userId,
       bucket: "",

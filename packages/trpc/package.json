@@ -10,6 +10,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@figgy/audit": "workspace:*",
     "@figgy/communication": "workspace:*",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",

@@ -14,7 +14,7 @@ export { encryptionService, EncryptionService } from "./services/encryption.serv
 export { AttachmentProcessor } from "./processors/attachment.processor";
 
 // Export database helpers
-export { getDb } from "./db";
+export { getDb, setDb, resetDb } from "./db";
 
 // Export webhook handler
 export { webhookHandler } from "./handlers/webhook.handler";

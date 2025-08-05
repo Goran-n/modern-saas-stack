@@ -13,9 +13,9 @@
   "dependencies": {
     "@figgy/communication": "workspace:*",
     "@figgy/config": "workspace:*",
+    "@figgy/email-ingestion": "workspace:*",
+    "@figgy/oauth": "workspace:*",
     "@figgy/shared-db": "workspace:*",
-    "@figgy/supabase-storage": "workspace:*",
-    "@figgy/tenant": "workspace:*",
     "@figgy/trpc": "workspace:*",
     "@figgy/types": "workspace:*",
     "@figgy/utils": "workspace:*",

@@ -1,5 +1,5 @@
-import { getConfig } from "@figgy/config";
 import { createLogger } from "@figgy/utils";
+import { COMMUNICATION_DEFAULT_MIME_TYPE, COMMUNICATION_WHATSAPP_PREFIX } from "../constants";
 import type { ParsedWhatsAppMessage } from "../types";
 import {
   extractTwilioMedia,
@@ -15,9 +15,8 @@ export function parseTwilioWhatsAppPayload(
     const validated = TwilioWhatsAppWebhookSchema.parse(payload);
     const media = extractTwilioMedia(payload as Record<string, any>);
 
-    const config = getConfig().getForCommunication();
     const phoneNumber = validated.From.replace(
-      config.COMMUNICATION_WHATSAPP_PREFIX,
+      COMMUNICATION_WHATSAPP_PREFIX,
       "",
     );
 
@@ -34,7 +33,7 @@ export function parseTwilioWhatsAppPayload(
         if (mimeType.startsWith("image/")) {
           type = "image";
         } else if (
-          mimeType === config.COMMUNICATION_DEFAULT_MIME_TYPE ||
+          mimeType === COMMUNICATION_DEFAULT_MIME_TYPE ||
           mimeType.startsWith("application/")
         ) {
           type = "document";
@@ -71,11 +70,10 @@ export function parseTwilioWhatsAppPayload(
 export function isTwilioWhatsAppWebhook(payload: unknown): boolean {
   if (typeof payload !== "object" || payload === null) return false;
 
-  const config = getConfig().getForCommunication();
   const obj = payload as Record<string, any>;
   return (
     typeof obj.MessageSid === "string" &&
     typeof obj.From === "string" &&
-    obj.From.startsWith(config.COMMUNICATION_WHATSAPP_PREFIX)
+    obj.From.startsWith(COMMUNICATION_WHATSAPP_PREFIX)
   );
 }

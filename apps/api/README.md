@@ -22,29 +22,18 @@ The main API server for Figgy, built with Hono and tRPC.
 
 ### Environment Variables
 
-Create a `.env` file based on `.env.example`:
+Environment variables are managed through Doppler. Key variables include:
 
-```bash
-# Server
-NODE_ENV=development
-PORT=5001
-HOST=0.0.0.0
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/figgy
-
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-key
-
-# Auth
-JWT_SECRET=your-jwt-secret
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
+- `NODE_ENV` - Environment mode (development/production)
+- `PORT` - Server port (default: 5001)
+- `DATABASE_URL` - PostgreSQL connection string
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_ANON_KEY` - Supabase anonymous key
+- `SUPABASE_SERVICE_KEY` - Supabase service key
+- `JWT_SECRET` - JWT signing secret
+- `REDIS_HOST` - Redis host
+- `REDIS_PORT` - Redis port
+- `BASE_URL` - Base URL for webhooks and callbacks
 
 ### Development
 
@@ -52,8 +41,8 @@ REDIS_PORT=6379
 # Install dependencies
 bun install
 
-# Run development server
-bun run dev
+# Run development server with Doppler
+doppler run -- bun run dev
 
 # The API will be available at http://localhost:5001
 ```
@@ -64,8 +53,8 @@ bun run dev
 # Build the application
 bun run build
 
-# Start production server
-bun run start
+# Start production server with Doppler
+doppler run -- bun run start
 ```
 
 ## API Endpoints

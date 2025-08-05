@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-between w-full gap-4">
     <div class="flex items-center gap-4 min-w-0">
-      <FileIcon 
+      <FigFileIcon 
         :file-name="file.fileName" 
         size="xl"
         class="flex-shrink-0"
@@ -75,7 +75,7 @@
 import type { FileItem } from '@figgy/types'
 import { FigButton } from '@figgy/ui'
 import { getFileDisplayName } from '~/utils/fileUtils'
-import FileIcon from '../atoms/FileIcon.vue'
+import { FigFileIcon } from '@figgy/ui'
 import FileDate from '../atoms/FileDate.vue'
 import FileSize from '../atoms/FileSize.vue'
 

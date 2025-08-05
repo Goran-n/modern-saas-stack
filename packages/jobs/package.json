@@ -18,11 +18,11 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/openai": "^1.3.23",
+    "@figgy/audit": "workspace:*",
     "@figgy/config": "workspace:*",
     "@figgy/deduplication": "workspace:*",
     "@figgy/email-ingestion": "workspace:*",
     "@figgy/file-manager": "workspace:*",
-    "@figgy/llm-utils": "workspace:*",
     "@figgy/search": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/supabase-storage": "workspace:*",

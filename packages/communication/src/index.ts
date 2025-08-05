@@ -15,3 +15,10 @@ export * from "./services/user-mapper";
 export * from "./services/whatsapp-response";
 export * from "./types";
 export * from "./types/twilio";
+
+// Email exports
+export * from "./email/service";
+export * from "./email/client";
+export * from "./email/types";
+export * from "./email/operations";
+export * from "./email/templates";

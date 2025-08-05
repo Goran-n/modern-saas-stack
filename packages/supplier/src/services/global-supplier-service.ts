@@ -175,15 +175,23 @@ export class GlobalSupplierService {
     const domains = this.extractDomains(attributes);
     const primaryDomain = domains[0] || null;
 
+    const insertData: any = {
+      canonicalName: supplier.displayName,
+      primaryDomain,
+      logoFetchStatus: primaryDomain ? "pending" : "not_found",
+    };
+    
+    // Only add optional fields if they have values
+    if (supplier.companyNumber) {
+      insertData.companyNumber = supplier.companyNumber;
+    }
+    if (supplier.vatNumber) {
+      insertData.vatNumber = supplier.vatNumber;
+    }
+    
     const [globalSupplier] = await this.db
       .insert(globalSuppliers)
-      .values({
-        companyNumber: supplier.companyNumber,
-        vatNumber: supplier.vatNumber,
-        canonicalName: supplier.displayName,
-        primaryDomain,
-        logoFetchStatus: primaryDomain ? "pending" : "not_found",
-      })
+      .values(insertData)
       .returning();
 
     if (!globalSupplier) {

@@ -6,6 +6,7 @@ export const FILE_SOURCES = {
   USER_UPLOAD: "user_upload",
   WHATSAPP: "whatsapp",
   SLACK: "slack",
+  EMAIL: "email",
 } as const;
 
 export const fileSourceSchema = z.enum([
@@ -13,26 +14,29 @@ export const fileSourceSchema = z.enum([
   FILE_SOURCES.USER_UPLOAD,
   FILE_SOURCES.WHATSAPP,
   FILE_SOURCES.SLACK,
+  FILE_SOURCES.EMAIL,
 ]);
 
 // Processing status constants
 export const PROCESSING_STATUS = {
   PENDING: "pending",
+  PENDING_UPLOAD: "pending_upload",
   PROCESSING: "processing",
   COMPLETED: "completed",
   FAILED: "failed",
+  DEAD_LETTER: "dead_letter",
 } as const;
 
 export const processingStatusSchema = z.enum([
   PROCESSING_STATUS.PENDING,
+  PROCESSING_STATUS.PENDING_UPLOAD,
   PROCESSING_STATUS.PROCESSING,
   PROCESSING_STATUS.COMPLETED,
   PROCESSING_STATUS.FAILED,
+  PROCESSING_STATUS.DEAD_LETTER,
 ]);
 
 export const createFileSchema = z.object({
-  fileName: z.string(),
-  pathTokens: z.array(z.string()),
   mimeType: z.string(),
   size: z.number(),
   source: fileSourceSchema,

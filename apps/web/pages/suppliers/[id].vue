@@ -105,7 +105,7 @@
             @click="() => navigateTo(`/files/${file.id}`)"
           >
             <div class="flex items-center gap-3">
-              <FileIcon 
+              <FigFileIcon 
                 :file-name="file.fileName" 
                 size="md"
               />
@@ -146,7 +146,7 @@
 import { useQuery } from '@tanstack/vue-query'
 import { FigContainer, FigCard, FigAlert, FigSkeleton, FigStatusBadge, FigEmptyState } from '@figgy/ui'
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue'
-import FileIcon from '~/components/atoms/FileIcon.vue'
+import { FigFileIcon } from '@figgy/ui'
 import FileSize from '~/components/atoms/FileSize.vue'
 import FileDate from '~/components/atoms/FileDate.vue'
 

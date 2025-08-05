@@ -1,0 +1,37 @@
+{
+  "supplier": {
+    "name": "OpenAI, LLC",
+    "address": "548 Market Street, PMB 97273, San Francisco, California 94104-5401, United States",
+    "email": "ar@openai.com",
+    "vat_number": "EU372041333"
+  },
+  "customer": {
+    "name": "NIKIC COMPANY LIMITED",
+    "address": "51 Bracken Road, Bracken House, Sandyford Business Park, Dublin, County Dublin, D18 CV48, Ireland",
+    "email": "goran@nikic.co",
+    "vat_number": "IE3410228VH"
+  },
+  "invoice": {
+    "number": "124114EE-0001",
+    "date_issued": "September 18, 2024",
+    "date_due": "September 18, 2024",
+    "currency": "USD"
+  },
+  "line_items": [
+    {
+      "description": "ChatGPT Team Subscription(per seat)",
+      "subscription_period": "18 Sept – 18 Oct 2024",
+      "quantity": 3,
+      "unit_price": 30.00,
+      "tax_rate": "0%",
+      "amount": 90.00
+    }
+  ],
+  "totals": {
+    "subtotal": 90.00,
+    "total": 90.00,
+    "amount_due": 90.00
+  },
+  "tax_notes": "Tax to be paid on a reverse-charge basis",
+  "document_type": "saas_subscription"
+}

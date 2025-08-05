@@ -20,17 +20,22 @@ export const env: EnvConfig = {
 
 // Validate required environment variables
 export function validateEnv() {
-  // Skip validation in development mode for easier local testing
-  if (env.NODE_ENV === "development") {
-    return;
-  }
-
-  const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY"] as const;
-  const missing = required.filter((key) => !env[key]);
+  const required = [
+    { key: "SUPABASE_URL", description: "Supabase project URL for authentication and data storage" },
+    { key: "SUPABASE_ANON_KEY", description: "Supabase anonymous key for client-side authentication" },
+    { key: "API_URL", description: "Backend API URL for tRPC communication" },
+  ] as const;
+  
+  const missing = required.filter((item) => !env[item.key as keyof EnvConfig]);
 
   if (missing.length > 0) {
+    const errorMessage = missing.map(item => 
+      `  - ${item.key}: ${item.description}`
+    ).join("\n");
+    
     throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`,
+      `Missing required environment variables:\n${errorMessage}\n\n` +
+      `Please ensure these are set in your .env file with the VITE_ prefix (e.g., VITE_SUPABASE_URL)`
     );
   }
 }

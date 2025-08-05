@@ -67,25 +67,26 @@
             
             <div class="min-h-[800px] flex items-center justify-center bg-gray-50 rounded-lg">
               <div v-if="isPDF(file.value?.fileName || '')" class="w-full h-full">
-                <div v-if="proxyUrl && !iframeError" class="w-full h-[800px]">
-                  <iframe 
-                    :src="proxyUrl"
-                    class="w-full h-full rounded-lg border-0"
+                <div v-if="proxyUrl" class="w-full h-[800px]">
+                  <object 
+                    :data="proxyUrl"
+                    type="application/pdf"
+                    class="w-full h-full rounded-lg"
                     title="PDF Viewer"
-                    @error="iframeError = true"
-                  />
-                </div>
-                <div v-else-if="proxyUrl && iframeError" class="flex items-center justify-center h-[800px]">
-                  <div class="text-center text-gray-500 p-8">
-                    <p class="mb-4">Your browser doesn't support PDFs or the file couldn't be loaded.</p>
-                    <UButton 
-                      :to="downloadUrl" 
-                      target="_blank" 
-                      variant="outline"
-                    >
-                      Download PDF
-                    </UButton>
-                  </div>
+                  >
+                    <div class="flex items-center justify-center h-[800px]">
+                      <div class="text-center text-gray-500 p-8">
+                        <p class="mb-4">Your browser doesn't support PDFs or the file couldn't be loaded.</p>
+                        <UButton 
+                          :to="downloadUrl" 
+                          target="_blank" 
+                          variant="outline"
+                        >
+                          Download PDF
+                        </UButton>
+                      </div>
+                    </div>
+                  </object>
                 </div>
                 <div v-else class="flex items-center justify-center h-[800px]">
                   <div class="text-center">
@@ -355,7 +356,6 @@ const trpc = useTrpc();
 
 const fileId = route.params.id as string;
 const selectedTenantId = computed(() => tenantStore.selectedTenantId);
-const iframeError = ref(false);
 const showReprocessModal = ref(false);
 const isReprocessing = ref(false);
 
@@ -371,14 +371,11 @@ const { data: file, isLoading: fileLoading, error: fileError } = useQuery({
 });
 
 // Get proxy URL for file display (inline viewing)
-// SECURITY: Tenant validation must happen server-side based on authenticated user context
-// Never pass tenantId in URL parameters
 const proxyUrl = computed(() => {
   if (!fileId || !selectedTenantId.value) return null;
   const config = useRuntimeConfig();
   const apiUrl = config.public.apiUrl;
-  // The server should validate tenant access based on the authenticated user's session
-  return `${apiUrl}/api/files/proxy/${fileId}#toolbar=0`;
+  return `${apiUrl}/api/files/proxy/${fileId}?tenantId=${selectedTenantId.value}`;
 });
 
 // Get signed URL for download

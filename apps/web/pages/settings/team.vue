@@ -93,7 +93,7 @@
                 {{ member.user?.name || 'Unknown' }}
               </p>
               <p class="text-sm text-neutral-500">
-                {{ member.user?.email }}
+                {{ member.user?.email || 'No email' }}
               </p>
             </div>
           </div>

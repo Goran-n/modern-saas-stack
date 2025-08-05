@@ -66,7 +66,10 @@ async function main() {
       mimeType: file.type || "application/octet-stream",
       size: file.size,
       source,
-      pathTokens: [tenantId, "cli-imports"],
+      metadata: {
+        originalFileName: fileName,
+        importedVia: "cli",
+      },
     });
 
     logger.info("File ingestion complete", { fileId, fileName });

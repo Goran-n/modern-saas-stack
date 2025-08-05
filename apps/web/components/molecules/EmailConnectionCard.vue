@@ -75,55 +75,28 @@
           <span class="ml-1">Sync</span>
         </FigButton>
         
-        <div class="relative">
-          <FigButton
-            @click="showMenu = !showMenu"
-            variant="ghost"
-            size="sm"
-            color="neutral"
-          >
-            <Icon name="heroicons:ellipsis-vertical" class="h-4 w-4" />
-          </FigButton>
-          
-          <!-- Dropdown Menu -->
-          <div
-            v-if="showMenu"
-            class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
-          >
-            <div class="py-1">
-              <button
-                @click="handleEdit"
-                class="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
-              >
-                <Icon name="heroicons:pencil" class="h-4 w-4 inline mr-2" />
-                Edit Settings
-              </button>
-              <button
-                disabled
-                class="block w-full text-left px-4 py-2 text-sm text-neutral-400 cursor-not-allowed"
-              >
-                <Icon name="heroicons:chart-bar" class="h-4 w-4 inline mr-2" />
-                View Activity
-              </button>
-              <hr class="my-1" />
-              <button
-                @click="handleDelete"
-                class="block w-full text-left px-4 py-2 text-sm text-error-600 hover:bg-error-50"
-              >
-                <Icon name="heroicons:trash" class="h-4 w-4 inline mr-2" />
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+        <FigDropdown
+          :items="dropdownItems"
+        >
+          <template #trigger>
+            <FigButton
+              variant="ghost"
+              size="sm"
+              color="neutral"
+            >
+              <Icon name="heroicons:ellipsis-vertical" class="h-4 w-4" />
+            </FigButton>
+          </template>
+        </FigDropdown>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { FigBadge, FigButton, FigAlert } from '@figgy/ui'
+import { computed } from 'vue'
+import { FigBadge, FigButton, FigAlert, FigDropdown } from '@figgy/ui'
+import type { DropdownMenuItem } from '@figgy/ui'
 
 // Props
 interface EmailConnection {
@@ -152,8 +125,32 @@ const emit = defineEmits<{
   delete: [connectionId: string]
 }>()
 
-// State
-const showMenu = ref(false)
+// Dropdown items
+const dropdownItems = computed<DropdownMenuItem[]>(() => [
+  {
+    id: 'edit',
+    label: 'Edit Settings',
+    icon: 'heroicons:pencil',
+    onClick: () => emit('edit', props.connection),
+  },
+  {
+    id: 'activity',
+    label: 'View Activity',
+    icon: 'heroicons:chart-bar',
+    disabled: true,
+  },
+  {
+    id: 'divider',
+    divider: true,
+  },
+  {
+    id: 'delete',
+    label: 'Delete',
+    icon: 'heroicons:trash',
+    variant: 'destructive',
+    onClick: () => emit('delete', props.connection.id),
+  },
+])
 
 // Computed
 const providerStyles = computed(() => {
@@ -188,15 +185,6 @@ const hasFilters = computed(() => {
 })
 
 // Methods
-function handleEdit() {
-  showMenu.value = false
-  emit('edit', props.connection)
-}
-
-function handleDelete() {
-  showMenu.value = false
-  emit('delete', props.connection.id)
-}
 function formatRelativeTime(dateString: string) {
   const date = new Date(dateString)
   const now = new Date()
@@ -214,21 +202,4 @@ function formatRelativeTime(dateString: string) {
   
   return date.toLocaleDateString()
 }
-
-// Click outside handler
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  const dropdown = target.closest('.relative')
-  if (!dropdown || !dropdown.contains(target)) {
-    showMenu.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>

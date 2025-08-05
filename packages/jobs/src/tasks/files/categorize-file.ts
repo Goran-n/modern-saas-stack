@@ -383,6 +383,7 @@ export const categorizeFile = schemaTask({
         processingDurationMs: extraction.processingDuration,
         modelVersion: extraction.processingVersion,
         errors: extraction.errors,
+        processingNotes: null,
         ownershipValidation: undefined,
         requiresReview: false,
         reviewReason: undefined,
@@ -614,14 +615,69 @@ export const categorizeFile = schemaTask({
         error,
       });
 
-      // Update processing status to 'failed'
-      await db
-        .update(filesTable)
-        .set({
-          processingStatus: "failed",
-          updatedAt: new Date(),
-        })
-        .where(eq(filesTable.id, fileId));
+      // Get current file metadata to check retry count
+      const [file] = await db
+        .select()
+        .from(filesTable)
+        .where(eq(filesTable.id, fileId))
+        .limit(1);
+
+      if (file) {
+        const metadata = (file.metadata as any) || {};
+        const retryCount = metadata.retryCount || 0;
+        
+        // Check if this is the final retry attempt
+        // Trigger.dev will retry up to maxAttempts (3), so on the 3rd failure, move to dead letter
+        if (retryCount >= 2) {
+          logger.warn("File categorization failed after max retries, moving to dead letter", {
+            fileId,
+            tenantId,
+            retryCount,
+            error: error instanceof Error ? error.message : String(error),
+          });
+
+          // Update to dead letter status
+          await db
+            .update(filesTable)
+            .set({
+              processingStatus: "dead_letter",
+              metadata: {
+                ...metadata,
+                error: "categorization_failed",
+                errorMessage: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined,
+                finalFailureAt: new Date().toISOString(),
+                retryCount: retryCount + 1,
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(filesTable.id, fileId));
+        } else {
+          // Update processing status to 'failed' with incremented retry count
+          await db
+            .update(filesTable)
+            .set({
+              processingStatus: "failed",
+              metadata: {
+                ...metadata,
+                retryCount: retryCount + 1,
+                lastError: error instanceof Error ? error.message : String(error),
+                lastFailureAt: new Date().toISOString(),
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(filesTable.id, fileId));
+        }
+      } else {
+        // Fallback if file not found
+        await db
+          .update(filesTable)
+          .set({
+            processingStatus: "failed",
+            updatedAt: new Date(),
+          })
+          .where(eq(filesTable.id, fileId));
+      }
 
       throw error;
     }

@@ -1,8 +1,7 @@
 import { getConfig } from "@figgy/config";
-import { globalSuppliers } from "@figgy/shared-db";
+import { globalSuppliers, eq, inArray } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
-import { eq, inArray } from "drizzle-orm";
 import { getDb } from "../../db";
 import { triggerLogoFetch } from "./fetch-logo";
 import { triggerWebsiteAnalysis } from "./website-analysis";

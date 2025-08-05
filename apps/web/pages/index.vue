@@ -27,7 +27,7 @@
         <div class="space-y-3">
           <div class="flex items-center text-sm text-muted">
             <Icon name="heroicons:user" class="w-4 h-4 mr-2 text-primary" />
-            {{ user?.email }}
+            {{ user?.email || 'Loading...' }}
           </div>
           <div class="flex items-center text-sm text-muted">
             <Icon name="heroicons:clock" class="w-4 h-4 mr-2 text-primary" />

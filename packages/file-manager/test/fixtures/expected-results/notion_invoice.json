@@ -1,0 +1,53 @@
+{
+  "supplier": {
+    "name": "Notion Labs, Inc.",
+    "address": "548 Market St #74567, San Francisco, CA 94104-5401, United States",
+    "email": "team@makenotion.com",
+    "vat_numbers": {
+      "EU": "EU528003828",
+      "CA_QST": "NR00012289",
+      "JPN_JCT": "T6700150123879",
+      "RU_INN": "9909540024",
+      "RU_KPP": "997789001"
+    }
+  },
+  "customer": {
+    "name": "Goran",
+    "address": "17 sunny hill grove, kenmare v93vk65, IE",
+    "vat_number": "IE3410228VH"
+  },
+  "workspace": {
+    "name": "Nikic Company",
+    "email": "goran@nikic.co"
+  },
+  "invoice": {
+    "number": "in_1P0MTjCcKlYJxALVDcUDQZbJ",
+    "date": "March 31, 2024",
+    "due_date": "March 31, 2024",
+    "status": "Paid",
+    "currency": "USD"
+  },
+  "line_items": {
+    "recurring_charges": [
+      {
+        "period": "3/31/2024 - 4/30/2024",
+        "description": "Plus Plan Monthly x 3 members",
+        "amount": 30.00
+      },
+      {
+        "period": "3/31/2024 - 4/30/2024",
+        "description": "Notion AI Monthly x 3 members",
+        "amount": 30.00
+      }
+    ],
+    "prorated_charges": []
+  },
+  "totals": {
+    "recurring_plan_charges": 60.00,
+    "prorated_charges": 0.00,
+    "tax": 0.00,
+    "credits": 0.00,
+    "total_due": 60.00
+  },
+  "document_type": "collaboration_tool_invoice"
+}

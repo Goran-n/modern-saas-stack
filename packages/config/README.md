@@ -169,8 +169,8 @@ Configuration validation failed:
 ## Best Practices
 
 1. **Bootstrap Early**: Call `bootstrap()` at the very start of your application
-2. **Environment Files**: Use `.env.example` as a template for your `.env` file
-3. **Production Secrets**: Use Doppler or similar for production secrets
+2. **Environment Variables**: Managed through Doppler for all environments
+3. **Local Development**: Use `doppler run` to inject environment variables
 4. **Service-Specific**: Use `bootstrapForService()` in packages that don't need full config
 5. **Validation**: Let validation fail fast - don't try to work around missing config
 
@@ -181,6 +181,6 @@ Configuration validation failed:
 
 ## See Also
 
-- [Environment Variables Guide](../../.env.example)
+- [Doppler Documentation](https://docs.doppler.com)
 - [@figgy/utils Logger](../utils/README.md)
 - [Bootstrap Examples](./src/bootstrap.ts)

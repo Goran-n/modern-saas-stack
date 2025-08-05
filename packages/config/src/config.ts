@@ -2,17 +2,12 @@ import { createLogger } from "@figgy/utils";
 import { z } from "zod";
 import { type EnvironmentConfig, getEnvironmentSchema } from "./environments";
 import {
-  type CommunicationConfig,
-  type CoreConfig,
-  communicationConfigSchema,
-  coreConfigSchema,
-  type FileManagerConfig,
-  type FullConfig,
-  fileManagerConfigSchema,
-  type TenantConfig,
-  tenantConfigSchema,
-  type WebAppConfig,
-  webAppConfigSchema,
+  type BackendConfig,
+  type FrontendConfig,
+  type ExtensionConfig,
+  backendSchema,
+  frontendSchema,
+  extensionSchema,
 } from "./schemas";
 
 const logger = createLogger("config");
@@ -108,31 +103,50 @@ export class Config {
   }
 
   /**
-   * Get configuration for specific package/service
+   * Get backend configuration
    */
-  public getForFileManager(): FileManagerConfig {
+  public getBackend(): BackendConfig {
     const config = this.get();
-    return fileManagerConfigSchema.parse(config);
+    return backendSchema.parse(config);
   }
 
-  public getForWebApp(): WebAppConfig {
+  /**
+   * Get frontend configuration
+   */
+  public getFrontend(): FrontendConfig {
     const config = this.get();
-    return webAppConfigSchema.parse(config);
+    return frontendSchema.parse(config);
   }
 
-  public getCore(): CoreConfig {
+  /**
+   * Get extension configuration
+   */
+  public getExtension(): ExtensionConfig {
     const config = this.get();
-    return coreConfigSchema.parse(config);
+    return extensionSchema.parse(config);
   }
 
-  public getForTenant(): TenantConfig {
-    const config = this.get();
-    return tenantConfigSchema.parse(config);
+  /**
+   * Legacy methods for backward compatibility
+   */
+  public getForFileManager(): BackendConfig {
+    return this.getBackend();
   }
 
-  public getForCommunication(): CommunicationConfig {
-    const config = this.get();
-    return communicationConfigSchema.parse(config);
+  public getForWebApp(): FrontendConfig {
+    return this.getFrontend();
+  }
+
+  public getCore(): BackendConfig {
+    return this.getBackend();
+  }
+
+  public getForTenant(): BackendConfig {
+    return this.getBackend();
+  }
+
+  public getForCommunication(): BackendConfig {
+    return this.getBackend();
   }
 
   /**
@@ -182,10 +196,15 @@ export function validateConfig(
 // Type exports for convenience
 export type {
   EnvironmentConfig,
-  FullConfig,
-  CoreConfig,
-  FileManagerConfig,
-  WebAppConfig,
-  TenantConfig,
-  CommunicationConfig,
+  BackendConfig,
+  FrontendConfig,
+  ExtensionConfig,
 };
+
+// Legacy type aliases for backward compatibility
+export type CoreConfig = BackendConfig;
+export type FileManagerConfig = BackendConfig;
+export type WebAppConfig = FrontendConfig;
+export type TenantConfig = BackendConfig;
+export type CommunicationConfig = BackendConfig;
+export type FullConfig = BackendConfig;

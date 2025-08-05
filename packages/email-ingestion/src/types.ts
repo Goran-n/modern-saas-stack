@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { OAuthTokens } from "@figgy/oauth";
 
 // Email provider types
 export enum EmailProvider {
@@ -21,14 +22,6 @@ export enum ProcessingStatus {
   PROCESSING = "processing",
   COMPLETED = "completed",
   FAILED = "failed",
-}
-
-// OAuth token types
-export interface OAuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: Date;
-  scope?: string;
 }
 
 // IMAP credentials
@@ -84,21 +77,12 @@ export interface IEmailProvider {
   connect(config: EmailConnectionConfig, tokens?: OAuthTokens, credentials?: IMAPCredentials): Promise<void>;
   disconnect(): Promise<void>;
   
-  // OAuth methods
-  getAuthUrl?(redirectUri: string, state: string): string;
-  exchangeCodeForTokens?(code: string, redirectUri: string): Promise<OAuthTokens>;
-  refreshTokens?(refreshToken: string): Promise<OAuthTokens>;
-  
   // Email operations
   listFolders(): Promise<string[]>;
   listMessages(folder: string, options: ListMessagesOptions): Promise<EmailMessage[]>;
   getMessage(messageId: string): Promise<EmailMessage>;
   getAttachment(messageId: string, attachmentId: string): Promise<Buffer>;
   markAsRead(messageId: string): Promise<void>;
-  
-  // Webhook operations
-  subscribeToWebhook?(webhookUrl: string): Promise<string>;
-  unsubscribeFromWebhook?(subscriptionId: string): Promise<void>;
 }
 
 // List messages options
@@ -132,6 +116,9 @@ export const OutlookWebhookPayloadSchema = z.object({
     }).optional(),
   })),
 });
+
+// Export Microsoft Graph types
+export * from "./types/microsoft-graph";
 
 // Processing options
 export interface ProcessingOptions {

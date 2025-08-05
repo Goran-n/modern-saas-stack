@@ -1,38 +1,26 @@
 <template>
-  <div :class="avatarClasses" role="img" :aria-label="effectiveAlt">
-    <img 
-      v-if="props.src && !imageError" 
-      :src="props.src" 
-      :alt="effectiveAlt"
-      class="w-full h-full object-cover"
-      @error="handleImageError"
+  <AvatarRoot :class="avatarClasses">
+    <AvatarImage 
+      v-if="src"
+      :src="src" 
+      :alt="alt"
+      :class="imageClasses"
     />
-    <div v-else class="flex items-center justify-center w-full h-full" aria-hidden="true">
+    <AvatarFallback :class="fallbackClasses">
       <slot />
-    </div>
-  </div>
+    </AvatarFallback>
+  </AvatarRoot>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
+import { AvatarRoot, AvatarImage, AvatarFallback } from 'reka-ui';
 import { cn } from '../../../utils/cn';
 import type { AvatarProps } from './types';
 
 const props = withDefaults(defineProps<AvatarProps>(), {
   size: 'md',
 });
-
-const imageError = ref(false);
-
-// Computed effective alt text
-const effectiveAlt = computed(() => {
-  return props.alt;
-});
-
-// Handle image loading errors
-const handleImageError = () => {
-  imageError.value = true;
-};
 
 // Size mapping
 const sizeMap = {
@@ -51,5 +39,13 @@ const avatarClasses = computed(() => {
     sizeMap[props.size],
     props.class
   );
+});
+
+const imageClasses = computed(() => {
+  return 'w-full h-full object-cover';
+});
+
+const fallbackClasses = computed(() => {
+  return 'flex items-center justify-center w-full h-full';
 });
 </script>

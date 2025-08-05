@@ -2,12 +2,15 @@ import {
   and, 
   eq, 
   emailProcessingLog,
+  files,
 } from "@figgy/shared-db";
+import { FILE_SOURCES } from "@figgy/file-manager";
+import type { CreateFileInput } from "@figgy/file-manager";
 import type {
   EmailProcessingLogEntry,
-  NewEmailProcessingLogEntry,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
+import { createHash } from "crypto";
 import type {
   EmailConnectionConfig,
   EmailMessage,
@@ -45,10 +48,11 @@ export class AttachmentProcessor {
   async processEmail(
     connection: EmailConnectionConfig,
     message: EmailMessage,
-    uploadFile: (file: File, input: any) => Promise<string>,
+    uploadFile: (file: File, input: CreateFileInput) => Promise<string>,
     tokens?: any,
     credentials?: any,
-    options: ProcessingOptions = DEFAULT_PROCESSING_OPTIONS
+    options: ProcessingOptions = DEFAULT_PROCESSING_OPTIONS,
+    context?: { userId?: string }
   ): Promise<ProcessingResult> {
     const startTime = Date.now();
     const fileIds: string[] = [];
@@ -66,7 +70,15 @@ export class AttachmentProcessor {
     try {
       // Check if already processed
       const existing = await this.getProcessingLog(connection.id, message.messageId);
-      if (existing && existing.processingStatus === ProcessingStatus.COMPLETED) {
+      if (!existing) {
+        logger.error("Email not found in processing log", {
+          messageId: message.messageId,
+          connectionId: connection.id,
+        });
+        throw new Error(`Email ${message.messageId} not found in processing log. Discovery phase may have failed.`);
+      }
+      
+      if (existing.processingStatus === ProcessingStatus.COMPLETED) {
         logger.info("Email already processed", {
           messageId: message.messageId,
           fileIds: existing.fileIds,
@@ -80,17 +92,10 @@ export class AttachmentProcessor {
         };
       }
       
-      // Create or update processing log entry
-      await this.upsertProcessingLog({
-        connectionId: connection.id,
-        messageId: message.messageId,
-        threadId: message.threadId,
-        emailDate: message.date,
-        fromAddress: message.from,
-        subject: message.subject,
-        attachmentCount: message.attachments.length,
-        attachmentsTotalSize: message.attachments.reduce((sum, att) => sum + att.size, 0),
+      // Update status to processing
+      await this.updateProcessingLog(connection.id, message.messageId, {
         processingStatus: ProcessingStatus.PROCESSING,
+        processingDurationMs: 0,
       });
       
       // Create provider instance
@@ -144,13 +149,83 @@ export class AttachmentProcessor {
               type: attachment.mimeType,
             });
             
+            // Calculate content hash for duplicate detection
+            const contentHash = createHash('sha256')
+              .update(attachmentData)
+              .digest('hex');
+            
+            // Check if file already exists with this content hash
+            const existingFile = await this.db
+              .select({
+                id: files.id,
+                fileName: files.fileName,
+                tenantId: files.tenantId,
+              })
+              .from(files)
+              .where(
+                and(
+                  eq(files.contentHash, contentHash),
+                  eq(files.tenantId, connection.tenantId)
+                )
+              )
+              .limit(1);
+            
+            if (existingFile[0]) {
+              logger.info("File already exists with same content hash, reusing", {
+                existingFileId: existingFile[0].id,
+                existingFileName: existingFile[0].fileName,
+                newFileName: attachment.fileName,
+                contentHash,
+              });
+              
+              fileIds.push(existingFile[0].id);
+              
+              logger.info("Reused existing file", {
+                fileName: attachment.fileName,
+                fileId: existingFile[0].id,
+              });
+              continue;
+            }
+            
             // Upload to file manager
-            const fileId = await uploadFile(file, {
+            // If no userId provided, throw error as it's required
+            if (!context?.userId) {
+              logger.error("Missing userId in context", {
+                context,
+                connectionId: connection.id,
+                emailAddress: connection.emailAddress,
+              });
+              throw new Error("User ID is required for file upload but was not provided in context");
+            }
+            
+            logger.info("Uploading file with userId", {
+              userId: context.userId,
+              fileName: attachment.fileName,
+              contextType: typeof context.userId,
+              fullContext: context,
+            });
+            
+            // Ensure userId is a valid UUID before passing to uploadFile
+            const SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000";
+            const uploadUserId = context?.userId && typeof context.userId === 'string' && 
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(context.userId) 
+              ? context.userId 
+              : SYSTEM_USER_ID;
+            
+            logger.info("Using uploadUserId for file upload", {
+              uploadUserId,
+              originalContextUserId: context?.userId,
+              isValidUUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uploadUserId),
+            });
+            
+            const uploadInput: CreateFileInput = {
               tenantId: connection.tenantId,
-              uploadedBy: connection.emailAddress, // Use email address as uploader
-              source: "email",
+              uploadedBy: uploadUserId,
+              source: FILE_SOURCES.EMAIL,
               mimeType: attachment.mimeType,
               size: attachment.size,
+              sourceId: message.messageId,
+              bucket: "vault",
               metadata: {
                 emailConnectionId: connection.id,
                 emailMessageId: message.messageId,
@@ -158,14 +233,16 @@ export class AttachmentProcessor {
                 emailSubject: message.subject,
                 emailDate: message.date.toISOString(),
                 originalFileName: attachment.fileName,
+                emailAddress: connection.emailAddress,
               },
-              pathTokens: [
-                connection.tenantId,
-                "email-attachments",
-                connection.emailAddress.replace("@", "_at_"),
-                message.date.toISOString().split("T")[0],
-              ],
+            };
+            
+            logger.info("Upload input object", {
+              uploadInput,
+              uploadedByValue: uploadInput.uploadedBy,
             });
+            
+            const fileId = await uploadFile(file, uploadInput);
             
             fileIds.push(fileId);
             
@@ -250,23 +327,6 @@ export class AttachmentProcessor {
     return entry || null;
   }
   
-  /**
-   * Create or update processing log entry
-   */
-  private async upsertProcessingLog(
-    data: Omit<NewEmailProcessingLogEntry, "id" | "createdAt">
-  ): Promise<void> {
-    const existing = await this.getProcessingLog(data.connectionId, data.messageId);
-    
-    if (existing) {
-      await this.db
-        .update(emailProcessingLog)
-        .set(data)
-        .where(eq(emailProcessingLog.id, existing.id));
-    } else {
-      await this.db.insert(emailProcessingLog).values(data);
-    }
-  }
   
   /**
    * Update processing log entry

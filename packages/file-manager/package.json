@@ -15,10 +15,23 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:simple": "SKIP_DB_SETUP=true vitest run test/unit/simple-format.test.ts",
+    "test:validate": "SKIP_DB_SETUP=true vitest run test/unit/invoice-validation.test.ts",
+    "test:unit": "bun test/setup-and-run.ts unit",
+    "test:integration": "bun test/setup-and-run.ts integration",
+    "test:all": "bun test/setup-and-run.ts all",
+    "test:watch": "vitest watch",
+    "test:db:start": "docker compose -f docker-compose.test.yml up -d",
+    "test:db:stop": "docker compose -f docker-compose.test.yml down",
+    "test:db:reset": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.test.yml up -d",
     "thumbnails:generate": "doppler run -p figgy-be -c dev -- bun run ./scripts/generate-missing-thumbnails.ts",
     "thumbnails:check": "doppler run -p figgy-be -c dev -- bun run ./scripts/generate-missing-thumbnails.ts --dry-run"
   },
   "dependencies": {
+    "@figgy/audit": "workspace:*",
     "@figgy/supabase-storage": "workspace:*",
     "@figgy/utils": "workspace:*",
     "@figgy/shared-db": "workspace:*",
@@ -28,5 +41,10 @@
     "@figgy/types": "workspace:*",
     "@trigger.dev/sdk": "^3.3.17"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "dotenv": "^17.2.1",
+    "vitest": "^3.2.4"
+  }
 }

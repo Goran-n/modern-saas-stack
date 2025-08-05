@@ -1,0 +1,32 @@
+{
+  "name": "@figgy/shared-testing",
+  "version": "1.0.0",
+  "description": "Shared testing utilities for Figgy",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./builders": "./src/builders/index.ts",
+    "./doubles": "./src/doubles/index.ts",
+    "./database": "./src/database/index.ts",
+    "./assertions": "./src/assertions/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.0.0",
+    "drizzle-orm": "^0.29.3",
+    "postgres": "^3.4.3",
+    "vitest": "^1.2.0"
+  },
+  "peerDependencies": {
+    "@figgy/config": "workspace:*",
+    "@figgy/file-manager": "workspace:*",
+    "@figgy/shared-db": "workspace:*"
+  },
+  "devDependencies": {
+    "@figgy/tsconfig": "workspace:*",
+    "typescript": "^5.3.3"
+  }
+}

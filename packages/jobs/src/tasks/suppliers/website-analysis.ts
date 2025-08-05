@@ -1,9 +1,7 @@
-import { getConfig } from "@figgy/config";
-import { getPortkeyClient } from "@figgy/llm-utils";
-import { globalSuppliers } from "@figgy/shared-db";
+import { getConfig, getPortkeyClient } from "@figgy/config";
+import { globalSuppliers, eq, inArray } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { task } from "@trigger.dev/sdk/v3";
-import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../../db";
 

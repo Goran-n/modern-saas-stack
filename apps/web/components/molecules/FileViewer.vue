@@ -40,7 +40,7 @@
         @error="handleImageError"
       />
       <div v-else class="text-center text-neutral-500">
-        <FileIcon :file-name="fileName" size="xl" class="text-6xl mb-4" />
+        <FigFileIcon :file-name="fileName" size="xl" class="text-6xl mb-4" />
         <p class="text-lg font-medium mb-2">{{ fileName }}</p>
         <p class="mb-4">Preview not available</p>
         <FigButton @click="$emit('download')">
@@ -51,7 +51,7 @@
     
     <!-- Other File Types -->
     <div v-else class="text-center text-neutral-500">
-      <FileIcon :file-name="fileName" class="text-6xl mb-4" />
+      <FigFileIcon :file-name="fileName" class="text-6xl mb-4" />
       <p class="text-lg font-medium mb-2">{{ fileName }}</p>
       <p class="mb-4">Preview not available for this file type</p>
       <FigButton @click="$emit('download')">
@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 import { FigButton, FigSkeleton, isImageFile } from '@figgy/ui'
-import FileIcon from '../atoms/FileIcon.vue'
+import { FigFileIcon } from '@figgy/ui'
 import { isPDF } from '~/utils/fileUtils'
 
 interface Props {

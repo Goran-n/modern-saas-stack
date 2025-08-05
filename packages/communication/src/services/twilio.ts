@@ -1,6 +1,7 @@
 import { getConfig } from "@figgy/config";
 import { createLogger, logAndRethrow } from "@figgy/utils";
 import twilio from "twilio";
+import { COMMUNICATION_WHATSAPP_PREFIX } from "../constants";
 
 const logger = createLogger("twilio-service");
 
@@ -26,11 +27,11 @@ export class TwilioService {
     const envConfig = configInstance.getForCommunication();
 
     this.config = {
-      accountSid: config?.accountSid || envConfig.TWILIO_ACCOUNT_SID,
-      authToken: config?.authToken || envConfig.TWILIO_AUTH_TOKEN,
+      accountSid: config?.accountSid || envConfig.TWILIO_ACCOUNT_SID || "",
+      authToken: config?.authToken || envConfig.TWILIO_AUTH_TOKEN || "",
       whatsappNumber:
         config?.whatsappNumber ||
-        `${envConfig.COMMUNICATION_WHATSAPP_PREFIX}${envConfig.TWILIO_WHATSAPP_NUMBER}`,
+        `${COMMUNICATION_WHATSAPP_PREFIX}${envConfig.TWILIO_WHATSAPP_NUMBER || ""}`,
     };
 
     if (!this.config.accountSid || !this.config.authToken) {
@@ -46,10 +47,9 @@ export class TwilioService {
 
   async sendMessage(to: string, body: string): Promise<string> {
     try {
-      const envConfig = getConfig().getForCommunication();
       const message = await this.client.messages.create({
         from: this.config.whatsappNumber,
-        to: `${envConfig.COMMUNICATION_WHATSAPP_PREFIX}${to}`,
+        to: `${COMMUNICATION_WHATSAPP_PREFIX}${to}`,
         body,
       });
 

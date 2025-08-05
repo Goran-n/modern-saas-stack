@@ -1,116 +1,56 @@
 <template>
-  <div ref="dropdownRef" class="relative">
-    <button
-      class="relative p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-      @click="isOpen = !isOpen"
-      :aria-label="`User menu for ${userName}`"
-    >
-      <FigAvatar
-        :alt="user?.email || 'User'"
-        size="sm"
-        class="w-8 h-8"
+  <FigDropdown
+    :items="dropdownItems"
+    class="inline-flex"
+    content-class="w-56"
+  >
+    <template #trigger>
+      <button
+        class="relative p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        :aria-label="`User menu for ${userName}`"
       >
-        <span class="text-xs font-medium">{{ userInitials }}</span>
-      </FigAvatar>
-    </button>
-
-    <!-- Dropdown Menu -->
-    <Transition
-      enter-active-class="transition duration-100 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-75 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
-    >
-      <div
-        v-if="isOpen"
-        class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 divide-y divide-gray-100 z-50"
-      >
-        <!-- Account Section -->
-        <div class="px-3 py-3">
-          <p class="text-sm font-medium text-gray-900">
-            {{ user?.email || 'Guest' }}
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            Free Plan
-          </p>
-        </div>
-
-        <!-- Menu Items -->
-        <div class="py-1">
-          <button
-            v-for="item in items"
-            :key="item.label"
-            @click="handleItemClick(item)"
-            class="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-            :class="[
-              item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-              item.iconClass
-            ]"
-            :disabled="item.disabled"
-          >
-            <Icon
-              v-if="item.icon"
-              :name="item.icon"
-              class="w-4 h-4"
-            />
-            <span class="flex-1">{{ item.label }}</span>
-            <span v-if="item.shortcuts?.length" class="text-xs text-gray-400">
-              {{ item.shortcuts.join(' ') }}
-            </span>
-          </button>
-        </div>
+        <FigAvatar
+          :alt="user?.email || 'User'"
+          size="sm"
+          class="w-8 h-8"
+        >
+          <span class="text-xs font-medium">{{ userInitials }}</span>
+        </FigAvatar>
+      </button>
+    </template>
+    
+    <template #header>
+      <div class="px-3 py-3 border-b border-gray-200">
+        <p class="text-sm font-medium text-gray-900">
+          {{ user?.email || 'Guest' }}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">
+          Free Plan
+        </p>
       </div>
-    </Transition>
-  </div>
+    </template>
+  </FigDropdown>
 </template>
 
 <script setup lang="ts">
-import { FigAvatar } from '@figgy/ui'
-import { ref, computed, watch, onUnmounted } from 'vue'
-
-interface MenuItem {
-  label: string
-  icon?: string
-  click?: () => void
-  disabled?: boolean
-  shortcuts?: string[]
-  iconClass?: string
-}
+import { FigAvatar, FigDropdown } from '@figgy/ui'
+import type { DropdownMenuItem } from '@figgy/ui'
+import { computed } from 'vue'
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const router = useRouter()
 
-const isOpen = ref(false)
-const dropdownRef = ref<HTMLElement>()
-
-// Handle click outside - use event handler approach
-const handleClickOutside = (event: MouseEvent) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
-
-// Setup and cleanup click outside listener
-watch(isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('click', handleClickOutside, true)
-  } else {
-    document.removeEventListener('click', handleClickOutside, true)
-  }
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside, true)
-})
+// User info computed properties
 
 const userName = computed(() => {
   if (user.value?.user_metadata?.full_name) {
     return user.value.user_metadata.full_name
   }
-  return user.value?.email?.split('@')[0] || 'User'
+  if (user.value?.email) {
+    return user.value.email.split('@')[0]
+  }
+  return 'User'
 })
 
 const userInitials = computed(() => {
@@ -123,33 +63,34 @@ const userInitials = computed(() => {
     .slice(0, 2)
 })
 
-const items = computed<MenuItem[]>(() => [
+// Dropdown items
+const dropdownItems = computed(() => [
   {
+    id: 'view-account',
     label: 'View account',
     icon: 'heroicons:user-circle',
-    click: () => router.push('/settings/account'),
-  },
+    onClick: () => router.push('/settings/account'),
+  } as DropdownMenuItem,
   {
+    id: 'settings',
     label: 'Settings',
     icon: 'heroicons:cog-6-tooth',
     shortcuts: ['⌘', ','],
-    click: () => router.push('/settings'),
-  },
+    onClick: () => router.push('/settings'),
+  } as DropdownMenuItem,
   {
+    id: 'divider',
+    divider: true,
+  } as DropdownMenuItem,
+  {
+    id: 'sign-out',
     label: 'Sign out',
     icon: 'heroicons:arrow-left-on-rectangle',
-    iconClass: 'text-red-500',
-    click: async () => {
+    variant: 'destructive' as const,
+    onClick: async () => {
       await supabase.auth.signOut()
       await router.push('/auth/login')
     },
-  },
+  } as DropdownMenuItem,
 ])
-
-const handleItemClick = (item: MenuItem) => {
-  if (item.click && !item.disabled) {
-    item.click()
-  }
-  isOpen.value = false
-}
 </script>

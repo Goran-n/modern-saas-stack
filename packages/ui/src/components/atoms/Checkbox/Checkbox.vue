@@ -1,53 +1,52 @@
 <template>
-  <label :class="containerClasses">
-    <input
-      ref="checkboxRef"
-      type="checkbox"
+  <div :class="containerClasses">
+    <CheckboxRoot
+      :id="id"
+      :name="name"
       :checked="modelValue"
       :disabled="disabled"
       :required="required"
-      :name="name"
-      :id="id"
       :aria-label="ariaLabel || label"
-      :indeterminate="indeterminate"
-      class="sr-only"
-      @change="handleChange"
-    />
-    <span :class="checkboxClasses">
-      <svg
-        v-if="modelValue && !indeterminate"
-        class="w-full h-full"
-        viewBox="0 0 12 12"
-        fill="none"
-      >
-        <path
-          d="M10 3L4.5 8.5L2 6"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-      <svg
-        v-else-if="indeterminate"
-        class="w-full h-full"
-        viewBox="0 0 12 12"
-        fill="none"
-      >
-        <path
-          d="M3 6H9"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-      </svg>
-    </span>
-    <span v-if="label" :class="labelClasses">{{ label }}</span>
-  </label>
+      @update:checked="handleChange"
+      :class="checkboxClasses"
+    >
+      <CheckboxIndicator :class="indicatorClasses">
+        <svg
+          v-if="!indeterminate"
+          class="w-full h-full"
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path
+            d="M10 3L4.5 8.5L2 6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <svg
+          v-else
+          class="w-full h-full"
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path
+            d="M3 6H9"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </CheckboxIndicator>
+    </CheckboxRoot>
+    <label v-if="label" :for="id" :class="labelClasses">{{ label }}</label>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
+import { CheckboxRoot, CheckboxIndicator } from 'reka-ui';
 import { cn } from '../../../utils/cn';
 import { transitions, focusRing } from '../../../utils/transitions';
 import type { CheckboxProps } from './types';
@@ -65,24 +64,14 @@ const emit = defineEmits<{
   'change': [value: boolean];
 }>();
 
-const checkboxRef = ref<HTMLInputElement>();
-
-// Handle indeterminate state
-watch(() => props.indeterminate, (value) => {
-  if (checkboxRef.value) {
-    checkboxRef.value.indeterminate = value;
-  }
-}, { immediate: true });
-
-const handleChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  emit('update:modelValue', target.checked);
-  emit('change', target.checked);
+const handleChange = (checked: boolean) => {
+  emit('update:modelValue', checked);
+  emit('change', checked);
 };
 
 const containerClasses = computed(() => {
   return cn(
-    'inline-flex items-center cursor-pointer',
+    'inline-flex items-center gap-2',
     props.disabled && 'opacity-50 cursor-not-allowed',
     props.class
   );
@@ -129,10 +118,17 @@ const checkboxClasses = computed(() => {
     'inline-flex items-center justify-center flex-shrink-0',
     'border-2 rounded',
     transitions.base,
-    !props.disabled && focusRing,
+    'cursor-pointer',
+    focusRing,
     sizeClasses[props.size],
     checked ? colorClasses.value.checked : colorClasses.value.unchecked,
     !props.disabled && colorClasses.value.hover
+  );
+});
+
+const indicatorClasses = computed(() => {
+  return cn(
+    'flex items-center justify-center w-full h-full'
   );
 });
 
@@ -145,7 +141,7 @@ const labelClasses = computed(() => {
   };
 
   return cn(
-    'ml-2 select-none',
+    'select-none cursor-pointer',
     textSizes[props.size],
     props.disabled ? 'text-neutral-400' : 'text-neutral-700'
   );

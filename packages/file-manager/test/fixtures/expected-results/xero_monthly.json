@@ -1,0 +1,54 @@
+{
+  "supplier": {
+    "name": "Xero (NZ) Ltd",
+    "address": "PO Box 24 537, Wellington 6011, NEW ZEALAND",
+    "support_url": "support.xero.com",
+    "vat_number": "4110278571"
+  },
+  "customer": {
+    "name": "Nikic Company Limited",
+    "country": "IRELAND"
+  },
+  "invoice": {
+    "number": "IN-4801136",
+    "date": "Jan 12, 2024",
+    "due_date": "Jan 12, 2024",
+    "currency": "USD"
+  },
+  "line_items": [
+    {
+      "description": "Nikic Company Limited. Monthly Subscription, Premium Price Plan, 12 Dec 2023 to 11 Jan 2024.",
+      "amount": 62.00
+    },
+    {
+      "description": "Nikic Company Limited. Monthly Subscription, Premium Price Plan, 12 Jan 2024 to 11 Feb 2024.",
+      "amount": 62.00
+    },
+    {
+      "description": "5% subscriber discount",
+      "amount": -6.20
+    }
+  ],
+  "subscription_details": {
+    "plan": "Premium Price Plan",
+    "type": "Monthly Subscription",
+    "billing_periods": [
+      {
+        "from": "12 Dec 2023",
+        "to": "11 Jan 2024"
+      },
+      {
+        "from": "12 Jan 2024",
+        "to": "11 Feb 2024"
+      }
+    ]
+  },
+  "totals": {
+    "subtotal": 117.80,
+    "total_tax": 0.00,
+    "total": 117.80,
+    "amount_paid": 117.80,
+    "amount_due": 0.00
+  },
+  "document_type": "accounting_software_invoice"
+}

@@ -8,4 +8,5 @@ export {
   resetLogger,
 } from "./logger";
 export * from "./string";
+export * from "./string-utils";
 export * from "./validation";

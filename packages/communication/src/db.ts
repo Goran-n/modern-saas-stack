@@ -1,22 +1,13 @@
-import { getConfig } from "@figgy/config";
-import { type DrizzleClient, getDatabaseConnection } from "@figgy/shared-db";
+import { getDb as getSharedDb, type DrizzleClient } from "@figgy/shared-db";
 
 let dbInstance: DrizzleClient | null = null;
 
 /**
- * Get the database instance
- * Creates a new connection if one doesn't exist
+ * Get database instance
  */
 export function getDb(): DrizzleClient {
   if (!dbInstance) {
-    const configManager = getConfig();
-    if (!configManager.isValid()) {
-      throw new Error(
-        "Configuration not validated. Database connection requires valid configuration.",
-      );
-    }
-    const config = configManager.getForCommunication();
-    dbInstance = getDatabaseConnection(config.DATABASE_URL);
+    dbInstance = getSharedDb();
   }
   return dbInstance;
 }

@@ -13,3 +13,5 @@ export { getConfig, validateConfig } from "./config";
 export * from "./environments";
 // Schema exports
 export * from "./schemas";
+// Portkey exports
+export { getPortkeyClient, resetPortkeyClient } from "./portkey";

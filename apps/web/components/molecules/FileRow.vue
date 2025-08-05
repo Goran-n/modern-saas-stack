@@ -9,7 +9,7 @@
     <!-- File Name & Info Column -->
     <td class="px-4 py-3">
       <div class="flex items-center gap-3">
-        <FileIcon 
+        <FigFileIcon 
           :file-name="file.fileName" 
           size="lg"
         />
@@ -104,7 +104,7 @@
 import { FigButton } from '@figgy/ui'
 import { computed } from 'vue'
 import type { FileItem } from '@figgy/types'
-import FileIcon from '../atoms/FileIcon.vue'
+import { FigFileIcon } from '@figgy/ui'
 import FileDate from '../atoms/FileDate.vue'
 import FileSize from '../atoms/FileSize.vue'
 import FileBadge from '../atoms/FileBadge.vue'

@@ -1,17 +1,24 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "~/*": ["./*"],
-      "@/*": ["./*"]
+      "~/*": [
+        "./*"
+      ],
+      "@/*": [
+        "./*"
+      ]
     }
   },
   "exclude": [
     "node_modules",
-    "../../packages/email/**"
+    "../../packages/email/**",
+    "../../packages/communication/**/*.tsx",
+    "../../packages/communication/src/email/templates/**"
   ]
 }

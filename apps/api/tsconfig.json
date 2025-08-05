@@ -1,11 +1,19 @@
 {
   "extends": "@figgy/tsconfig/base.json",
   "compilerOptions": {
+    "composite": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["bun-types"],
+    "types": [
+      "bun-types"
+    ],
     "jsx": "react"
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

@@ -223,13 +223,18 @@ export const duplicatesRouter = createTRPCRouter({
       }
 
       // Update status
+      const updateData: any = {
+        duplicateStatus: input.duplicateStatus,
+        updatedAt: new Date(),
+      };
+      
+      if (input.duplicateCandidateId !== undefined) {
+        updateData.duplicateCandidateId = input.duplicateCandidateId;
+      }
+      
       await db
         .update(documentExtractions)
-        .set({
-          duplicateStatus: input.duplicateStatus,
-          duplicateCandidateId: input.duplicateCandidateId,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(eq(documentExtractions.id, input.extractionId));
 
       return { success: true };

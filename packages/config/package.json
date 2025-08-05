@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@figgy/utils": "workspace:*"
+    "@figgy/utils": "workspace:*",
+    "portkey-ai": "^1.10.1"
   },
   "devDependencies": {}
 }

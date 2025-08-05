@@ -1,1 +1,0 @@
-export { InvitationEmail } from "./invitation";

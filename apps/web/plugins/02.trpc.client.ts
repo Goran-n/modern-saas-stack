@@ -6,8 +6,7 @@ export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
   const supabase = useSupabaseClient();
 
-  // For now, use direct URL to API server to bypass proxy issues
-  // TODO: Fix proxy configuration and revert to using '/trpc' in development
+  // Use direct URL to API server
   const trpcUrl = `${config.public.apiUrl}/trpc`;
 
   // [TRPC Client] Initializing with URL
@@ -29,6 +28,16 @@ export default defineNuxtPlugin(() => {
 
           if (session?.access_token) {
             headers.authorization = `Bearer ${session.access_token}`;
+          }
+
+          // Add CSRF token for security
+          try {
+            const { token } = useCsrf();
+            if (token.value) {
+              headers['x-csrf-token'] = token.value;
+            }
+          } catch (_error) {
+            // CSRF token not available
           }
 
           // Get tenant store at request time to avoid circular dependency

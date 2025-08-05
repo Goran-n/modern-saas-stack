@@ -1,9 +1,18 @@
 {
   "extends": "@figgy/tsconfig/base.json",
   "compilerOptions": {
-    "types": ["node"],
+    "composite": true,
+    "types": [
+      "node"
+    ],
     "exactOptionalPropertyTypes": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", ".trigger"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    ".trigger"
+  ]
 }

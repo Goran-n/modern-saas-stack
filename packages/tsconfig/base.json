@@ -21,7 +21,7 @@
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
-    "incremental": false,
+    "incremental": true,
     "useDefineForClassFields": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

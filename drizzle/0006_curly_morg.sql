@@ -1,0 +1,1 @@
+ALTER TABLE "oauth_connections" DROP CONSTRAINT "oauth_connections_user_id_users_id_fk";

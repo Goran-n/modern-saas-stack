@@ -1,37 +1,38 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitOverride": true,
-    "exactOptionalPropertyTypes": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "baseUrl": ".",
-    "paths": {
-      "@figgy/api/*": ["./apps/api/src/*"],
-      "@figgy/web/*": ["./apps/web/src/*"],
-      "@figgy/shared-utils/*": ["./packages/shared-utils/src/*"]
-    }
-  },
-  "references": [
-    {
-      "path": "./apps/api"
-    },
-    {
-      "path": "./apps/web"
-    }
-  ],
+  "$schema": "https://json.schemastore.org/tsconfig",
   "files": [],
-  "include": [],
-  "exclude": ["node_modules", "**/dist", "**/build", "**/.next"]
+  "references": [
+    // Apps
+    { "path": "./apps/api" },
+    { "path": "./apps/web" },
+    { "path": "./apps/figgy-website" },
+    // Note: browser-extension is excluded as it has its own config
+    
+    // Core packages
+    { "path": "./packages/types" },
+    { "path": "./packages/config" },
+    { "path": "./packages/utils" },
+    { "path": "./packages/shared-db" },
+    { "path": "./packages/shared-auth" },
+    
+    // Feature packages
+    { "path": "./packages/tenant" },
+    { "path": "./packages/supabase-storage" },
+    { "path": "./packages/file-manager" },
+    { "path": "./packages/communication" },
+    { "path": "./packages/email" },
+    { "path": "./packages/email-ingestion" },
+    { "path": "./packages/supplier" },
+    { "path": "./packages/search" },
+    { "path": "./packages/deduplication" },
+    { "path": "./packages/llm-utils" },
+    { "path": "./packages/nlq" },
+    { "path": "./packages/trpc" },
+    { "path": "./packages/jobs" },
+    
+    // UI packages
+    { "path": "./packages/ui" }
+    // Note: assets package excluded as it contains only static files
+    // Note: tsconfig package excluded as it only provides configs
+  ]
 }

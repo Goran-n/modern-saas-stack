@@ -1,0 +1,48 @@
+{
+  "supplier": {
+    "name": "Figma, Inc.",
+    "address": "760 Market Street, Floor 10, San Francisco, California 94102, United States",
+    "phone": "+1 415-890-5404",
+    "email": "support@figma.com",
+    "vat_number": "EU372054390"
+  },
+  "customer": {
+    "name": "NCL",
+    "bill_to_address": "17 Sunny hill, Kenmare, Co. Kerry, v93vk65, Ireland",
+    "ship_to_address": "17 Sunny hill, Kenmare, Co. Kerry, v93vk65, Ireland",
+    "email": "accounts@nikic.co"
+  },
+  "invoice": {
+    "number": "F95E8016-0034",
+    "date_issued": "January 23, 2024",
+    "date_due": "January 23, 2024",
+    "currency": "USD"
+  },
+  "line_items": [
+    {
+      "description": "Professional FigJam seats (monthly)",
+      "billing_period": "Jan 23 – Feb 23, 2024",
+      "quantity": 3,
+      "unit_price": 5.00,
+      "tax_rate": "23%",
+      "amount": 15.00
+    },
+    {
+      "description": "Professional Figma design seats (monthly)",
+      "billing_period": "Jan 23 – Feb 23, 2024",
+      "quantity": 4,
+      "unit_price": 15.00,
+      "tax_rate": "23%",
+      "amount": 60.00
+    }
+  ],
+  "totals": {
+    "subtotal": 75.00,
+    "total_excluding_tax": 75.00,
+    "tax_amount": 17.25,
+    "tax_description": "Tax (23% on $75.00)",
+    "total": 92.25,
+    "amount_due": 92.25
+  },
+  "document_type": "design_software_invoice"
+}

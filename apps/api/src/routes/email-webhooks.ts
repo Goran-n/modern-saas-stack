@@ -53,32 +53,3 @@ emailWebhookRoutes.post("/webhook/outlook", async (c) => {
     return c.json({ error: "Failed to process webhook" }, 500);
   }
 });
-
-/**
- * OAuth callback endpoint
- * This would typically be handled by the frontend, but included here for reference
- */
-emailWebhookRoutes.get("/oauth/callback", async (c) => {
-  const provider = c.req.query("provider");
-  const code = c.req.query("code");
-  const state = c.req.query("state");
-  const error = c.req.query("error");
-  
-  if (error) {
-    logger.error("OAuth error", { provider, error });
-    return c.redirect(`/settings/integrations/email?error=${encodeURIComponent(error)}`);
-  }
-  
-  if (!code || !state) {
-    return c.redirect("/settings/integrations/email?error=missing_parameters");
-  }
-  
-  // Redirect to frontend with code and state
-  const params = new URLSearchParams({
-    provider: provider || "",
-    code,
-    state,
-  });
-  
-  return c.redirect(`/settings/integrations/email/callback?${params}`);
-});

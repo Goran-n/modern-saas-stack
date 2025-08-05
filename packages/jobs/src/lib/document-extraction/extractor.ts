@@ -1,4 +1,4 @@
-import { getPortkeyClient } from "@figgy/llm-utils";
+import { getPortkeyClient } from "@figgy/config";
 import type { ExtractedFields } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { CONFIDENCE_THRESHOLDS, PROCESSING_CONFIG } from "./constants";

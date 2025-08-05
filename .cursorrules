@@ -1,0 +1,62 @@
+# Cursor Rules for Kibly Project
+
+## Environment Configuration
+- **NEVER** use .env files - this project uses Doppler for secrets management
+- **NEVER** suggest creating or modifying .env files
+- Always refer to Doppler for environment variable management
+- Use `doppler run` for local development
+- Environment variables are accessed via `process.env` but managed through Doppler
+
+## Code Style
+- Use TypeScript for all new files
+- Follow existing code patterns and conventions
+- Use British English in comments and documentation
+- Prefer functional programming patterns where appropriate
+
+## Project Structure
+- Monorepo using npm workspaces with Turborepo
+- Apps: web (Nuxt.js), api (Hono), browser-extension
+- Packages: shared libraries and utilities
+- Use package imports like `@figgy/package-name`
+- **IMPORTANT**: Packages export TypeScript source files directly (e.g., `"main": "./src/index.ts"`)
+- **NEVER** build packages to JavaScript - consuming apps handle TypeScript compilation
+- **NEVER** use build tools like tsup, rollup, or esbuild in packages
+- All packages should only have `typecheck` scripts, not build scripts
+
+## Security
+- Never commit secrets or API keys
+- Always validate user input
+- Use proper authentication and authorization
+- Follow OWASP security guidelines
+
+## Git Workflow
+- Write clear, concise commit messages
+- Test changes before committing
+- Never push directly to main/master branches
+
+## Documentation
+- Document complex logic with clear comments
+- Update README files when adding new features
+- Include examples in documentation where helpful
+
+## Testing
+- Write tests for new features
+- Ensure existing tests pass before committing
+- Use the project's established testing patterns
+
+## Dependencies
+- Check if a dependency already exists before adding new ones
+- Prefer packages already used in the project
+- Keep dependencies up to date but test thoroughly
+- Use Bun as the package manager (`bun install`, `bun add`)
+- All packages should use the same version of shared dependencies (e.g., @types/node)
+
+## API Design
+- Follow RESTful principles for HTTP endpoints
+- Use TRPC for type-safe API calls
+- Implement proper error handling and validation
+
+## Database
+- Use Drizzle ORM for database operations
+- Always create migrations for schema changes
+- Follow existing naming conventions for tables and columns

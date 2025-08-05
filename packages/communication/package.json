@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.react.json",
     "clean": "rm -rf dist .turbo",
     "test": "bun test",
     "build": "tsc -p tsconfig.build.json"
@@ -19,11 +19,18 @@
     "@figgy/nlq": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
+    "@react-email/components": "^0.0.29",
+    "@react-email/render": "^1.0.3",
     "@slack/oauth": "^3.0.3",
     "@slack/web-api": "^7.9.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "resend": "^4.0.1",
     "twilio": "^5.8.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1"
   }
 }

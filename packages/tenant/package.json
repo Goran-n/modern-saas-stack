@@ -12,9 +12,10 @@
   },
   "dependencies": {
     "@figgy/config": "workspace:*",
-    "@figgy/email": "workspace:*",
+    "@figgy/communication": "workspace:*",
     "@figgy/shared-db": "workspace:*",
     "@figgy/utils": "workspace:*",
+    "@supabase/supabase-js": "^2.48.1",
     "nanoid": "^5.1.5",
     "date-fns": "^3.6.0"
   },

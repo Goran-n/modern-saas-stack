@@ -44,7 +44,7 @@ export const CategorizeFileSchema = z.object({
   mimeType: z.string(),
   size: z.number(),
   pathTokens: z.array(z.string()),
-  source: z.enum(["integration", "user_upload", "whatsapp", "slack"]),
+  source: z.enum(["integration", "user_upload", "whatsapp", "slack", "email"]),
 });
 
 export type File = z.infer<typeof FileSchema>;

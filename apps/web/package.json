@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck",
+    "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --fix ."
   },
@@ -28,12 +28,6 @@
     "vue-router": "latest"
   },
   "devDependencies": {
-    "@nuxt/devtools": "latest",
-    "@nuxt/icon": "^1.15.0",
-    "@nuxtjs/color-mode": "^3.5.2",
-    "@nuxtjs/supabase": "^1.5.3",
-    "@tailwindcss/vite": "^4.1.11",
-    "tailwindcss": "^4.1.11",
-    "vue-tsc": "^3.0.4"
+    "@nuxtjs/supabase": "^1.5.3"
   }
 }

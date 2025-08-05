@@ -38,17 +38,25 @@ export class SupplierService {
     }
 
     try {
+      const supplierData: any = {
+        legalName,
+        displayName,
+        slug: await generateSlug(displayName, tenantId, this.db),
+        status: SupplierStatus.ACTIVE,
+        tenantId,
+      };
+      
+      // Only add optional fields if they have values
+      if (companyNumber !== undefined) {
+        supplierData.companyNumber = companyNumber;
+      }
+      if (vatNumber !== undefined) {
+        supplierData.vatNumber = vatNumber;
+      }
+      
       const [supplier] = await this.db
         .insert(suppliers)
-        .values({
-          companyNumber,
-          vatNumber,
-          legalName,
-          displayName,
-          slug: await generateSlug(displayName, tenantId, this.db),
-          status: SupplierStatus.ACTIVE,
-          tenantId,
-        })
+        .values(supplierData)
         .returning();
 
       if (!supplier) {

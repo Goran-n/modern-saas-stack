@@ -54,6 +54,25 @@ export class TextExtractor {
         logger.error("PDF extraction failed", { error: pdfError });
         throw new Error("Failed to extract text from PDF");
       }
+      
+      // Validate extracted text
+      if (!extractedText || extractedText.trim().length === 0) {
+        logger.warn("PDF extraction resulted in empty text", {
+          mimeType,
+          originalLength: extractedText.length,
+        });
+        throw new Error("PDF appears to be empty or contains no extractable text");
+      }
+      
+      // Check for minimal content (just whitespace or very short)
+      const trimmedText = extractedText.trim();
+      if (trimmedText.length < 10) {
+        logger.warn("PDF extraction resulted in minimal text", {
+          textLength: trimmedText.length,
+          text: trimmedText,
+        });
+        throw new Error(`PDF contains insufficient text content (${trimmedText.length} characters)`);
+      }
     } else if (mimeType.startsWith("image/")) {
       // For images, we'll need to use an OCR service
       logger.warn(

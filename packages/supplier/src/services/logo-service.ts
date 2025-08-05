@@ -1,6 +1,5 @@
-import { globalSuppliers } from "@figgy/shared-db";
+import { globalSuppliers, eq } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
-import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 
 export interface LogoConfig {

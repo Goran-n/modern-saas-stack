@@ -6,6 +6,8 @@ export * from "./db";
 
 // Query functions (read operations)
 export * from "./queries";
+// User operations (from shared-auth)
+export * from "./operations/users";
 // Legacy service class for backwards compatibility
 export { TenantService } from "./service";
 // Type exports

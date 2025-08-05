@@ -81,8 +81,8 @@ export const emailProcessingLog = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     connectionId: uuid("connection_id")
-      .notNull()
-      .references(() => emailConnections.id, { onDelete: "cascade" }),
+      .notNull(),
+      // Note: No foreign key constraint as this can reference either emailConnections or oauthConnections
     messageId: varchar("message_id", { length: 255 }).notNull(),
     threadId: varchar("thread_id", { length: 255 }),
     emailDate: timestamp("email_date").notNull(),

@@ -161,18 +161,30 @@
           </div>
 
           <!-- File Grid -->
-          <organisms-file-grid 
+          <div 
             v-if="viewMode === 'grid'"
-            :files="currentFiles"
-            @file-selected="handleFileSelected"
-          />
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          >
+            <FileCard
+              v-for="file in currentFiles"
+              :key="file.id"
+              :file="file"
+              @click="handleFileSelected(file)"
+            />
+          </div>
 
           <!-- File List -->
-          <organisms-file-list 
+          <div 
             v-else
-            :files="currentFiles"
-            @file-selected="handleFileSelected"
-          />
+            class="space-y-2"
+          >
+            <FileRow
+              v-for="file in currentFiles"
+              :key="file.id"
+              :file="file"
+              @click="handleFileSelected(file)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -180,10 +192,10 @@
 
   <!-- File Preview Modal (outside grid for proper overlay) -->
   <Teleport to="body">
-    <organisms-file-preview
+    <FilePreview
       v-if="selectedFile"
       :file="selectedFile"
-      @close="selectedFile = null"
+      @close="handleFileModalClose"
     />
   </Teleport>
 </template>
@@ -193,6 +205,11 @@ import { useQuery } from '@tanstack/vue-query'
 import type { File, FileItem } from '@figgy/types';
 import { FigButton, FigSkeleton, FigEmptyState } from '@figgy/ui';
 import SupplierLogo from '~/components/atoms/SupplierLogo.vue';
+import FileManagerSidebar from '~/components/FileManagerSidebar.vue';
+import FileCard from '~/components/molecules/FileCard.vue';
+import FileRow from '~/components/molecules/FileRow.vue';
+import FilePreview from '~/components/organisms/FilePreview.vue';
+import type { FileManagerState } from '~/composables/useHashNavigation';
 
 // Page meta
 definePageMeta({
@@ -220,13 +237,10 @@ interface FileDataSerializedWithLogo {
 // Composables
 const api = useApi()
 const tenantStore = useTenantStore()
+const { getCurrentState, updateHash, navigateToState, onHashChange } = useHashNavigation()
 
-// localStorage keys
+// localStorage keys (only for view mode now)
 const STORAGE_KEYS = {
-  selectedYear: 'files_selected_year',
-  selectedSupplier: 'files_selected_supplier',
-  selectedStatus: 'files_selected_status',
-  currentView: 'files_current_view',
   viewMode: 'files_view_mode'
 }
 
@@ -345,18 +359,24 @@ const currentFiles = computed(() => {
 })
 
 const breadcrumbLinks = computed(() => {
-  const links = [{ label: 'Files', to: '/files' }]
+  const links = [{ label: 'Files', to: '/files#/' }]
   
   if (currentView.value === 'status') {
     links.push({ 
       label: selectedStatus.value === 'processing' ? 'Processing' : 'Failed',
-      to: '/files' 
+      to: `/files#/status/${selectedStatus.value}` 
     })
   } else if (selectedYear.value) {
-    links.push({ label: selectedYear.value, to: '/files' })
+    links.push({ 
+      label: selectedYear.value, 
+      to: `/files#/year/${selectedYear.value}` 
+    })
     
     if (selectedSupplier.value) {
-      links.push({ label: selectedSupplier.value, to: '/files' })
+      links.push({ 
+        label: selectedSupplier.value, 
+        to: `/files#/year/${selectedYear.value}/supplier/${encodeURIComponent(selectedSupplier.value)}` 
+      })
     }
   }
   
@@ -370,11 +390,8 @@ const handleYearSelected = (year: string) => {
   selectedStatus.value = null
   currentView.value = 'default'
   
-  // Save to localStorage
-  localStorage.setItem(STORAGE_KEYS.selectedYear, year)
-  localStorage.removeItem(STORAGE_KEYS.selectedSupplier)
-  localStorage.removeItem(STORAGE_KEYS.selectedStatus)
-  localStorage.setItem(STORAGE_KEYS.currentView, 'default')
+  // Update URL hash
+  navigateToState({ view: 'default', year })
 }
 
 const handleSupplierSelected = (supplier: string) => {
@@ -382,10 +399,10 @@ const handleSupplierSelected = (supplier: string) => {
   selectedStatus.value = null
   currentView.value = 'supplier'
   
-  // Save to localStorage
-  localStorage.setItem(STORAGE_KEYS.selectedSupplier, supplier)
-  localStorage.removeItem(STORAGE_KEYS.selectedStatus)
-  localStorage.setItem(STORAGE_KEYS.currentView, 'supplier')
+  // Update URL hash
+  if (selectedYear.value) {
+    navigateToState({ view: 'supplier', year: selectedYear.value, supplier })
+  }
 }
 
 const handleStatusSelected = (status: 'processing' | 'failed') => {
@@ -394,17 +411,81 @@ const handleStatusSelected = (status: 'processing' | 'failed') => {
   selectedSupplier.value = null
   currentView.value = 'status'
   
-  // Save to localStorage
-  localStorage.setItem(STORAGE_KEYS.selectedStatus, status)
-  localStorage.removeItem(STORAGE_KEYS.selectedYear)
-  localStorage.removeItem(STORAGE_KEYS.selectedSupplier)
-  localStorage.setItem(STORAGE_KEYS.currentView, 'status')
+  // Update URL hash
+  navigateToState({ view: 'status', status })
 }
 
 const handleFileSelected = (file: FileItem | null) => {
   if (file) {
     selectedFile.value = file
+    
+    // Update URL to include file ID
+    const currentState = {
+      view: currentView.value,
+      year: selectedYear.value || undefined,
+      supplier: selectedSupplier.value || undefined,
+      status: selectedStatus.value || undefined,
+      fileId: file.id
+    } as FileManagerState
+    
+    navigateToState(currentState)
   }
+}
+
+const handleFileModalClose = () => {
+  selectedFile.value = null
+  
+  // Update URL to remove file ID
+  const currentState = {
+    view: currentView.value,
+    year: selectedYear.value || undefined,
+    supplier: selectedSupplier.value || undefined,
+    status: selectedStatus.value || undefined
+  } as FileManagerState
+  
+  navigateToState(currentState)
+}
+
+// Helper function to find file by ID across all data and determine correct context
+const findFileById = (fileId: string): { file: FileItem; suggestedState?: Partial<FileManagerState> } | null => {
+  // Search in current files first (supplier view or status view)
+  const file = currentFiles.value.find(f => f.id === fileId)
+  if (file) return { file }
+  
+  // Search in processing files
+  const processingFile = processingFiles.value.find(f => f.id === fileId)
+  if (processingFile) {
+    return { 
+      file: processingFile, 
+      suggestedState: { view: 'status', status: 'processing' }
+    }
+  }
+  
+  // Search in failed files
+  const failedFile = failedFiles.value.find(f => f.id === fileId)
+  if (failedFile) {
+    return { 
+      file: failedFile, 
+      suggestedState: { view: 'status', status: 'failed' }
+    }
+  }
+  
+  // Search across all files in all years/suppliers if data is loaded
+  if (fileDataUnwrapped.value) {
+    for (const [year, yearData] of Object.entries(fileDataUnwrapped.value.byYear)) {
+      for (const [supplierName, supplierData] of Object.entries(yearData.suppliers)) {
+        const supplierFile = supplierData.files?.find((f: any) => f.id === fileId)
+        if (supplierFile) {
+          return {
+            file: typeof supplierFile.createdAt === 'string' ? supplierFile : fileToFileItem(supplierFile),
+            suggestedState: { view: 'supplier', year, supplier: supplierName }
+          }
+        }
+      }
+    }
+  }
+  
+  return null
 }
 
 // Watch viewMode changes and save to localStorage
@@ -412,65 +493,156 @@ watch(viewMode, (newMode) => {
   localStorage.setItem(STORAGE_KEYS.viewMode, newMode)
 })
 
-// Initialize from localStorage and auto-select
+// Apply state from URL hash
+const applyStateFromHash = (state: FileManagerState) => {
+  selectedYear.value = state.year || null
+  selectedSupplier.value = state.supplier || null
+  selectedStatus.value = state.status || null
+  currentView.value = state.view
+  
+  // Handle file ID - find and select the file if provided
+  if (state.fileId) {
+    // We'll set this after data loads in the watcher
+    nextTick(() => {
+      const result = findFileById(state.fileId!)
+      if (result) {
+        selectedFile.value = result.file
+        
+        // If we found the file but in a different context, suggest state correction
+        if (result.suggestedState) {
+          const correctedState = { ...state, ...result.suggestedState }
+          // Only update URL if the context changed significantly
+          if (JSON.stringify(state) !== JSON.stringify(correctedState)) {
+            updateHash(correctedState)
+          }
+        }
+      }
+    })
+  } else {
+    selectedFile.value = null
+  }
+}
+
+// Validate and fix invalid state
+const validateAndFixState = (state: FileManagerState, forceValidation = false): FileManagerState => {
+  // Don't validate if data isn't loaded yet, unless forced
+  if (!forceValidation && !fileDataUnwrapped.value && !statusFiles.value) {
+    return state
+  }
+  
+  // Validate status view
+  if (state.view === 'status' && state.status && statusFiles.value) {
+    const hasFiles = state.status === 'processing' 
+      ? (statusFiles.value?.processing?.length || 0) > 0
+      : (statusFiles.value?.failed?.length || 0) > 0
+    
+    if (hasFiles) return state
+    // If no files for this status, fallback to default but don't auto-select year
+    return { view: 'default' as const }
+  }
+  
+  // Validate year/supplier view
+  if (state.view !== 'status' && state.year && fileDataUnwrapped.value?.byYear) {
+    const yearData = fileDataUnwrapped.value.byYear[state.year]
+    
+    // Year exists
+    if (yearData) {
+      if (state.view === 'supplier' && state.supplier) {
+        // Check if supplier exists in this year
+        if (yearData.suppliers[state.supplier]) {
+          return state
+        }
+        // Supplier doesn't exist, fallback to year view but keep the year
+        return { view: 'default' as const, year: state.year }
+      }
+      // Year exists and we're in default view
+      return state
+    }
+    
+    // Year doesn't exist, try to fallback to a valid year but keep the original intent
+    const years = Object.keys(fileDataUnwrapped.value.byYear).sort().reverse()
+    if (years.length > 0) {
+      const fallbackYear = years[0]
+      if (fallbackYear && state.view === 'supplier' && state.supplier) {
+        // Check if supplier exists in fallback year
+        const fallbackYearData = fileDataUnwrapped.value.byYear[fallbackYear]
+        if (fallbackYearData?.suppliers[state.supplier]) {
+          return { view: 'supplier' as const, year: fallbackYear, supplier: state.supplier }
+        }
+      }
+      // Fallback to year view with most recent year
+      if (fallbackYear) {
+        return { view: 'default' as const, year: fallbackYear }
+      }
+    }
+  }
+  
+  // Only auto-select current year if we're forcing validation (initial load)
+  if (forceValidation && fileDataUnwrapped.value?.byYear) {
+    const currentYear = getCurrentYear()
+    const years = Object.keys(fileDataUnwrapped.value.byYear).sort().reverse()
+    
+    if (fileDataUnwrapped.value.byYear[currentYear]) {
+      return { view: 'default' as const, year: currentYear }
+    } else if (years.length > 0) {
+      return { view: 'default' as const, year: years[0] }
+    }
+  }
+  
+  return state
+}
+
+// Initialize from URL hash and set up navigation
 onMounted(() => {
-  // Restore view mode
+  // Restore view mode from localStorage
   const savedViewMode = localStorage.getItem(STORAGE_KEYS.viewMode) as 'grid' | 'list' | null
   if (savedViewMode) {
     viewMode.value = savedViewMode
   }
   
-  // Restore selections
-  const savedView = localStorage.getItem(STORAGE_KEYS.currentView) as 'default' | 'supplier' | 'status' | null
-  const savedYear = localStorage.getItem(STORAGE_KEYS.selectedYear) || null
-  const savedSupplier = localStorage.getItem(STORAGE_KEYS.selectedSupplier) || null
-  const savedStatus = localStorage.getItem(STORAGE_KEYS.selectedStatus) as 'processing' | 'failed' | null
+  // Set up hash change listener for browser navigation
+  const cleanupHashListener = onHashChange((state) => {
+    const validatedState = validateAndFixState(state)
+    applyStateFromHash(validatedState)
+    
+    // Update URL if state was corrected
+    if (JSON.stringify(state) !== JSON.stringify(validatedState)) {
+      updateHash(validatedState)
+    }
+  })
   
-  // Wait for data to load
+  // Apply initial state from hash immediately (before data loads)
+  const initialHashState = getCurrentState()
+  if (initialHashState.view !== 'default' || initialHashState.year || initialHashState.supplier || initialHashState.status) {
+    // Apply the state from URL immediately
+    applyStateFromHash(initialHashState)
+  }
+  
+  // Wait for data to load, then validate and potentially correct the state
   let unwatch: (() => void) | null = null
   unwatch = watch([fileData, statusFiles], ([data, status]) => {
     if (!data && !status) return
     
-    let hasValidSelection = false
+    // Get current state from URL hash
+    const hashState = getCurrentState()
+    const validatedState = validateAndFixState(hashState, true) // Force validation now that data is loaded
     
-    // Try to restore previous selections
-    if (savedView === 'status' && savedStatus) {
-      // Check if we have files with this status
-      const statusHasFiles = savedStatus === 'processing' 
-        ? (status?.processing?.length || 0) > 0
-        : (status?.failed?.length || 0) > 0
-        
-      if (statusHasFiles) {
-        selectedStatus.value = savedStatus
-        currentView.value = 'status'
-        hasValidSelection = true
-      }
-    } else if (savedYear && data?.byYear[savedYear]) {
-      // Restore year selection
-      selectedYear.value = savedYear
-      currentView.value = savedSupplier ? 'supplier' : 'default'
-      
-      // Check if saved supplier still exists
-      if (savedSupplier && data.byYear[savedYear].suppliers[savedSupplier]) {
-        selectedSupplier.value = savedSupplier
-      }
-      hasValidSelection = true
-    }
+    // Apply the validated state
+    applyStateFromHash(validatedState)
     
-    // If no valid saved selection, auto-select current year
-    if (!hasValidSelection && data?.byYear) {
-      const currentYear = getCurrentYear()
-      const years = Object.keys(data.byYear).sort().reverse()
-      
-      // Try current year first
-      if (data.byYear[currentYear]) {
-        selectedYear.value = currentYear
-        currentView.value = 'default'
-      } else if (years.length > 0) {
-        // Otherwise select the most recent year
-        selectedYear.value = years[0] || null
-        currentView.value = 'default'
-      }
+    // Only update URL if the state was actually corrected (not just auto-selected)
+    const wasStateInvalid = (
+      (hashState.view === 'status' && hashState.status && 
+       ((hashState.status === 'processing' && (!status?.processing?.length)) ||
+        (hashState.status === 'failed' && (!status?.failed?.length)))) ||
+      (hashState.view !== 'status' && hashState.year && data?.byYear && 
+       (!data.byYear[hashState.year] || 
+        (hashState.view === 'supplier' && hashState.supplier && 
+         !data.byYear[hashState.year]?.suppliers[hashState.supplier])))
+    )
+    
+    if (wasStateInvalid || (!window.location.hash && validatedState.view !== 'default')) {
+      updateHash(validatedState)
     }
     
     // Unwatch after initialization
@@ -478,6 +650,11 @@ onMounted(() => {
       unwatch()
     }
   }, { immediate: true })
+  
+  // Cleanup on unmount
+  onUnmounted(() => {
+    cleanupHashListener()
+  })
 })
 
 // SEO

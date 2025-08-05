@@ -9,8 +9,7 @@
   "dependencies": {
     "@figgy/config": "workspace:*",
     "@figgy/shared-db": "workspace:*",
-    "@figgy/utils": "workspace:*",
-    "@figgy/llm-utils": "workspace:*"
+    "@figgy/utils": "workspace:*"
   },
   "devDependencies": {}
 }

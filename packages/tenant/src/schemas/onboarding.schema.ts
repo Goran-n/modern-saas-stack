@@ -16,50 +16,52 @@ export const validationErrorSchema = z.object({
   severity: z.enum(["error", "warning", "info"]),
 });
 
-// Company Basics Step Schema
-export const companyBasicsSchema = z
-  .object({
-    legalName: z
-      .string()
-      .min(1, "Legal company name is required")
-      .min(3, "Company name must be at least 3 characters")
-      .max(200, "Company name must not exceed 200 characters")
-      .refine(
-        (name) => {
-          // Check for generic/test names
-          const genericNames = [
-            "test",
-            "demo",
-            "example",
-            "company",
-            "business",
-            "ltd",
-            "limited",
-          ];
-          const nameLower = name.toLowerCase().trim();
-          return !genericNames.includes(nameLower);
-        },
-        {
-          message:
-            "Please enter your actual company name, not a generic placeholder",
-        },
-      ),
-    companyType: companyTypeSchema,
-    companyNumber: z
-      .string()
-      .optional()
-      .refine(
-        (val) => {
-          if (!val) return true;
-          // UK company number validation
-          return /^[A-Z0-9]{8}$|^[A-Z]{2}\d{6}$/.test(val);
-        },
-        {
-          message:
-            "Invalid company number format. UK company numbers are typically 8 characters (e.g., 12345678 or SC123456)",
-        },
-      ),
-  })
+// Company Basics Base Schema (without refinements)
+export const companyBasicsBaseSchema = z.object({
+  legalName: z
+    .string()
+    .min(1, "Legal company name is required")
+    .min(3, "Company name must be at least 3 characters")
+    .max(200, "Company name must not exceed 200 characters")
+    .refine(
+      (name) => {
+        // Check for generic/test names
+        const genericNames = [
+          "test",
+          "demo",
+          "example",
+          "company",
+          "business",
+          "ltd",
+          "limited",
+        ];
+        const nameLower = name.toLowerCase().trim();
+        return !genericNames.includes(nameLower);
+      },
+      {
+        message:
+          "Please enter your actual company name, not a generic placeholder",
+      },
+    ),
+  companyType: companyTypeSchema,
+  companyNumber: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        // UK company number validation
+        return /^[A-Z0-9]{8}$|^[A-Z]{2}\d{6}$/.test(val);
+      },
+      {
+        message:
+          "Invalid company number format. UK company numbers are typically 8 characters (e.g., 12345678 or SC123456)",
+      },
+    ),
+});
+
+// Company Basics Step Schema (with refinements)
+export const companyBasicsSchema = companyBasicsBaseSchema
   .superRefine((data, ctx) => {
     // Business rule: Charities must have a charity number
     if (data.companyType === "charity" && !data.companyNumber) {
@@ -92,43 +94,45 @@ export const financialConfigSchema = z.object({
     .regex(/^[A-Z]{3}$/, "Currency code must be 3 uppercase letters"),
 });
 
-// VAT Setup Step Schema
-export const vatSetupSchema = z
-  .object({
-    isRegistered: z.boolean(),
-    vatNumber: z.string().optional(),
-    country: z.string().length(2).optional(),
-    scheme: z
-      .enum([
-        "standard",
-        "flat_rate",
-        "cash_accounting",
-        "annual_accounting",
-      ])
-      .optional(),
-    flatRatePercentage: z.number().min(0).max(100).optional(),
-    mtdEnabled: z.boolean().optional(),
-    ecSalesListRequired: z.boolean().optional(),
-    address: z
-      .object({
-        line1: z.string().min(1, "Address line 1 is required"),
-        line2: z.string().optional(),
-        city: z.string().min(1, "City is required"),
-        county: z.string().optional(),
-        postcode: z
-          .string()
-          .min(1, "Postcode is required")
-          .regex(
-            /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i,
-            "Invalid UK postcode format",
-          ),
-        country: z
-          .string()
-          .length(2, "Country must be 2-letter ISO code")
-          .default("GB"),
-      })
-      .optional(),
-  })
+// VAT Setup Base Schema (without refinements)
+export const vatSetupBaseSchema = z.object({
+  isRegistered: z.boolean(),
+  vatNumber: z.string().optional(),
+  country: z.string().length(2).optional(),
+  scheme: z
+    .enum([
+      "standard",
+      "flat_rate",
+      "cash_accounting",
+      "annual_accounting",
+    ])
+    .optional(),
+  flatRatePercentage: z.number().min(0).max(100).optional(),
+  mtdEnabled: z.boolean().optional(),
+  ecSalesListRequired: z.boolean().optional(),
+  address: z
+    .object({
+      line1: z.string().min(1, "Address line 1 is required"),
+      line2: z.string().optional(),
+      city: z.string().min(1, "City is required"),
+      county: z.string().optional(),
+      postcode: z
+        .string()
+        .min(1, "Postcode is required")
+        .regex(
+          /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i,
+          "Invalid UK postcode format",
+        ),
+      country: z
+        .string()
+        .length(2, "Country must be 2-letter ISO code")
+        .default("GB"),
+    })
+    .optional(),
+});
+
+// VAT Setup Step Schema (with refinements)
+export const vatSetupSchema = vatSetupBaseSchema
   .superRefine((data, ctx) => {
     // If VAT registered, require VAT number and related fields
     if (data.isRegistered) {
@@ -246,9 +250,9 @@ export const onboardingProgressSchema = z.object({
   currentStep: z.number().min(0).max(4),
   completedSteps: z.array(z.string()),
   stepData: z.object({
-    basics: companyBasicsSchema.partial().optional(),
+    basics: companyBasicsBaseSchema.partial().optional(),
     financial: financialConfigSchema.partial().optional(),
-    vat: vatSetupSchema.partial().optional(),
+    vat: vatSetupBaseSchema.partial().optional(),
     recognition: documentRecognitionSchema.partial().optional(),
     integrations: integrationsSchema.partial().optional(),
   }),

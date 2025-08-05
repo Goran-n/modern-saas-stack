@@ -173,3 +173,6 @@ pnpm-lock.yaml
 # Vitest
 /coverage/
 *.local
+
+# Test fixtures (large files)
+packages/file-manager/test/fixtures/invoices/*.pdf

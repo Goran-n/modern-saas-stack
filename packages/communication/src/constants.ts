@@ -1,33 +1,28 @@
-import type { CommunicationConfig } from "@figgy/config";
-import { getConfig } from "@figgy/config";
-
-// Lazy-loaded configuration
-let _config: CommunicationConfig | null = null;
-
-function getCommConfig(): CommunicationConfig {
-  if (!_config) {
-    _config = getConfig().getForCommunication();
-  }
-  return _config;
-}
-
-// Use getters for lazy evaluation
+// Communication constants - no need for config
 export const FILE_LIMITS = {
-  get MAX_SIZE_BYTES() {
-    return getCommConfig().COMMUNICATION_MAX_FILE_SIZE;
-  },
-  get MAX_SIZE_LABEL() {
-    return `${Math.round(getCommConfig().COMMUNICATION_MAX_FILE_SIZE / (1024 * 1024))}MB`;
-  },
+  MAX_SIZE_BYTES: 16 * 1024 * 1024, // 16MB
+  MAX_SIZE_LABEL: "16MB",
 } as const;
 
 export const SUPPORTED_MIME_TYPES = {
-  get WHATSAPP() {
-    return getCommConfig().COMMUNICATION_WHATSAPP_MIME_TYPES;
-  },
-  get SLACK() {
-    return getCommConfig().COMMUNICATION_SLACK_MIME_TYPES;
-  },
+  WHATSAPP: [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ],
+  SLACK: [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "text/plain",
+    "application/json",
+    "application/xml",
+  ],
 } as const;
 
 export const ERROR_MESSAGES = {
@@ -54,3 +49,7 @@ export const ERROR_CODES = {
   INTERNAL_ERROR: "INTERNAL_ERROR",
   ALL_FILES_FAILED: "ALL_FILES_FAILED",
 } as const;
+
+// Communication specific constants
+export const COMMUNICATION_DEFAULT_MIME_TYPE = "application/octet-stream";
+export const COMMUNICATION_WHATSAPP_PREFIX = "whatsapp:";

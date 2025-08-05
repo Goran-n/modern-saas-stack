@@ -148,7 +148,7 @@ export const useFileService = () => {
     const baseUrl = options.apiUrl || "/api";
     const toolbar = options.toolbar ?? false;
 
-    return `${baseUrl}/files/proxy/${fileId}?tenantId=${options.tenantId}${toolbar ? "" : "#toolbar=0"}`;
+    return `${baseUrl}/api/files/proxy/${fileId}?tenantId=${options.tenantId}${toolbar ? "" : "#toolbar=0"}`;
   };
 
   const getDownloadUrl = (

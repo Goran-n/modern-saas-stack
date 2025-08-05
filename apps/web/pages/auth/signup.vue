@@ -79,7 +79,7 @@
       variant="outline"
       @click="signUpWithProvider"
     >
-      <NuxtIcon name="simple-icons:google" class="w-4 h-4 mr-2" />
+      <Icon name="simple-icons:google" class="w-4 h-4 mr-2" />
       Continue with Google
     </FigButton>
 

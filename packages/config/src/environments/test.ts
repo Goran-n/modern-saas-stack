@@ -1,64 +1,47 @@
 import { z } from "zod";
-import { emailSchema } from "../schemas/email";
-import { externalServicesSchema } from "../schemas/external-services";
-import { portkeySchema } from "../schemas/portkey";
-import { triggerSchema } from "../schemas/trigger";
-import { twilioSchema } from "../schemas/twilio";
+import { backendSchema } from "../schemas";
 
 /**
  * Test environment configuration
  * Minimal requirements with mock/test values
  */
-export const testConfigSchema = z
-  .object({
-    // Base configuration for testing
+export const testConfigSchema = backendSchema
+  .extend({
+    // Override for test
     NODE_ENV: z.literal("test"),
     LOG_LEVEL: z
       .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
       .default("error"), // Minimal logging
     PORT: z.coerce.number().int().min(1).max(65535).default(0), // Random port for tests
-    HOST: z.string().default("localhost"),
-
-    // Database - can use test database or mock
     DATABASE_URL: z
       .string()
       .url()
       .default("postgresql://test:test@localhost:5432/test_db"),
-
-    // Supabase - can use mock values for testing
     SUPABASE_URL: z.string().url().default("https://test.supabase.co"),
     SUPABASE_ANON_KEY: z.string().default("test-anon-key"),
-    SUPABASE_SERVICE_KEY: z.string().default("test-service-key").optional(),
-
-    // Auth - test values
+    SUPABASE_SERVICE_KEY: z.string().default("test-service-key"),
     JWT_SECRET: z.string().default("test-jwt-secret-32-characters-long"),
-    JWT_EXPIRES_IN: z.string().default("1h"),
-    JWT_REFRESH_EXPIRES_IN: z.string().default("24h"),
-
-    // Redis - use mock/memory store for tests
-    REDIS_HOST: z.string().default("localhost"),
-    REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6380), // Different port for tests
-    REDIS_USER: z.string().optional(),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_TLS: z.coerce.boolean().default(false),
-    REDIS_DB: z.coerce.number().int().min(0).max(15).default(1), // Different DB for tests
-    REDIS_TIMEOUT: z.coerce.number().int().min(1000).default(1000),
-
-    // Web application - test ports
-    WEB_PORT: z.coerce.number().int().min(1).max(65535).default(0), // Random port
-    API_URL: z.string().url().default("http://localhost:0"), // Will be set dynamically
-    DEV_MODE: z.coerce.boolean().default(false),
-
-    // Base URL for OAuth callbacks and webhooks
-    BASE_URL: z.string().url().optional(),
-
-    // Logo service
-    LOGO_DEV_TOKEN: z.string().optional(),
+    BASE_URL: z.string().url().default("http://localhost:5001"),
   })
-  .merge(triggerSchema.partial()) // Optional for tests
-  .merge(portkeySchema.partial()) // Optional for tests
-  .merge(emailSchema.partial()) // Optional for tests
-  .merge(twilioSchema.partial()) // Optional for tests
-  .merge(externalServicesSchema.partial()); // Optional for tests
+  .partial({
+    // Make everything else optional for tests
+    RESEND_API_KEY: true,
+    EMAIL_FROM_ADDRESS: true,
+    SLACK_CLIENT_ID: true,
+    SLACK_CLIENT_SECRET: true,
+    SLACK_SIGNING_SECRET: true,
+    GOOGLE_CLIENT_ID: true,
+    GOOGLE_CLIENT_SECRET: true,
+    MICROSOFT_CLIENT_ID: true,
+    MICROSOFT_CLIENT_SECRET: true,
+    TRIGGER_API_KEY: true,
+    TRIGGER_API_URL: true,
+    TRIGGER_PROJECT_ID: true,
+    PORTKEY_API_KEY: true,
+    ANTHROPIC_API_KEY: true,
+    UPSTASH_SEARCH_URL: true,
+    UPSTASH_SEARCH_TOKEN: true,
+    ENCRYPTION_KEY: true,
+  });
 
 export type TestConfig = z.infer<typeof testConfigSchema>;

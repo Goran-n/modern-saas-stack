@@ -1,7 +1,6 @@
-import { eq, globalSuppliers, supplierAttributes } from "@figgy/shared-db";
+import { eq, globalSuppliers, supplierAttributes, inArray } from "@figgy/shared-db";
 import { logger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
-import { inArray } from "drizzle-orm";
 import { getDb } from "../db";
 import { SupplierQueries } from "../queries/supplier-queries";
 import { AttributeType } from "../types";

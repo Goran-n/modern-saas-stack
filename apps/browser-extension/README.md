@@ -45,22 +45,17 @@ Make sure you have Doppler set up:
 doppler setup  # Select figgy-be project
 ```
 
-For local development without Doppler, create a `.env` file:
-```bash
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_API_URL=http://localhost:3006
-VITE_APP_URL=http://localhost:3000
-```
+Required environment variables (managed through Doppler):
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `VITE_API_URL` - API endpoint URL
+- `VITE_APP_URL` - Web app URL
 
 ### Commands
 
 ```bash
 # Development (with Doppler)
 bun run dev
-
-# Development (local env file)
-bun run dev:local
 
 # Build for production
 bun run build

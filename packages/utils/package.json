@@ -11,6 +11,8 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "portkey-ai": "^1.10.1"
+  },
   "devDependencies": {}
 }

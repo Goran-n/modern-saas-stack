@@ -1,6 +1,8 @@
 import { 
   eq,
-  emailConnections,
+  and,
+  inArray,
+  oauthConnections,
 } from "@figgy/shared-db";
 import { createLogger } from "@figgy/utils";
 import { schedules, tasks } from "@trigger.dev/sdk/v3";
@@ -27,8 +29,13 @@ export const pollEmailConnections = schedules.task({
       const now = new Date();
       const connections = await db
         .select()
-        .from(emailConnections)
-        .where(eq(emailConnections.status, "active"));
+        .from(oauthConnections)
+        .where(
+          and(
+            eq(oauthConnections.status, "active"),
+            inArray(oauthConnections.provider, ['gmail', 'outlook'])
+          )
+        );
       
       logger.info("Found active connections", {
         count: connections.length,
@@ -48,9 +55,11 @@ export const pollEmailConnections = schedules.task({
         }
         
         // Skip if recently synced
-        if (connection.lastSyncAt) {
+        const metadata = (connection.metadata as any) || {};
+        if (metadata.lastSyncAt) {
+          const lastSyncTime = new Date(metadata.lastSyncAt).getTime();
           const minutesSinceSync = 
-            (now.getTime() - connection.lastSyncAt.getTime()) / (1000 * 60);
+            (now.getTime() - lastSyncTime) / (1000 * 60);
           
           if (minutesSinceSync < pollInterval) {
             logger.debug("Skipping recently synced connection", {
@@ -65,7 +74,7 @@ export const pollEmailConnections = schedules.task({
         // Skip if webhooks are active for Gmail/Outlook
         if (
           (connection.provider === "gmail" || connection.provider === "outlook") &&
-          connection.webhookSubscriptionId &&
+          connection.webhookId &&
           connection.webhookExpiresAt &&
           connection.webhookExpiresAt > now
         ) {

@@ -51,3 +51,5 @@ export {
 } from "./suppliers";
 export * from "./tenants";
 export * from "./email-connections";
+export * from "./audit-events";
+export * from "./oauth-connections";

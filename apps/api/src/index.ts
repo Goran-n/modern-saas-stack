@@ -100,6 +100,10 @@ async function main() {
   // Create Hono app with tRPC
   const app = createHonoApp();
 
+  // Start OAuth maintenance worker
+  const { startOAuthWorker } = await import("./services/oauth-worker");
+  startOAuthWorker();
+
   // Start server
   const port = config.PORT || 8011;
   const hostname = config.HOST || "0.0.0.0";
@@ -137,6 +141,11 @@ async function main() {
       cleanupErrorTracker();
       cleanupPerformanceMonitor();
       logger.info("tRPC monitoring services cleaned up");
+
+      // Stop OAuth worker
+      const { stopOAuthWorker } = await import("./services/oauth-worker");
+      stopOAuthWorker();
+      logger.info("OAuth worker stopped");
     } catch (error) {
       logger.error("Error during cleanup", { error });
     }

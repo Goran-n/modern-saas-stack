@@ -137,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { FigBadge, FigSkeleton } from '@figgy/ui';
+import { FigBadge, FigSkeleton, FigIcon } from '@figgy/ui';
 import { nextTick, onMounted, computed } from 'vue';
 
 interface YearData {

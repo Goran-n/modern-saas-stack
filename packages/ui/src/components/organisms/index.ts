@@ -1,2 +1,2 @@
 // Organism components will be exported here
-export {};
+export * from './AuditTrail';

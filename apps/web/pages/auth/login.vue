@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <form @submit="handleSubmit" class="space-y-4">
+    <form @submit="(e) => { e.preventDefault(); onSubmit() }" class="space-y-4">
       <FigFormField 
         label="Email" 
         :error="errors.email"
@@ -77,7 +77,7 @@
       variant="outline"
       @click="signInWithProvider"
     >
-      <NuxtIcon name="simple-icons:google" class="w-4 h-4 mr-2" />
+      <Icon name="simple-icons:google" class="w-4 h-4 mr-2" />
       Continue with Google
     </FigButton>
 
@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { FigButton, FigInput, FigFormField, FigCheckbox, FigDivider } from '@figgy/ui';
 import { z } from 'zod'
-import { reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 definePageMeta({
   layout: 'auth',
@@ -132,7 +132,7 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-const state = ref<Schema>({
+const state = reactive<Schema>({
   email: '',
   password: '',
   remember: false
@@ -146,7 +146,7 @@ function validateField(field: keyof Schema) {
       remember: z.boolean()
     }[field];
     
-    fieldSchema.parse(state.value[field]);
+    fieldSchema.parse(state[field]);
     errors[field] = undefined;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -162,7 +162,7 @@ function validateForm(): boolean {
   });
   
   try {
-    schema.parse(state.value);
+    schema.parse(state);
     return true;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -176,17 +176,12 @@ function validateForm(): boolean {
   }
 }
 
-function handleSubmit(event: Event) {
-  event.preventDefault();
-  onSubmit();
-}
-
 async function onSubmit() {
   if (!validateForm()) {
     return;
   }
   
-  const formData = state.value;
+  const formData = state;
   try {
     isLoading.value = true
     await authStore.signIn(formData.email, formData.password)
@@ -199,33 +194,20 @@ async function onSubmit() {
       // Show success message before redirecting
       general.success('Success!', 'Redirecting back to browser extension...')
       
-      // Get the session data to pass to extension
-      const supabaseClient = useSupabaseClient()
-      const { data: sessionResponse } = await supabaseClient.auth.getSession()
-      const currentSession = sessionResponse?.session
-      
-      const sessionData = currentSession ? {
-        access_token: currentSession.access_token,
-        refresh_token: currentSession.refresh_token,
-        expires_at: currentSession.expires_at,
-        user: currentSession.user
-      } : null
-      
-      // Session data to pass
-      
       // Small delay to show the success message
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Redirect back to extension callback page with session data
-      const redirectUrl = `${extensionCallbackUrl.value}?auth_success=true&session=${encodeURIComponent(JSON.stringify(sessionData))}&timestamp=${Date.now()}`
-      // Final redirect URL
+      // Redirect back to extension callback page with success flag only
+      // The extension should make a separate secure request to get session data
+      const redirectUrl = `${extensionCallbackUrl.value}?auth_success=true&timestamp=${Date.now()}`
       window.location.href = redirectUrl
     } else {
       await router.push('/')
     }
   } catch (error) {
-    // Login error
-    auth.signInFailed(error instanceof Error ? error.message : undefined)
+    // Use the user-friendly error message from auth store
+    const message = error instanceof Error ? error.message : 'Failed to sign in'
+    auth.signInFailed(message)
   } finally {
     isLoading.value = false
   }

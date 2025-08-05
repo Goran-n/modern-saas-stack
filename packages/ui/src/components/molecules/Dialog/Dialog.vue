@@ -119,6 +119,6 @@ const descriptionClasses = computed(() => {
 }
 
 .fig-dialog--loading :deep(.bg-white) {
-  @apply opacity-75;
+  opacity: 0.75;
 }
 </style>
