@@ -5,7 +5,13 @@
         <!-- Logo -->
         <div class="flex items-center">
           <a href="/" class="flex items-center">
-            <img src="/logo.png" alt="Figgy" class="h-10 w-auto" />
+            <div class="relative">
+              <img src="/logo.png" alt="Figgy" class="h-10 w-auto" />
+              <!-- Early Access Badge -->
+              <span class="absolute -top-2 -right-8 px-2 py-0.5 text-[10px] font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-sm whitespace-nowrap">
+                Early Access
+              </span>
+            </div>
           </a>
         </div>
 

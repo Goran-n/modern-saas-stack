@@ -8,12 +8,18 @@
           <div class="flex items-center">
             <!-- Logo -->
             <NuxtLink to="/" class="flex items-center focus:outline-none mr-10">
-              <img 
-                src="/logo.png" 
-                alt="Figgy logo" 
-                class="h-8 w-auto select-none"
-                @error="handleLogoError"
-              />
+              <div class="relative">
+                <img 
+                  src="/logo.png" 
+                  alt="Figgy logo" 
+                  class="h-8 w-auto select-none"
+                  @error="handleLogoError"
+                />
+                <!-- Early Access Badge -->
+                <span class="absolute -top-2.5 -right-8 px-2 py-0.5 text-[10px] font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-sm whitespace-nowrap">
+                  Early Access
+                </span>
+              </div>
             </NuxtLink>
             
             <!-- Main Navigation -->

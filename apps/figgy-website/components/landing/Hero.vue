@@ -12,7 +12,7 @@
         <!-- Badge -->
         <div class="inline-flex items-center px-4 py-2 rounded-full bg-red-100 text-red-700 text-sm font-medium mb-8">
           <Icon name="heroicons:fire" class="w-4 h-4 mr-2" />
-          No more missed claims. No more month-end chaos.
+          Limited spots remaining for early access
         </div>
 
         <!-- Main headline -->
@@ -24,7 +24,7 @@
 
         <!-- Subheadline -->
         <p class="text-xl md:text-2xl text-neutral-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-          Stop wasting hours sorting invoices. Figgy reads, posts, and reconciles them for you — automatically.
+          Stop wasting hours sorting invoices. Figgy reads, posts, and reconciles them for you automatically.
         </p>
 
         <!-- CTA Section -->
