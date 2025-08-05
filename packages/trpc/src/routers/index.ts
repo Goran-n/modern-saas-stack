@@ -11,6 +11,7 @@ import { searchRouter } from "./search";
 import { suppliersRouter } from "./suppliers";
 import { tenantRouter } from "./tenant";
 import { usersRouter } from "./users";
+import { vatRouter } from "./vat";
 
 // Only include debug router in development
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   tenant: tenantRouter,
   duplicates: duplicatesRouter,
   users: usersRouter,
+  vat: vatRouter,
   ...(isDevelopment ? { debug: debugRouter } : {}),
 });
 

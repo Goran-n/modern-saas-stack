@@ -1,3 +1,7 @@
+/* Font files need to be added to /public/fonts/ directory */
+/* Uncomment below when font files are available */
+
+/*
 @font-face {
   font-family: 'Gilroy';
   font-weight: 400;
@@ -27,3 +31,4 @@
     url('/fonts/GilroyBold/font.woff2') format('woff2'),
     url('/fonts/GilroyBold/font.woff') format('woff');
 }
+*/

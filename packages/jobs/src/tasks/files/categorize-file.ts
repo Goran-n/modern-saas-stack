@@ -1,6 +1,6 @@
 import { getConfig } from "@figgy/config";
 import { DeduplicationService } from "@figgy/deduplication";
-import { generateDisplayName } from "@figgy/file-manager";
+import { generateDisplayName, deleteFile } from "@figgy/file-manager";
 import * as searchOps from "@figgy/search";
 import {
   documentExtractions,
@@ -591,6 +591,40 @@ export const categorizeFile = schemaTask({
           error: error instanceof Error ? error.message : String(error),
         });
         // Don't throw - search update failure shouldn't fail the categorization
+      }
+
+      // Check if this is a non-business document from email source
+      if (extraction.documentType === "other" && source === "email") {
+        logger.info("Non-business document from email detected, deleting file", {
+          fileId,
+          tenantId,
+          documentType: extraction.documentType,
+          fileName: file.fileName,
+          source,
+        });
+
+        // Delete extraction record first (before file deletion)
+        await db
+          .delete(documentExtractions)
+          .where(eq(documentExtractions.id, insertedExtraction.id));
+
+        // Delete file using file-manager's deleteFile function
+        // This handles storage deletion, database deletion, and proper cleanup
+        await deleteFile(fileId, tenantId);
+
+        logger.info("Non-business document deleted successfully", {
+          fileId,
+          tenantId,
+          documentType: extraction.documentType,
+          source,
+        });
+
+        return {
+          fileId,
+          status: "deleted",
+          category: extraction.documentType,
+          reason: "non-business document from email",
+        };
       }
 
       logger.info("File categorization and extraction completed", {

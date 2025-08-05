@@ -1,22 +1,71 @@
 <template>
   <div class="max-w-xl">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-neutral-900">Welcome to Figgy</h1>
-      <p class="mt-3 text-lg text-neutral-600">
-        Let's set up your company to get the most accurate results
-      </p>
-      <div v-if="isSaving || lastSavedAt" class="mt-3 text-sm text-neutral-500">
-        <span v-if="isSaving" class="flex items-center gap-2">
-          <Icon name="heroicons:arrow-path" class="w-4 h-4 animate-spin" />
-          Saving progress...
-        </span>
-        <span v-else-if="lastSavedAt" class="flex items-center gap-2">
-          <Icon name="heroicons:check-circle" class="w-4 h-4 text-green-500" />
-          Progress saved {{ useTimeAgo(lastSavedAt).value }}
-        </span>
+    <!-- Tenant Creation Form -->
+    <div v-if="needsTenantCreation" class="space-y-6">
+      <div>
+        <h1 class="text-3xl font-bold text-neutral-900">Create your company</h1>
+        <p class="mt-3 text-lg text-neutral-600">
+          Let's start by creating your company account
+        </p>
       </div>
+
+      <form @submit.prevent="createTenant" class="space-y-4">
+        <FigFormField 
+          label="Company Name" 
+          :error="tenantCreationError"
+          required
+        >
+          <FigInput 
+            v-model="tenantCreationForm.name" 
+            placeholder="Enter your company name"
+            size="lg"
+            autofocus
+          />
+        </FigFormField>
+
+        <FigFormField 
+          label="Company Email (Optional)" 
+        >
+          <FigInput 
+            v-model="tenantCreationForm.email" 
+            type="email"
+            placeholder="company@example.com"
+            size="lg"
+          />
+        </FigFormField>
+
+        <FigButton
+          type="submit"
+          color="primary"
+          size="lg"
+          class="w-full"
+          :loading="isCreatingTenant"
+          :disabled="!tenantCreationForm.name.trim()"
+        >
+          Create Company
+        </FigButton>
+      </form>
     </div>
+
+    <!-- Regular Onboarding Flow -->
+    <template v-else>
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-neutral-900">Welcome to Figgy</h1>
+        <p class="mt-3 text-lg text-neutral-600">
+          Let's set up your company to get the most accurate results
+        </p>
+        <div v-if="isSaving || lastSavedAt" class="mt-3 text-sm text-neutral-500">
+          <span v-if="isSaving" class="flex items-center gap-2">
+            <Icon name="heroicons:arrow-path" class="w-4 h-4 animate-spin" />
+            Saving progress...
+          </span>
+          <span v-else-if="lastSavedAt" class="flex items-center gap-2">
+            <Icon name="heroicons:check-circle" class="w-4 h-4 text-green-500" />
+            Progress saved {{ useTimeAgo(lastSavedAt).value }}
+          </span>
+        </div>
+      </div>
 
     <!-- Progress Indicator -->
     <div class="mb-12">
@@ -128,12 +177,13 @@
         </FigButton>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { FigButton } from '@figgy/ui'
+import { FigButton, FigFormField, FigInput } from '@figgy/ui'
 import { useDebounceFn, useTimeAgo } from '@vueuse/core'
 import CompanyBasicsStep from './onboarding/CompanyBasicsStep.vue'
 import FinancialConfigStep from './onboarding/FinancialConfigStep.vue'
@@ -146,6 +196,7 @@ const $trpc = useTrpc()
 const toast = useToast()
 const router = useRouter()
 const onboardingStore = useOnboardingStore()
+const tenantStore = useTenantStore()
 
 // Step Configuration
 const steps = [
@@ -199,32 +250,55 @@ const lastSavedAt = ref<Date | null>(null)
 const stepValidationState = ref<Record<string, boolean>>({})
 const canProceed = ref(false)
 
+// Tenant creation state
+const needsTenantCreation = computed(() => tenantStore.userTenants.length === 0)
+const isCreatingTenant = ref(false)
+const tenantCreationForm = ref({
+  name: '',
+  email: '',
+})
+const tenantCreationError = ref<string | null>(null)
+
 // Computed
 const currentStep = computed(() => steps[currentStepIndex.value] ?? steps[0])
 
 // Load saved progress on mount
 onMounted(async () => {
   try {
-    const progress = await $trpc.tenant.getOnboardingProgress.query()
-    
-    if (progress.stepData) {
-      formData.value = progress.stepData
+    // Check if user has any tenants first
+    if (!tenantStore.userTenants.length && !tenantStore.isLoading) {
+      await tenantStore.fetchUserTenants()
     }
-    
-    if (progress.currentStep > 0) {
-      currentStepIndex.value = progress.currentStep
+
+    // If user has no tenants, we need to handle tenant creation first
+    if (tenantStore.userTenants.length === 0) {
+      // Will be handled by the template - show tenant creation form
+      return
     }
-    
-    if (progress.lastUpdated) {
-      lastSavedAt.value = new Date(progress.lastUpdated)
+
+    // Only load progress if user has a tenant
+    if (tenantStore.selectedTenantId) {
+      const progress = await $trpc.tenant.getOnboardingProgress.query()
+      
+      if (progress.stepData) {
+        formData.value = progress.stepData
+      }
+      
+      if (progress.currentStep > 0) {
+        currentStepIndex.value = progress.currentStep
+      }
+      
+      if (progress.lastUpdated) {
+        lastSavedAt.value = new Date(progress.lastUpdated)
+      }
+      
+      if (progress.validationState) {
+        stepValidationState.value = progress.validationState
+      }
+      
+      // Update onboarding store
+      onboardingStore.setCurrentStep(currentStepIndex.value)
     }
-    
-    if (progress.validationState) {
-      stepValidationState.value = progress.validationState
-    }
-    
-    // Update onboarding store
-    onboardingStore.setCurrentStep(currentStepIndex.value)
   } catch (error) {
     console.error('Failed to load onboarding progress:', error)
   }
@@ -376,6 +450,41 @@ function canNavigateToStep(stepIndex: number): boolean {
 function goToStep(stepIndex: number) {
   if (canNavigateToStep(stepIndex)) {
     currentStepIndex.value = stepIndex
+  }
+}
+
+async function createTenant() {
+  if (!tenantCreationForm.value.name.trim()) {
+    tenantCreationError.value = 'Company name is required'
+    return
+  }
+
+  isCreatingTenant.value = true
+  tenantCreationError.value = null
+
+  try {
+    const result = await $trpc.auth.createFirstTenant.mutate({
+      name: tenantCreationForm.value.name.trim(),
+      email: tenantCreationForm.value.email.trim() || undefined,
+    })
+
+    // Refresh user tenants
+    await tenantStore.fetchUserTenants()
+
+    // Select the newly created tenant
+    if (result.tenant.id) {
+      tenantStore.selectTenant(result.tenant.id)
+    }
+
+    toast.add({
+      title: 'Company created',
+      description: 'Now let\'s set up your company details',
+      color: 'success' as const,
+    })
+  } catch (error: any) {
+    tenantCreationError.value = error.message || 'Failed to create company'
+  } finally {
+    isCreatingTenant.value = false
   }
 }
 

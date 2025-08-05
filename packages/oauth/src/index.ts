@@ -11,6 +11,7 @@ export {
   OutlookOAuthProvider,
 } from "./providers/microsoft";
 export { SlackOAuthProvider } from "./providers/slack";
+export { HmrcOAuthProvider } from "./providers/hmrc";
 export {
   OAuthProviderRegistry,
   getOAuthProviderRegistry,

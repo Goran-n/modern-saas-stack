@@ -397,6 +397,17 @@
         "portkey-ai": "^1.10.1",
       },
     },
+    "packages/vat": {
+      "name": "@figgy/vat",
+      "version": "1.0.0",
+      "dependencies": {
+        "@figgy/config": "workspace:*",
+        "@figgy/shared-db": "workspace:*",
+        "@figgy/utils": "workspace:*",
+        "date-fns": "^3.6.0",
+        "zod": "^3.23.8",
+      },
+    },
   },
   "packages": {
     "@1natsu/wait-element": ["@1natsu/wait-element@4.1.2", "", { "dependencies": { "defu": "^6.1.4", "many-keys-map": "^2.0.1" } }, "sha512-qWxSJD+Q5b8bKOvESFifvfZ92DuMsY+03SBNjTO34ipJLP6mZ9yK4bQz/vlh48aEQXoJfaZBqUwKL5BdI5iiWw=="],
@@ -670,6 +681,8 @@
     "@figgy/ui": ["@figgy/ui@workspace:packages/ui"],
 
     "@figgy/utils": ["@figgy/utils@workspace:packages/utils"],
+
+    "@figgy/vat": ["@figgy/vat@workspace:packages/vat"],
 
     "@figgy/web": ["@figgy/web@workspace:apps/web"],
 

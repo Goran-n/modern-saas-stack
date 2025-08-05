@@ -3,6 +3,7 @@ import { OAuthProvider } from "./base";
 import { GmailOAuthProvider, GoogleOAuthProvider } from "./google";
 import { MicrosoftOAuthProvider, OutlookOAuthProvider } from "./microsoft";
 import { SlackOAuthProvider } from "./slack";
+import { HmrcOAuthProvider } from "./hmrc";
 
 /**
  * Registry of available OAuth providers
@@ -92,6 +93,20 @@ export class OAuthProviderRegistry {
             "users:read",
             "users:read.email",
             "team:read",
+          ],
+        }),
+      );
+    }
+
+    // HMRC OAuth
+    if (config.HMRC_CLIENT_ID && config.HMRC_CLIENT_SECRET) {
+      this.register(
+        new HmrcOAuthProvider({
+          clientId: config.HMRC_CLIENT_ID,
+          clientSecret: config.HMRC_CLIENT_SECRET,
+          scopes: [
+            "read:vat",
+            "write:vat",
           ],
         }),
       );

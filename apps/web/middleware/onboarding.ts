@@ -17,23 +17,31 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   }
 
   try {
-    // Ensure we have a selected tenant
-    if (!tenantStore.selectedTenantId) {
+    // Ensure we have fetched user tenants
+    if (!tenantStore.userTenants.length && !tenantStore.isLoading) {
       await tenantStore.fetchUserTenants();
     }
 
-    // Get tenant details
-    const tenant = await $trpc.tenant.get.query();
-
-    // Check if onboarding is completed
-    const onboardingCompleted = tenant.metadata?.onboardingCompleted || false;
-
-    // Store onboarding status in tenant store for easy access
-    tenantStore.setOnboardingStatus(!!onboardingCompleted);
-
-    // If onboarding is not completed, redirect to onboarding page
-    if (!onboardingCompleted) {
+    // Check if user has no tenants - redirect to onboarding for tenant creation
+    if (tenantStore.userTenants.length === 0) {
       return navigateTo(onboardingRoute);
+    }
+
+    // Only check tenant details if user has tenants
+    if (tenantStore.selectedTenantId) {
+      // Get tenant details
+      const tenant = await $trpc.tenant.get.query();
+
+      // Check if onboarding is completed
+      const onboardingCompleted = tenant.metadata?.onboardingCompleted || false;
+
+      // Store onboarding status in tenant store for easy access
+      tenantStore.setOnboardingStatus(!!onboardingCompleted);
+
+      // If onboarding is not completed, redirect to onboarding page
+      if (!onboardingCompleted) {
+        return navigateTo(onboardingRoute);
+      }
     }
   } catch (error) {
     console.error("Error checking onboarding status:", error);

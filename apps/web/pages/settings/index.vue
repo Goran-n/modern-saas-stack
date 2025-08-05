@@ -90,6 +90,22 @@
               </div>
             </FigCard>
           </NuxtLink>
+
+          <NuxtLink to="/settings/vat" class="block">
+            <FigCard class="cursor-pointer hover:border-primary-300 transition-colors">
+              <div class="flex items-start gap-4">
+                <div class="p-3 bg-amber-100 rounded-lg">
+                  <Icon name="heroicons:calculator" class="h-6 w-6 text-amber-600" />
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold mb-1">VAT Management</h3>
+                  <p class="text-sm text-gray-600">
+                    Manage VAT periods, submissions, and HMRC compliance
+                  </p>
+                </div>
+              </div>
+            </FigCard>
+          </NuxtLink>
         </div>
     </FigContainer>
   </div>

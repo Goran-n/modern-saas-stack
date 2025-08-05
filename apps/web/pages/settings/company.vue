@@ -113,7 +113,7 @@
             <VATRegistrationForm
               v-model:vat="formState.vat"
               v-model:identifiers="formState.identifiers"
-              @update:vat="saveField('vat')"
+              @update:vat="handleVatUpdate"
               @update:identifiers="saveField('identifiers')"
             />
           </FigCard>
@@ -323,17 +323,23 @@ async function loadConfiguration() {
 }
 
 // Auto-save functionality
-const saveField = useDebounceFn(async (_field: string) => {
-  if (!formState.value.names.legal) {
+const saveField = useDebounceFn(async (field: string) => {
+  console.log('saveField called for:', field, 'formState.vat:', formState.value.vat);
+  
+  // Allow VAT updates even without legal name
+  if (field !== 'vat' && !formState.value.names.legal) {
+    console.log('Blocked save - no legal name and field is not vat');
     return;
   }
   
   try {
     saveStatus.value = 'saving';
+    console.log('Saving company config...');
     
     await $trpc.tenant.updateCompanyConfig.mutate(formState.value);
     
     saveStatus.value = 'saved';
+    console.log('Save successful');
     
     setTimeout(() => {
       if (saveStatus.value === 'saved') {
@@ -342,6 +348,7 @@ const saveField = useDebounceFn(async (_field: string) => {
     }, 2000);
   } catch (e: any) {
     saveStatus.value = 'error';
+    console.error('Save failed:', e);
     toast.add({
       title: 'Failed to save',
       description: e.message || 'An error occurred while saving',
@@ -356,7 +363,12 @@ const saveField = useDebounceFn(async (_field: string) => {
   }
 }, 1000);
 
-
+// VAT-specific update handler
+function handleVatUpdate(vat: CompanyConfig['vat']) {
+  console.log('handleVatUpdate called with:', vat);
+  formState.value.vat = vat;
+  saveField('vat');
+}
 
 // Lifecycle
 onMounted(async () => {

@@ -9,8 +9,8 @@
         </p>
       </div>
       <FigSwitch 
-        v-model="localVat.isRegistered"
-        @change="updateVat"
+        :model-value="localVat.isRegistered"
+        @update:model-value="handleVatToggle"
       />
     </div>
 
@@ -123,7 +123,14 @@ const euCountryOptions = euCountries.map(code => ({
 }));
 
 // Methods
+function handleVatToggle(value: boolean) {
+  console.log('VAT toggle changed to:', value);
+  localVat.value.isRegistered = value;
+  updateVat();
+}
+
 function updateVat() {
+  console.log('Emitting VAT update:', localVat.value);
   emit('update:vat', { ...localVat.value });
 }
 

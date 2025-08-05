@@ -16,7 +16,7 @@ import {
   suppliers,
 } from "@figgy/shared-db";
 import { download, remove, signedUrl, upload } from "@figgy/supabase-storage";
-import { createLogger, stripSpecialCharacters } from "@figgy/utils";
+import { createLogger } from "@figgy/utils";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { v4 as uuidv4 } from "uuid";
 import { getClient } from "./client";
@@ -458,7 +458,7 @@ export async function uploadFileFromBase64(input: {
   let fileRecord;
   try {
     logger.info("Creating file record with pending_upload status", {
-      fileName: fileName,
+      fileName: input.fileName,
       originalFileName: input.fileName,
       tenantId: input.tenantId,
       uploadedBy: input.uploadedBy,
@@ -952,7 +952,12 @@ export async function listFiles(
       createdAt: files.createdAt,
     })
     .from(files)
-    .where(eq(files.tenantId, tenantId))
+    .where(
+      and(
+        eq(files.tenantId, tenantId),
+        eq(files.processingStatus, "completed")
+      )
+    )
     .orderBy(desc(files.createdAt))
     .limit(limit)
     .offset(offset);
@@ -1450,7 +1455,12 @@ export async function getFilesGroupedByYear(tenantId: string): Promise<{
       globalSuppliers,
       eq(globalSuppliers.id, suppliers.globalSupplierId),
     )
-    .where(eq(files.tenantId, tenantId))
+    .where(
+      and(
+        eq(files.tenantId, tenantId),
+        eq(files.processingStatus, "completed")
+      )
+    )
     .orderBy(desc(files.createdAt));
 
   // Group files by year and supplier
@@ -1720,6 +1730,7 @@ export async function getFilesBySupplierAndYear(
 
   const baseConditions = [
     eq(files.tenantId, tenantId),
+    eq(files.processingStatus, "completed"),
     gte(files.createdAt, startOfYear),
     sql`${files.createdAt} < ${endOfYear}`,
   ];

@@ -47,6 +47,9 @@ export const backendSchema = z.object({
   MICROSOFT_CLIENT_ID: z.string().optional(),
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_TENANT_ID: z.string().optional(),
+  
+  HMRC_CLIENT_ID: z.string().optional(),
+  HMRC_CLIENT_SECRET: z.string().optional(),
 
   // Trigger.dev
   TRIGGER_API_KEY: z.string().optional(),
